@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cmake",
-			"label": "CMake: build",
+			"label": "CMake: Build",
 			"command": "build",
 			"targets": [
 				"all"
@@ -17,7 +17,7 @@
 		},
 		{
 			"type": "cmake",
-			"label": "CMake: install",
+			"label": "CMake: Install",
 			"command": "build",
 			"targets": [
 				"install"
@@ -25,6 +25,24 @@
 			"group": "none",
 			"problemMatcher": [],
 			"detail": "CMake install task",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"CMake: Build"
+			]
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: Build Tests",
+			"command": "build",
+			"targets": [
+				"build_tests"
+			],
+			"group": "test",
+			"problemMatcher": [],
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"CMake: Build"
+			]
 		},
 		{
 			"type": "cmake",
@@ -34,7 +52,11 @@
 				"run_tests"
 			],
 			"group": "test",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"CMake: Build Tests"
+			]
 		},
 		{
 			"type": "cmake",
@@ -44,7 +66,11 @@
 				"coverage"
 			],
 			"group": "test",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"CMake: Run Tests"
+			]
 		},
 	]
 }
