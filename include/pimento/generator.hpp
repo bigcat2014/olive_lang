@@ -30,41 +30,192 @@ public:
 
 private:
   void gen_statement(const ast::node::StmtNode *const stmt) noexcept {
-    struct StmtVisitor {
-      std::ostringstream &m_output;
+    struct Visitor {
+      Generator &gen;
 
       void operator()(const ast::node::StmtExitNode *const stmt_exit) const {
-        m_output << "    ;; exit\n";
-        m_output << "    mov rax, 60\n";
-        m_output << "    mov rdi, 23\n";
-        m_output << "    syscall\n";
-        m_output << "    ;; /exit\n";
+        gen.m_output << "    ;; exit\n";
+        gen.m_output << "    mov rax, 60\n";
+        gen.gen_expression(stmt_exit->expression);
+        // TODO(lthomas): Remove hard-coded exit value
+        gen.m_output << "    mov rdi, 23\n";
+        gen.m_output << "    syscall\n";
+        gen.m_output << "    ;; /exit\n";
       }
 
       void operator()(const ast::node::StmtLetNode *const stmt_let) const {
-        m_output << "    ;; let\n";
-        m_output << "    ;; /let\n";
+        gen.m_output << "    ;; let\n";
+        gen.m_output << "    ;; "
+                     << tokenization::TokenTypeUtil::get_type_as_str(
+                            stmt_let->identifier.token_type)
+                     << "\n";
+        gen.gen_expression(stmt_let->expression);
+        gen.m_output << "    ;; /let\n";
       }
 
       void
       operator()(const ast::node::StmtAssignNode *const stmt_assign) const {
-        m_output << "    ;; assign";
-        m_output << "    ;; /assign";
+        gen.m_output << "    ;; assign";
+        gen.m_output << "    ;; "
+                     << tokenization::TokenTypeUtil::get_type_as_str(
+                            stmt_assign->identifier.token_type)
+                     << "\n";
+        gen.gen_expression(stmt_assign->expression);
+        gen.m_output << "    ;; /assign";
       }
 
       void operator()(const ast::node::ScopeNode *const scope) const {
-        m_output << "    ;; scope\n";
-        m_output << "    ;; /scope\n";
+        gen.m_output << "    ;; scope\n";
+        gen.gen_scope(scope);
+        gen.m_output << "    ;; /scope\n";
       }
 
       void operator()(const ast::node::StmtIfNode *const stmt_if) const {
-        m_output << "    ;; if\n";
-        m_output << "    ;; /if\n";
+        gen.m_output << "    ;; if\n";
+        gen.gen_expression(stmt_if->expression);
+        gen.gen_scope(stmt_if->scope);
+        gen.m_output << "    ;; /if\n";
+        if (stmt_if->ifpred.has_value()) {
+          gen.gen_ifpred(stmt_if->ifpred.value());
+        }
       }
     };
 
-    StmtVisitor visitor{.m_output = m_output};
+    Visitor visitor{.gen = *this};
     std::visit(visitor, stmt->node);
+  }
+
+  void gen_expression(const ast::node::ExprNode *const expr) noexcept {
+    struct Visitor {
+      Generator &gen;
+
+      void operator()(const ast::node::TermNode *const term) const {
+        gen.m_output << "    ;; term\n";
+        gen.gen_term(term);
+        gen.m_output << "    ;; /term\n";
+      }
+
+      void operator()(const ast::node::BinExprNode *const bin_expr) const {
+        gen.m_output << "    ;; binexpr\n";
+        gen.gen_bin_expr(bin_expr);
+        gen.m_output << "    ;; /binexpr\n";
+      }
+    };
+
+    Visitor visitor{.gen = *this};
+    std::visit(visitor, expr->node);
+  }
+
+  void gen_scope(const ast::node::ScopeNode *const scope) noexcept {
+    for (const auto stmt : scope->statements) {
+      m_output << "    ;; scope\n";
+      gen_statement(stmt);
+      m_output << "    ;; /scope\n";
+    }
+  }
+
+  void gen_ifpred(const ast::node::IfPredNode *const ifpred) noexcept {
+    struct Visitor {
+      Generator &gen;
+
+      void
+      operator()(const ast::node::IfPredElifNode *const ifpred_elif) const {
+        gen.m_output << "    ;; elif\n";
+        gen.gen_expression(ifpred_elif->expression);
+        gen.gen_scope(ifpred_elif->scope);
+        gen.m_output << "    ;; /elif\n";
+        if (ifpred_elif->ifpred.has_value()) {
+          gen.gen_ifpred(ifpred_elif->ifpred.value());
+        }
+      }
+
+      void
+      operator()(const ast::node::IfPredElseNode *const ifpred_else) const {
+        gen.m_output << "    ;; else\n";
+        gen.m_output << "    ;; /else\n";
+      }
+    };
+
+    Visitor visitor{.gen = *this};
+    std::visit(visitor, ifpred->node);
+  }
+
+  void gen_term(const ast::node::TermNode *const term) noexcept {
+    struct Visitor {
+      Generator &gen;
+
+      void operator()(const ast::node::TermIntLitNode *const int_lit) const {
+        gen.m_output << "    ;; int_lit\n";
+        gen.m_output << "    ;; /int_lit\n";
+      }
+
+      void operator()(const ast::node::TermIdentNode *const ident) const {
+        gen.m_output << "    ;; ident\n";
+        gen.m_output << "    ;; /ident\n";
+      }
+
+      void operator()(const ast::node::TermExprNode *const expr) const {
+        gen.m_output << "    ;; expr\n";
+        gen.gen_expression(expr->expression);
+        gen.m_output << "    ;; /expr\n";
+      }
+    };
+
+    Visitor visitor{.gen = *this};
+    std::visit(visitor, term->node);
+  }
+
+  void gen_bin_expr(const ast::node::BinExprNode *const bin_expr) noexcept {
+    struct Visitor {
+      Generator &gen;
+
+      void
+      operator()(const ast::node::BinExprPowerNode *const power_node) const {
+        gen.m_output << "    ;; power\n";
+        gen.gen_expression(power_node->left);
+        gen.gen_expression(power_node->right);
+        gen.m_output << "    ;; /power\n";
+      }
+
+      void operator()(const ast::node::BinExprModNode *const mod_node) const {
+        gen.m_output << "    ;; mod\n";
+        gen.gen_expression(mod_node->left);
+        gen.gen_expression(mod_node->right);
+        gen.m_output << "    ;; /mod\n";
+      }
+
+      void operator()(const ast::node::BinExprMulNode *const mul_node) const {
+        gen.m_output << "    ;; multiply\n";
+        gen.gen_expression(mul_node->left);
+        gen.gen_expression(mul_node->right);
+        gen.m_output << "    ;; /multiply\n";
+      }
+
+      void operator()(const ast::node::BinExprDivNode *const div_node) const {
+        gen.m_output << "    ;; divide\n";
+        gen.gen_expression(div_node->left);
+        gen.gen_expression(div_node->right);
+        gen.m_output << "    ;; /divide\n";
+      }
+
+      void operator()(const ast::node::BinExprPlusNode *const plus_node) const {
+        gen.m_output << "    ;; add\n";
+        gen.gen_expression(plus_node->left);
+        gen.gen_expression(plus_node->right);
+        gen.m_output << "    ;; /add\n";
+      }
+
+      void
+      operator()(const ast::node::BinExprMinusNode *const minus_node) const {
+        gen.m_output << "    ;; subtract\n";
+        gen.gen_expression(minus_node->left);
+        gen.gen_expression(minus_node->right);
+        gen.m_output << "    ;; /subtract\n";
+      }
+    };
+
+    Visitor visitor{.gen = *this};
+    std::visit(visitor, bin_expr->node);
   }
 
   // TODO(lthomas): Write output to this file

@@ -162,12 +162,11 @@ private:
     }
     // Parse format {[Stmt]*}
     case tokenization::TokenType::TT_LEFT_CURLY: {
-      try_consume(tokenization::TokenType::TT_LEFT_CURLY);
       stmt->node = parse_scope();
       break;
     }
     default: {
-      logger.error("Expected statemetnt at TODO Line & Column number");
+      logger.error("Expected statement at TODO Line & Column number");
       exit(EXIT_FAILURE);
     }
     }
@@ -301,16 +300,21 @@ private:
   //! @brief Parse a scope into the AST.
   //! @return std::unique_ptr<node::ScopeNode> The scope node of the AST.
   node::ScopeNode *parse_scope() {
+    try_consume(tokenization::TokenType::TT_LEFT_CURLY);
 
     node::ScopeNode *scope = new node::ScopeNode;
-    while (peek().has_value() && peek().value().token_type !=
-                                     tokenization::TokenType::TT_RIGHT_CURLY) {
+    while (true) {
+      std::optional<tokenization::Token> next = peek();
+      if (!next.has_value() ||
+          next.value().token_type == tokenization::TokenType::TT_RIGHT_CURLY) {
+        break;
+      }
+
       node::StmtNode *statement = parse_statement();
       scope->statements.push_back(statement);
     }
 
     try_consume(tokenization::TokenType::TT_RIGHT_CURLY);
-
     return scope;
   }
 
