@@ -191,7 +191,6 @@ private:
         // true
         gen.m_output << "    jz " << label << "\n";
         gen.gen_scope(stmt_node->scope);
-        gen.m_output << "    ;; /if\n";
         if (stmt_node->ifpred.has_value()) {
           const std::string end_label = gen.create_label();
           gen.m_output << "    jmp " << end_label << "\n";
@@ -201,6 +200,7 @@ private:
         } else {
           gen.m_output << label << ":\n";
         }
+        gen.m_output << "    ;; /if\n";
       }
     };
 
@@ -259,8 +259,8 @@ private:
         gen.gen_scope(ifpred_elif->scope);
         gen.m_output << "    jmp " << end_label << "\n";
         gen.m_output << "    ;; /elif\n";
+        gen.m_output << label << ":\n";
         if (ifpred_elif->ifpred.has_value()) {
-          gen.m_output << label << ":\n";
           gen.gen_ifpred(ifpred_elif->ifpred.value(), end_label);
         }
       }
@@ -285,19 +285,17 @@ private:
         gen.m_output << "    ;; int_lit\n";
         // TODO(lthomas): Probably a cleaner way to do this... Refactor later
         struct TokenVisitor {
-          std::ostringstream &oss;
+          Generator &gen;
           void operator()(tokenization::IdentProperties properties) {}
           void operator()(tokenization::BinOpProperties properties) {}
           void operator()(tokenization::IntLitProperties properties) {
-            oss << "    mov rax, " << properties.value << "\n";
+            gen.m_output << "    mov rax, " << properties.value << "\n";
+            gen.push("rax");
           }
           void operator()(std::monostate properties) {}
         };
 
-        std::visit(TokenVisitor(gen.m_output),
-                   int_lit->int_lit_token.properties);
-
-        gen.push("rax");
+        std::visit(TokenVisitor(gen), int_lit->int_lit_token.properties);
         gen.m_output << "    ;; /int_lit\n";
       }
 
@@ -375,17 +373,33 @@ private:
 
       void operator()(const ast::node::BinExprPowerNode *const node) const {
         gen.m_output << "    ;; power\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
-        // TODO(lthomas): Create loop in assembly, unroll the loop, or
-        // conditionally unroll the loop and multiply
+        gen.gen_expression(node->left);
+
+        std::string loop_label = gen.create_label();
+        std::string neg_label = gen.create_label();
+        std::string end_label = gen.create_label();
+
+        gen.pop("rax");
+        gen.m_output << "    mov rbx, rax\n";
+        gen.pop("rcx");
+        gen.m_output << loop_label << ":\n";
+        gen.m_output << "    sub rcx, 1\n";
+        gen.m_output << "    jc " << neg_label << "\n";
+        gen.m_output << "    jz " << end_label << "\n";
+        gen.m_output << "    mul rbx\n";
+        gen.m_output << "    jmp " << loop_label << "\n";
+        gen.m_output << neg_label << ":\n";
+        gen.m_output << "    mov rax, 1\n";
+        gen.m_output << end_label << ":\n";
+        gen.push("rax");
         gen.m_output << "    ;; /power\n";
       }
 
       void operator()(const ast::node::BinExprModNode *const node) const {
         gen.m_output << "    ;; mod\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    div rbx\n";
@@ -395,8 +409,8 @@ private:
 
       void operator()(const ast::node::BinExprMulNode *const node) const {
         gen.m_output << "    ;; multiply\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    mul rbx\n";
@@ -406,8 +420,8 @@ private:
 
       void operator()(const ast::node::BinExprDivNode *const node) const {
         gen.m_output << "    ;; divide\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    div rbx\n";
@@ -417,8 +431,8 @@ private:
 
       void operator()(const ast::node::BinExprPlusNode *const node) const {
         gen.m_output << "    ;; add\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    add rax, rbx\n";
@@ -428,8 +442,8 @@ private:
 
       void operator()(const ast::node::BinExprMinusNode *const node) const {
         gen.m_output << "    ;; subtract\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    sub rax, rbx\n";
@@ -439,20 +453,44 @@ private:
 
       void operator()(const ast::node::BinExprLessThanNode *const node) const {
         gen.m_output << "    ;; less than\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
-        // TODO(lthomas): Not entirely sure yet now to handle the jump
-        // instruction here
+        gen.gen_expression(node->left);
+
+        std::string label = gen.create_label();
+        std::string end_label = gen.create_label();
+
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    cmp rax, rbx\n";
+        gen.m_output << "    jl " << label << "\n";
+        gen.m_output << "    mov rax, 0\n";
+        gen.m_output << "    jmp " << end_label << "\n";
+        gen.m_output << label << ":\n";
+        gen.m_output << "    mov rax, 1\n";
+        gen.m_output << end_label << ":\n";
+        gen.push("rax");
         gen.m_output << "    ;; /less than\n";
       }
 
       void
       operator()(const ast::node::BinExprGreaterThanNode *const node) const {
         gen.m_output << "    ;; greater than\n";
-        gen.gen_expression(node->left);
         gen.gen_expression(node->right);
-        // TODO(lthomas): Not entirely sure yet now to handle the jump
-        // instruction here
+        gen.gen_expression(node->left);
+
+        std::string label = gen.create_label();
+        std::string end_label = gen.create_label();
+
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    cmp rax, rbx\n";
+        gen.m_output << "    jg " << label << "\n";
+        gen.m_output << "    mov rax, 0\n";
+        gen.m_output << "    jmp " << end_label << "\n";
+        gen.m_output << label << ":\n";
+        gen.m_output << "    mov rax, 1\n";
+        gen.m_output << end_label << ":\n";
+        gen.push("rax");
         gen.m_output << "    ;; /greater than\n";
       }
     };
@@ -486,8 +524,10 @@ private:
   }
 
   std::string create_label() noexcept {
+    static size_t s_label_count{0};
+
     std::ostringstream oss;
-    oss << "label" << std::to_string(m_label_count++);
+    oss << "label" << std::to_string(s_label_count++);
     return oss.str();
   }
 
@@ -510,7 +550,6 @@ private:
   size_t m_stack_size{0};
   std::vector<Var> m_vars{};
   std::vector<size_t> m_scopes{};
-  size_t m_label_count{0};
 };
 
 } // namespace pimento::generation

@@ -1,11 +1,11 @@
-let x = 0;
-let y = x;
-let z = 15;
+let x = 2;
+let y = 2;
+let z = 20;
 
-if x {
-    exit(x);
-} elif y {
-    exit(y);
+if x > y {
+    exit(1);
+} elif x < y {
+    exit(2);
 }
 
-exit(z - 1);
+exit(z);
