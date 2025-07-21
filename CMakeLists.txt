@@ -28,14 +28,20 @@ foreach(package ${BUILD_DEPS})
     find_package(${package} REQUIRED)
 endforeach()
 
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME ON)
+find_package(Boost 1.74.0 REQUIRED)
+
 add_executable(${PROJECT_NAME}
     src/pimento.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+    ${Boost_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog)
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog ${Boost_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror -Wdouble-promotion -Wconversion")
 

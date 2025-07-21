@@ -1,7 +1,9 @@
 # Olive Lang
 ## Prerequisites
 - cmake
-- spdlog
+- libspdlog-dev
+- libboost-dev
+- libgtest-dev
 
 ## CMake Configuration
 ### Debug
