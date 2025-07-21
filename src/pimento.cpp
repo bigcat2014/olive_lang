@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <iostream>
 #include <optional>
+#include <regex>
+#include <stdexcept>
 #include <string>
 
 #ifndef PROJECT_VERSION
@@ -20,38 +22,59 @@ void configureLogger(spdlog::level::level_enum level) {
   getLogger().set_level(level);
 }
 
-std::filesystem::path expandUserHome(const std::string& path) {
+std::filesystem::path expandVars(const std::string& inputPath) {
   auto logger = getLogger();
 
+  std::string path = inputPath;
+
+  // Expand ~ at the start
   if (!path.empty() && path[0] == '~') {
     const char* home = std::getenv("HOME");
     if (home == nullptr) {
       throw std::runtime_error("Unable to determine home directory.");
     }
-
-    std::filesystem::path expanded = std::filesystem::path(home);
-    logger.debug("Expanded '~' to home: {}", expanded.string());
+    logger.debug("Expanded `~` to: {}", home);
 
     if (path == "~") {
-      return expanded;
+      path = home;
     } else if (path[1] == '/') {
-      std::filesystem::path subPath = path.substr(2);  // strip "~/" prefix
-      expanded = expanded / subPath;
-      logger.debug("Expanded entire path to: {}", expanded.string());
-      return expanded;
+      path = std::string(home) + path.substr(1);  // replace "~" prefix
     } else {
       throw std::runtime_error(
           "Unsupported ~ expansion (e.g. ~username is not supported).");
     }
   }
 
-  return std::filesystem::path(path);
+  // Expand environment variables
+  std::regex envPattern(R"(\$([A-Za-z_][A-Za-z0-9_]*)|\$\{([^}]+)\})");
+  std::smatch match;
+  std::string result;
+  std::string::const_iterator searchStart(path.cbegin());
+
+  while (std::regex_search(searchStart, path.cend(), match, envPattern)) {
+    result.append(searchStart, match[0].first);
+
+    std::string varName = match[1].matched ? match[1].str() : match[2].str();
+    const char* value = std::getenv(varName.c_str());
+
+    if (!value) {
+      throw std::runtime_error("Environment variable not set: $" + varName);
+    }
+
+    result.append(value);
+    searchStart = match[0].second;
+  }
+
+  result.append(searchStart, path.cend());
+  logger.debug("Expanded path: {} to {}", inputPath, result);
+
+  return std::filesystem::path(result);
 }
 
 std::optional<std::filesystem::path> sanitizePath(const std::string& path) {
   auto logger = getLogger();
 
-  std::filesystem::path resolvedPath = expandUserHome(path);
+  std::filesystem::path resolvedPath = expandVars(path);
   try {
     resolvedPath = std::filesystem::canonical(resolvedPath);
 
