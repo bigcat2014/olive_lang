@@ -135,7 +135,7 @@ private:
 
     try {
       TokenType token_type = TokenTypeUtil::get_token_type(token_buffer);
-      Token token = m_token_factory.create_token(token_type);
+      Token token = TokenFactory::create_token(token_type);
       m_tokens.push_back(token);
       token_buffer.clear();
       return true;
@@ -145,14 +145,14 @@ private:
         if (!std::isdigit(next)) {
           uint64_t value = std::stoull(token_buffer);
           m_tokens.push_back(
-              m_token_factory.create_token(TokenType::TT_INT_LITERAL, value));
+              TokenFactory::create_token(TokenType::TT_INT_LITERAL, value));
           token_buffer.clear();
           return true;
         }
         // Identifier special case
       } else if (std::isalpha(token_buffer.back())) {
         if (!std::isalpha(next)) {
-          m_tokens.push_back(m_token_factory.create_token(
+          m_tokens.push_back(TokenFactory::create_token(
               TokenType::TT_IDENTIFIER, token_buffer));
           token_buffer.clear();
           return true;
@@ -190,8 +190,6 @@ private:
   constexpr static size_t MAX_TOKEN_LEN = 64;
   //! @brief The path to the file to tokenize.
   const std::filesystem::path m_path;
-  //! @brief Token factory for creating tokens.
-  const TokenFactory m_token_factory{};
   //! @brief The tokens parsed from the file.
   std::vector<Token> m_tokens;
 };

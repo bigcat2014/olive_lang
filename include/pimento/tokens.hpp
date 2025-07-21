@@ -209,7 +209,8 @@ private:
 
 class TokenFactory {
 public:
-  [[nodiscard]] Token create_token(TokenType token_type) const noexcept {
+  [[nodiscard]] static inline Token
+  create_token(TokenType token_type) noexcept {
     try {
       std::pair<uint8_t, Associativity> bin_op_properties =
           TokenTypeUtil::get_bin_expr_properties(token_type);
@@ -224,14 +225,14 @@ public:
     }
   }
 
-  [[nodiscard]] Token create_token(TokenType token_type,
-                                   uint64_t value) const noexcept {
+  [[nodiscard]] static inline Token create_token(TokenType token_type,
+                                                 uint64_t value) noexcept {
     return Token{.token_type = token_type,
                  .properties = IntLitProperties{.value = value}};
   }
 
-  [[nodiscard]] Token create_token(TokenType token_type,
-                                   std::string identifier) const noexcept {
+  [[nodiscard]] static inline Token
+  create_token(TokenType token_type, std::string identifier) noexcept {
     return Token{.token_type = token_type,
                  .properties = IdentProperties{.identifier = identifier}};
   }
