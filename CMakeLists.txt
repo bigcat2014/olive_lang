@@ -127,12 +127,46 @@ if (BUILD_TESTING)
 
     # Linters
     set(${PROJECT_NAME}_LINTER_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Linters)
+
+    find_program(CMAKE_LINT_PATH cmake-lint)
+    if(NOT CMAKE_LINT_PATH)
+        message(FATAL_ERROR "cmake-lint not found! Aborting...")
+    endif() # NOT CMAKE_LINT_PATH
     add_test(NAME ${PROJECT_NAME}_cmake_linter
-        COMMAND cmake-lint
+        COMMAND ${CMAKE_LINT_PATH}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
         --tab-size 4
         --disabled-codes C0103
         -o ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_cmake_linter.txt
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+    find_program(
+        CLANG_TIDY_PATH
+        NAMES
+            clang-tidy
+            clang-tidy-11
+            clang-tidy-12
+            clang-tidy-13
+            clang-tidy-14
+            clang-tidy-15)
+    if(NOT CLANG_TIDY_PATH)
+        message(FATAL_ERROR "clang-tidy not found! Aborting...")
+    endif() # NOT CLANG_TIDY_PATH
+    file(GLOB_RECURSE
+        ${PROJECT_NAME}_SOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
+    file(GLOB_RECURSE
+        ${PROJECT_NAME}_HEADER_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/pimento/*)
+    add_test(NAME ${PROJECT_NAME}_clang_tidy_linter
+        COMMAND ${CLANG_TIDY_PATH}
+        --config-file ${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy
+        -p ${CMAKE_CURRENT_BINARY_DIR}
+        --use-color
+        --export-fixes
+        ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml  # cmake-lint: disable=C0301
+        ${${PROJECT_NAME}_SOURCE_FILES}
+        ${${PROJECT_NAME}_HEADER_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
     set(${PROJECT_NAME}_TEST_RESOURCES_DIR
@@ -237,10 +271,7 @@ if (BUILD_TESTING)
         DEPENDS lexer_test parser_test
         COMMENT "Build unit tests")
 
-    file(MAKE_DIRECTORY ${${PROJECT_NAME}_LINTER_OUTPUT_DIR} LINTER_DIR_CREATED)
-    if(LINTER_DIR_CREATED)
-        message(FATAL_ERROR ${LINTER_DIR_CREATED})
-    endif() # LINTER_DIR_CREATED
+    file(MAKE_DIRECTORY ${${PROJECT_NAME}_LINTER_OUTPUT_DIR})
     add_custom_target(run_linters
         COMMAND ${CTEST_PATH}
         --output-on-failure
