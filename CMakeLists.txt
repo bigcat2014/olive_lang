@@ -96,6 +96,12 @@ install(EXPORT export_${PROJECT_NAME}
     FILE export_${PROJECT_NAME}.cmake
     COMPONENT dev)
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${${PROJECT_NAME}_VERSION})
+# generate a DEB when cpack is run
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
+set(CPACK_GENERATOR "DEB")
+SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libspdlog1, libboost-dev")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ltogan.2014@gmail.com")
+include(GNUInstallDirs)
+set(CPACK_PACKAGE_VENDOR "ThomasDigital, LLC")
 include(CPack)
