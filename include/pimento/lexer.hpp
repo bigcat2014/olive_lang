@@ -64,7 +64,7 @@ class Lexer {
         token_buffer.push_back(file_buffer[i]);
 
         // Attempt to parse token from token buffer
-        const char next = peek_next(i, file_buffer.data(), n);
+        const char next = peek(i, file_buffer.data(), n);
         bool token_added = try_parse_token(token_buffer, next);
 
         if (!m_tokens.empty() && token_added) {
@@ -83,18 +83,19 @@ class Lexer {
   }
 
  private:
-  //! @brief Peek at the next character in the buffer.
+  //! @brief Peek at a character at an offset from the current character in the buffer.
   //!
-  //! Peek at the next character in the buffer. If there are no more characters,
+  //! Peek at a character at an offset from the current character in the buffer. If attempting to peek out of bounds,
   //! return whitespace.
   //! @param current_index size_t The index of the current character in the
   //! buffer.
-  //! @param buffer const char* The buffer from which to get the next token.
+  //! @param buffer const char* const The buffer from which to get the character.
   //! @param size size_t The length of the buffer.
-  //! @return char The next character or ` ` if there is no next character.
-  inline char peek_next(size_t current_index, const char* buffer,
-                        size_t size) const noexcept {
-    return current_index + 1 > size ? ' ' : buffer[current_index + 1];
+  //! @param lookahead size_t Optional lookahead distance to peek.
+  //! @return char The character at `lookahead` offset from the current index or ` ` if attempting to peek out of bounds.
+  inline char peek(size_t current_index, const char* const buffer,
+                        size_t size, size_t lookahead = 1) const noexcept {
+    return current_index + lookahead > size ? ' ' : buffer[current_index + 1];
   }
 
   //! @brief Attmpt to parse a token from the buffer.
