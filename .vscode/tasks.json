@@ -22,6 +22,17 @@
 			"group": "none",
 			"problemMatcher": [],
 			"detail": "CMake template install task"
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: test",
+			"command": "test",
+			"targets": [
+				"all"
+			],
+			"group": "none",
+			"problemMatcher": [],
+			"detail": "CMake template install task"
 		}
 	]
 }

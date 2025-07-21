@@ -3,6 +3,10 @@ project(pimento)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors")
+if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif()
 
 set(${PROJECT_NAME}_MAJOR_VERSION 0)
 set(${PROJECT_NAME}_MINOR_VERSION 1)
@@ -33,26 +37,21 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.74.0 REQUIRED)
 
+
 add_executable(${PROJECT_NAME}
     src/pimento.cpp
 )
-target_include_directories(${PROJECT_NAME} PUBLIC
+target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${Boost_INCLUDE_DIRS}
 )
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog_header_only ${Boost_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
-set(COMPILE_FLAGS "-Wall -Wextra -Wdouble-promotion -Wconversion")
-if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-set(COMPILE_FLAGS "${COMPILE_FLAGS} -Werror")
-endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${COMPILE_FLAGS})
 
-include(CTest)
-enable_testing()
 if (BUILD_TESTING)
+    enable_testing()
     find_package(GTest REQUIRED)
 
     add_test(NAME ${PROJECT_NAME}
@@ -72,7 +71,10 @@ install(
     EXPORT export_${PROJECT_NAME}
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
-    RUNTIME DESTINATION bin)
+    RUNTIME DESTINATION bin
+    COMPONENT binaries
+)
+
 
 set(export_targets ${export_targets};${PROJECT_NAME})
 export(EXPORT export_${PROJECT_NAME}
@@ -89,19 +91,44 @@ install(
     FILES
     "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-    DESTINATION "share/${PROJECT_NAME}/cmake" COMPONENT dev)
+    DESTINATION "share/${PROJECT_NAME}/cmake"
+    COMPONENT dev
+)
 
-install(EXPORT export_${PROJECT_NAME}
+install(
+    EXPORT export_${PROJECT_NAME}
     DESTINATION "share/${PROJECT_NAME}/cmake"
     FILE export_${PROJECT_NAME}.cmake
-    COMPONENT dev)
+    COMPONENT dev
+)
+
+install(
+    DIRECTORY include/
+    DESTINATION include
+    COMPONENT dev
+)
 
 # generate a DEB when cpack is run
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
-set(CPACK_GENERATOR "DEB")
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libspdlog1, libboost-dev")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "ltogan.2014@gmail.com")
-include(GNUInstallDirs)
-set(CPACK_PACKAGE_VENDOR "ThomasDigital, LLC")
+set(CPACK_PACKAGE_VENDOR "Thomas Digital, LLC")
+set(CPACK_GENERATOR "DEB;TGZ")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+
+set(CPACK_DEB_COMPONENT_INSTALL "ON")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Logan Thomas")
+SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libspdlog-dev, libboost-dev")
+
+set(CPACK_TGZ_COMPONENT_INSTALL "ON")
+
+cpack_add_component(binaries
+DISPLAY_NAME "Pimento"
+DESCRIPTION "Compiler for Olive lang *.oil files."
+)
+cpack_add_component(dev
+DISPLAY_NAME "Olive lang headers"
+DESCRIPTION "Headers for olive lang compiler."
+)
+
 include(CPack)
