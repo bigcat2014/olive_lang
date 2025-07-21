@@ -20,13 +20,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-# Fetch spdlog
-FetchContent_Declare(
-  spdlog
-  GIT_REPOSITORY https://github.com/gabime/spdlog.git
-  GIT_TAG v1.15.3
+set(BUILD_DEPS
+    spdlog
 )
-FetchContent_MakeAvailable(spdlog)
+
+foreach(package ${BUILD_DEPS})
+    find_package(${package} REQUIRED)
+endforeach()
 
 add_executable(${PROJECT_NAME}
     src/pimento.cpp
