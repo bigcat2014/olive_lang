@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/build/pimento",
             "args": [
                 "--debug",
-                "~/Documents/Coding/olive_lang/test.oil"
+                "${workspaceFolder}/test.oil"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

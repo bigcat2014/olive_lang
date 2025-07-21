@@ -68,7 +68,7 @@ struct TokenString {
 //! for.
 //! @return TokenString The string representations of the token type.
 TokenString token_to_str(const TokenType& token) {
-  // TODO(lthomst): Should just be a lookup table instead of regenerating
+  // TODO(lthomas): Should just be a lookup table instead of regenerating
   // TokenString every time the function is called.
   switch (token) {
     case TokenType::TT_ELSE:
