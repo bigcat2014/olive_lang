@@ -23,7 +23,7 @@ public:
 
   //! @brief Parse all tokens.
   void parse() {
-    while (peek(m_index).has_value()) {
+    while (peek().has_value()) {
       node::StmtNode *stmt = parse_statement();
       m_prog.statements.push_back(stmt);
     }
