@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <pimento/ast.hpp>
@@ -13,7 +14,9 @@ namespace pimento::generation {
 
 class Generator {
 public:
-  Generator(const ast::node::ProgNode &prog) : m_prog(prog) {}
+  explicit Generator(const ast::node::ProgNode &prog,
+                     const std::filesystem::path &path)
+      : m_prog(prog), m_output_path(path) {}
 
   void generate() noexcept {
     m_output << "global _start\n_start:\n";
@@ -69,6 +72,8 @@ private:
     std::visit(visitor, stmt->node);
   }
 
+  // TODO(lthomas): Write output to this file
+  std::filesystem::path m_output_path;
   std::ostringstream m_output;
   const ast::node::ProgNode &m_prog;
 };

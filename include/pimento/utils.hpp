@@ -31,10 +31,10 @@ void configure_logger(spdlog::level::level_enum level) {
 //! @brief Expands `~` and environment variables in input path.
 //! @param inputPath The file path in which to expand the variables.
 //! @return std::filesystem::path The file path with variables expanded.
-std::filesystem::path expand_vars(const std::string &inputPath) {
+std::filesystem::path expand_vars(const std::string &input_path) {
   auto &logger = get_logger();
 
-  std::string path = inputPath;
+  std::string path = input_path;
 
   // Expand ~ at the start
   if (!path.empty() && path[0] == '~') {
@@ -55,26 +55,26 @@ std::filesystem::path expand_vars(const std::string &inputPath) {
   }
 
   // Expand environment variables
-  std::regex envPattern(R"(\$([A-Za-z_][A-Za-z0-9_]*)|\$\{([^}]+)\})");
+  std::regex env_pattern(R"(\$([A-Za-z_][A-Za-z0-9_]*)|\$\{([^}]+)\})");
   std::smatch match;
   std::string result;
-  std::string::const_iterator searchStart(path.cbegin());
+  std::string::const_iterator search_start(path.cbegin());
 
-  while (std::regex_search(searchStart, path.cend(), match, envPattern)) {
-    result.append(searchStart, match[0].first);
+  while (std::regex_search(search_start, path.cend(), match, env_pattern)) {
+    result.append(search_start, match[0].first);
 
-    std::string varName = match[1].matched ? match[1].str() : match[2].str();
-    const char *value = std::getenv(varName.c_str());
+    std::string var_name = match[1].matched ? match[1].str() : match[2].str();
+    const char *value = std::getenv(var_name.c_str());
 
     if (!value) {
-      throw std::runtime_error("Environment variable not set: $" + varName);
+      throw std::runtime_error("Environment variable not set: $" + var_name);
     }
 
     result.append(value);
-    searchStart = match[0].second;
+    search_start = match[0].second;
   }
 
-  result.append(searchStart, path.cend());
+  result.append(search_start, path.cend());
   logger.debug("Expanded path: {}", result);
 
   return std::filesystem::path(result);
@@ -89,24 +89,24 @@ std::filesystem::path expand_vars(const std::string &inputPath) {
 //! @param inputPath The file path to sanitize.
 //! @return std::optional<std::filesystem::path> The sanitized path.
 std::optional<std::filesystem::path>
-sanitize_path(const std::string &inputPath) {
+sanitize_path(const std::string &input_path) {
   auto &logger = get_logger();
 
-  std::filesystem::path resolvedPath = expand_vars(inputPath);
+  std::filesystem::path resolved_path = expand_vars(input_path);
   try {
-    resolvedPath = std::filesystem::canonical(resolvedPath);
+    resolved_path = std::filesystem::canonical(resolved_path);
 
-    if (!std::filesystem::exists(resolvedPath)) {
-      logger.error("File does not exist: {}", resolvedPath.string());
+    if (!std::filesystem::exists(resolved_path)) {
+      logger.error("File does not exist: {}", resolved_path.string());
       return {};
     }
 
-    if (!std::filesystem::is_regular_file(resolvedPath)) {
-      logger.error("Path is not a regular file: {}", resolvedPath.string());
+    if (!std::filesystem::is_regular_file(resolved_path)) {
+      logger.error("Path is not a regular file: {}", resolved_path.string());
       return {};
     }
 
-    if (resolvedPath.extension() != ".oil") {
+    if (resolved_path.extension() != ".oil") {
       logger.warn("File is not a .oil file.");
     }
   } catch (const std::filesystem::filesystem_error &e) {
@@ -114,6 +114,6 @@ sanitize_path(const std::string &inputPath) {
     return {};
   }
 
-  return resolvedPath;
+  return resolved_path;
 }
 } // namespace pimento::utils

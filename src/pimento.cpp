@@ -23,6 +23,11 @@ int main(int argc, char *argv[]) {
       .help("Path to the .oil file to compile")
       .required();
 
+  program.add_argument("-o", "--output")
+      .help("Path for assembly output file")
+      .nargs(1)
+      .default_value(std::string{"out.asm"});
+
   program.add_argument("--trace")
       .default_value(false)
       .implicit_value(true)
@@ -62,24 +67,36 @@ int main(int argc, char *argv[]) {
 
   auto &logger = pimento::utils::get_logger();
 
-  std::string fileStr = program.get<std::string>("file");
-  logger.debug("Input file path: {}", fileStr);
+  std::string in_file_str = program.get<std::string>("file");
+  logger.debug("Input file path: {}", in_file_str);
 
-  auto resolvedPath = pimento::utils::sanitize_path(fileStr);
-  if (!resolvedPath.has_value()) {
+  auto input_resolved_path = pimento::utils::sanitize_path(in_file_str);
+  if (!input_resolved_path.has_value()) {
     return EXIT_FAILURE;
   }
+  logger.debug("Sanitized input file path: {}",
+               input_resolved_path.value().string());
 
-  logger.debug("Sanitized file path: {}", resolvedPath.value().string());
+  std::string out_file_str = program.get<std::string>("output");
+  logger.debug("Output file path: {}", out_file_str);
 
-  pimento::tokenization::Lexer lexer(resolvedPath.value());
+  auto output_resolved_path = pimento::utils::expand_vars(out_file_str);
+  output_resolved_path = std::filesystem::absolute(output_resolved_path);
+  output_resolved_path = output_resolved_path.lexically_normal();
+  logger.debug("Sanitized output file path: {}", output_resolved_path.string());
+
+  pimento::tokenization::Lexer lexer(input_resolved_path.value());
   lexer.tokenize();
 
   pimento::ast::Parser parser(lexer.tokens());
   parser.parse();
 
-  pimento::generation::Generator generator(parser.get_program());
+  pimento::generation::Generator generator(parser.get_program(),
+                                           output_resolved_path);
   generator.generate();
+
+  // system("nasm -felf64 out.asm");
+  // system("ld -o out out.o");
 
   return EXIT_SUCCESS;
 }
