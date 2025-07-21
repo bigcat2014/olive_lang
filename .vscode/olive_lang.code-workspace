@@ -6,7 +6,7 @@
 	],
 	"settings": {
 		"cmake.sourceDirectory": [
-			"${workspaceFolder}/olive_lang"
+			"${workspaceFolder}"
 		],
 		"cmake.buildDirectory": "${sourceDirectory}/build",
 		"cmake.installPrefix": "${sourceDirectory}/install",
