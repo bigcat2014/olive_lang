@@ -7,7 +7,7 @@
 #include <array>
 #include <cctype>
 #include <filesystem>
-#include <fstream>
+#include <istream>
 #include <pimento/tokens.hpp>
 #include <pimento/utils.hpp>
 #include <sstream>
@@ -19,29 +19,24 @@ namespace pimento::tokenization {
 class Lexer {
 public:
   //! @brief Constructor for the Lexer
-  //! @param path const std::filesystem::path& The path to the file to tokenize.
-  Lexer(const std::filesystem::path &path) : m_path(path) {
+  //! @param stream std::istream * The stream of characters to tokenize.
+  Lexer(std::istream *stream) : m_stream(stream) {
     m_tokens.reserve(BUFFER_SIZE);
   }
 
   //! @brief Tokenize the input file.
   void tokenize() {
     auto &logger = utils::get_logger();
-    std::fstream file(m_path, std::ios::in);
-    if (!file) {
-      throw std::runtime_error("cannot open " + m_path.string());
-    }
-
-    std::array<char, BUFFER_SIZE> file_buffer;
 
     size_t total = 0;
     size_t total_chunks = 0;
+    std::array<char, BUFFER_SIZE> file_buffer;
     std::string token_buffer;
     token_buffer.reserve(MAX_TOKEN_LEN);
 
-    while (file) {
-      file.read(file_buffer.data(), file_buffer.size());
-      size_t n = static_cast<size_t>(file.gcount());
+    while (*m_stream) {
+      m_stream->read(file_buffer.data(), file_buffer.size());
+      size_t n = static_cast<size_t>(m_stream->gcount());
       if (n <= 0) {
         break;
       }
@@ -189,7 +184,7 @@ private:
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
   //! @brief The path to the file to tokenize.
-  const std::filesystem::path m_path;
+  std::unique_ptr<std::istream> m_stream;
   //! @brief The tokens parsed from the file.
   std::vector<Token> m_tokens;
 };

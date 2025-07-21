@@ -4,6 +4,7 @@
 
 #include <argparse/argparse.hpp>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <optional>
 #include <pimento/generator.hpp>
@@ -85,14 +86,26 @@ int main(int argc, char *argv[]) {
   output_resolved_path = output_resolved_path.lexically_normal();
   logger.debug("Sanitized output file path: {}", output_resolved_path.string());
 
-  pimento::tokenization::Lexer lexer(input_resolved_path.value());
+  std::fstream *input_file =
+      new std::fstream{input_resolved_path.value(), std::ios::in};
+  if (!input_file) {
+    throw std::runtime_error("cannot open " +
+                             input_resolved_path.value().string());
+  }
+
+  pimento::tokenization::Lexer lexer(input_file);
   lexer.tokenize();
 
   pimento::ast::Parser parser(lexer.tokens());
   parser.parse();
 
-  pimento::generation::Generator generator(output_resolved_path,
-                                           parser.get_program());
+  std::fstream *output_file =
+      new std::fstream{output_resolved_path, std::ios::out};
+  if (!output_file) {
+    throw std::runtime_error("cannot open " + output_resolved_path.string());
+  }
+
+  pimento::generation::Generator generator(output_file, parser.get_program());
   generator.generate();
 
   // system("nasm -felf64 out.asm");
