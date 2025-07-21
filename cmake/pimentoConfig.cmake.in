@@ -1,5 +1,5 @@
-set(oliveoil_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+set(pimento_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
 
-include("${oliveoil_DIR/export_oliveoil.cmake}")
+include("${pimento_DIR/export_pimento.cmake}")
 
-set(oliveoil_LIBRARIES oliveoil)
+set(pimento_LIBRARIES pimento)
