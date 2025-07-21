@@ -21,7 +21,7 @@ public:
   void generate() noexcept {
     m_output << "global _start\n_start:\n";
 
-    for (const auto &statement : m_prog.statements) {
+    for (const auto statement : m_prog.statements) {
       gen_statement(statement);
     }
 
@@ -29,13 +29,11 @@ public:
   }
 
 private:
-  void
-  gen_statement(const std::unique_ptr<ast::node::StmtNode> &stmt) noexcept {
+  void gen_statement(const ast::node::StmtNode *const stmt) noexcept {
     struct StmtVisitor {
       std::ostringstream &m_output;
 
-      void operator()(
-          const std::unique_ptr<ast::node::StmtExitNode> &stmt_exit) const {
+      void operator()(const ast::node::StmtExitNode *const stmt_exit) const {
         m_output << "    ;; exit\n";
         m_output << "    mov rax, 60\n";
         m_output << "    mov rdi, 23\n";
@@ -43,26 +41,23 @@ private:
         m_output << "    ;; /exit\n";
       }
 
-      void operator()(
-          const std::unique_ptr<ast::node::StmtLetNode> &stmt_let) const {
+      void operator()(const ast::node::StmtLetNode *const stmt_let) const {
         m_output << "    ;; let\n";
         m_output << "    ;; /let\n";
       }
 
-      void operator()(
-          const std::unique_ptr<ast::node::StmtAssignNode> &stmt_assign) const {
+      void
+      operator()(const ast::node::StmtAssignNode *const stmt_assign) const {
         m_output << "    ;; assign";
         m_output << "    ;; /assign";
       }
 
-      void
-      operator()(const std::unique_ptr<ast::node::ScopeNode> &scope) const {
+      void operator()(const ast::node::ScopeNode *const scope) const {
         m_output << "    ;; scope\n";
         m_output << "    ;; /scope\n";
       }
 
-      void
-      operator()(const std::unique_ptr<ast::node::StmtIfNode> &stmt_if) const {
+      void operator()(const ast::node::StmtIfNode *const stmt_if) const {
         m_output << "    ;; if\n";
         m_output << "    ;; /if\n";
       }
