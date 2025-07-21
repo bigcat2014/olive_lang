@@ -5,11 +5,12 @@ set(${PROJECT_NAME}_MAJOR_VERSION 0)
 set(${PROJECT_NAME}_MINOR_VERSION 1)
 set(${PROJECT_NAME}_PATCH_VERSION 0)
 set(${PROJECT_NAME}_VERSION
-    ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
+    ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})  # cmake-lint: disable=C0301
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors")
+set(CMAKE_CXX_FLAGS
+    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors")
 if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
@@ -51,7 +52,8 @@ target_include_directories(${PROJECT_NAME}_lexer PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME}_lexer PRIVATE ${PROJECT_NAME}_utils ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_lexer PRIVATE
+    ${PROJECT_NAME}_utils ${Boost_LIBRARIES})
 
 # Parser library target
 add_library(${PROJECT_NAME}_parser STATIC
@@ -76,54 +78,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse ${PROJECT_NAME}_generator)
-target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
-
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    argparse ${PROJECT_NAME}_generator)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
 if (BUILD_TESTING)
     enable_testing()
-
-    set(${PROJECT_NAME}_TEST_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
-    add_test(NAME ${PROJECT_NAME}_valgrind_file
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
-
-    add_test(NAME ${PROJECT_NAME}_valgrind_stdout
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --stdout
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
-
-    set(${PROJECT_NAME}_TEST_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
-    add_test(NAME ${PROJECT_NAME}_valgrind_file_trace
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --trace
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
-
-    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_trace
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --stdout --trace
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
     # GTest
     find_package(GTest REQUIRED)
@@ -133,7 +94,8 @@ if (BUILD_TESTING)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         ${Boost_INCLUDE_DIRS})
-    target_link_libraries(lexer_test PRIVATE ${PROJECT_NAME}_lexer GTest::gtest_main)
+    target_link_libraries(lexer_test PRIVATE
+        ${PROJECT_NAME}_lexer GTest::gtest_main)
     gtest_discover_tests(lexer_test)
 
     add_executable(parser_test EXCLUDE_FROM_ALL
@@ -142,7 +104,8 @@ if (BUILD_TESTING)
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         ${Boost_INCLUDE_DIRS})
-    target_link_libraries(parser_test PRIVATE ${PROJECT_NAME}_parser GTest::gtest_main)
+    target_link_libraries(parser_test PRIVATE
+        ${PROJECT_NAME}_parser GTest::gtest_main)
     gtest_discover_tests(parser_test)
 
     # Gcovr
@@ -156,14 +119,134 @@ if (BUILD_TESTING)
         if(NOT LLVM_COV_PATH)
             message(FATAL_ERROR "llvm-cov not found! Aborting...")
         endif() # NOT LLVM_COV_PATH
-        list(APPEND GCOVR_ADDITIONAL_ARGS --gcov-executable "${LLVM_COV_PATH} gcov")
+        list(APPEND GCOVR_ADDITIONAL_ARGS
+            --gcov-executable "${LLVM_COV_PATH} gcov")
     endif()
     set(Coverage_DEPENDENCIES run_tests)
     setup_target_for_coverage_gcovr_html(NAME coverage)
 
+    # Linters
+    set(${PROJECT_NAME}_LINTER_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Linters)
+    add_test(NAME ${PROJECT_NAME}_cmake_linter
+        COMMAND cmake-lint
+        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+        --tab-size 4
+        --disabled-codes C0103
+        -o ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_cmake_linter.txt
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+    set(${PROJECT_NAME}_TEST_RESOURCES_DIR
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
+    add_test(NAME ${PROJECT_NAME}_valgrind_file
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_stdout
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --stdout
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_file_trace
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --trace
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_trace
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --stdout --trace
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_file_debug
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --debug
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_debug
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --stdout --debug
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_file_verbose
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --verbose
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_verbose
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}>
+            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+            --stdout --verbose
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
     # Custom Testing Targets
     add_custom_target(build_tests
-        DEPENDS lexer_test parser_test)
+        DEPENDS lexer_test parser_test
+        COMMENT "Build unit tests")
+
+    file(MAKE_DIRECTORY ${${PROJECT_NAME}_LINTER_OUTPUT_DIR} LINTER_DIR_CREATED)
+    if(LINTER_DIR_CREATED)
+        message(FATAL_ERROR ${LINTER_DIR_CREATED})
+    endif() # LINTER_DIR_CREATED
+    add_custom_target(run_linters
+        COMMAND ${CTEST_PATH}
+        --output-on-failure
+        -R "${PROJECT_NAME}_.*_linter"
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Run unit tests")
 
     find_program(CTEST_PATH ctest)
     if(NOT CTEST_PATH)
@@ -173,8 +256,8 @@ if (BUILD_TESTING)
         COMMAND ${CTEST_PATH}
         --output-on-failure
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS build_tests ${PROJECT_NAME})
-
+        DEPENDS build_tests ${PROJECT_NAME}
+        COMMENT "Run unit tests")
 endif()
 
 install(
@@ -185,17 +268,20 @@ install(
     RUNTIME DESTINATION bin
     COMPONENT binaries)
 
-
 set(export_targets ${export_targets};${PROJECT_NAME})
 export(EXPORT export_${PROJECT_NAME}
     FILE "${PROJECT_BINARY_DIR}/export_${PROJECT_NAME}.cmake")
 
 set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-configure_file(${${PROJECT_NAME}_CMAKE_DIR}/${PROJECT_NAME}Config.cmake.in
-    "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY)
+configure_file(
+    ${${PROJECT_NAME}_CMAKE_DIR}/${PROJECT_NAME}Config.cmake.in
+    "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
+    @ONLY)
 
-configure_file(${${PROJECT_NAME}_CMAKE_DIR}/${PROJECT_NAME}ConfigVersion.cmake.in
-    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
+configure_file(
+    ${${PROJECT_NAME}_CMAKE_DIR}/${PROJECT_NAME}ConfigVersion.cmake.in
+    "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    @ONLY)
 
 install(
     FILES

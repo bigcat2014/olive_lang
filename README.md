@@ -4,6 +4,7 @@
 - libboost-dev
 - libspdlog-dev
 ### Building unit tests
+- cmake-format
 - gcovr
 - libgtest-dev
 - valgrind (See [known issues](#known-issues))

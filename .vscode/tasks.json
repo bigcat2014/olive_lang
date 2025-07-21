@@ -60,6 +60,16 @@
 		},
 		{
 			"type": "cmake",
+			"label": "CMake: Run Linters",
+			"command": "build",
+			"targets": [
+				"run_linters"
+			],
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			"type": "cmake",
 			"label": "CMake: Generate Coverage Report",
 			"command": "build",
 			"targets": [
