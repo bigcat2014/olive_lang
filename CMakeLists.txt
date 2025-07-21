@@ -20,13 +20,11 @@ include(FetchContent)
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-  GIT_TAG        v3.2
-)
+  GIT_TAG        v3.2)
 FetchContent_MakeAvailable(argparse)
 
 set(BUILD_DEPS
-    spdlog
-)
+    spdlog)
 
 foreach(package ${BUILD_DEPS})
     find_package(${package} REQUIRED)
@@ -39,14 +37,12 @@ find_package(Boost 1.74.0 REQUIRED)
 
 
 add_executable(${PROJECT_NAME}
-    src/pimento.cpp
-)
+    src/pimento.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-    ${Boost_INCLUDE_DIRS}
-)
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog_header_only ${Boost_LIBRARIES})
+    ${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog_header_only ${Boost_LIBRARIES} gtest)
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
 
@@ -54,7 +50,7 @@ if (BUILD_TESTING)
     enable_testing()
     find_package(GTest REQUIRED)
 
-    add_test(NAME ${PROJECT_NAME}
+    add_test(NAME ${PROJECT_NAME}_valgrind
         COMMAND valgrind
         --error-exitcode=1
         --tool=memcheck
@@ -64,6 +60,16 @@ if (BUILD_TESTING)
         $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
+
+    add_executable(lexer_test
+        tests/lexer_test.cpp)
+    target_include_directories(lexer_test PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${Boost_INCLUDE_DIRS})
+    target_link_libraries(lexer_test PRIVATE spdlog::spdlog_header_only ${Boost_LIBRARIES} GTest::gtest_main)
+    gtest_discover_tests(lexer_test)
+
 endif()
 
 install(
@@ -72,8 +78,7 @@ install(
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
-    COMPONENT binaries
-)
+    COMPONENT binaries)
 
 
 set(export_targets ${export_targets};${PROJECT_NAME})
@@ -92,21 +97,18 @@ install(
     "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
     DESTINATION "share/${PROJECT_NAME}/cmake"
-    COMPONENT dev
-)
+    COMPONENT dev)
 
 install(
     EXPORT export_${PROJECT_NAME}
     DESTINATION "share/${PROJECT_NAME}/cmake"
     FILE export_${PROJECT_NAME}.cmake
-    COMPONENT dev
-)
+    COMPONENT dev)
 
 install(
     DIRECTORY include/
     DESTINATION include
-    COMPONENT dev
-)
+    COMPONENT dev)
 
 # generate a DEB when cpack is run
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
