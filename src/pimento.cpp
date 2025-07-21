@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <iostream>
 #include <optional>
+#include <pimento/lexer.hpp>
 #include <pimento/utils.hpp>
 #include <string>
 
@@ -60,6 +61,9 @@ int main(int argc, char* argv[]) {
   }
 
   logger.debug("Sanitized file path: {}", resolvedPath.value().string());
+
+  pimento::Lexer lexer(resolvedPath.value());
+  lexer.tokenize();
 
   return EXIT_SUCCESS;
 }
