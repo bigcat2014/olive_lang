@@ -60,6 +60,7 @@ struct BinOpProperties {
 
 //! @brief Properties of an Int Literal token.
 struct IntLitProperties {
+  // TODO(lthomas): Only supports 64 bit ints for now.
   uint64_t value;
 };
 
