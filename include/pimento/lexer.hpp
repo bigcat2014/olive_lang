@@ -6,12 +6,10 @@
 
 #include <array>
 #include <cctype>
-#include <filesystem>
 #include <istream>
 #include <pimento/tokens.hpp>
 #include <pimento/utils.hpp>
 #include <sstream>
-#include <stdexcept>
 #include <variant>
 
 namespace pimento::tokenization {
@@ -20,10 +18,16 @@ class Lexer {
 public:
   //! @brief Constructor for the Lexer
   //! @param stream std::istream * The stream of characters to tokenize.
-  Lexer(std::istream *stream) : p_stream(stream) {
+  Lexer(std::shared_ptr<std::istream> istream) : p_stream(istream) {
     m_tokens.reserve(BUFFER_SIZE);
+    tokenize();
   }
 
+  [[nodiscard]] const std::vector<Token> &tokens() const noexcept {
+    return m_tokens;
+  }
+
+private:
   //! @brief Tokenize the input file.
   void tokenize() {
     auto &logger = utils::get_logger();
@@ -44,10 +48,9 @@ public:
       total += n;
       for (size_t i = 0; i < n; i++) {
         if (token_buffer.size() + 1 > token_buffer.capacity()) {
-          std::ostringstream msg;
-          msg << "Max token length of " << MAX_TOKEN_LEN
-              << " characters exceeded.";
-          throw std::runtime_error(msg.str());
+          logger.error("Max token length of {} characters exceeded.",
+                       MAX_TOKEN_LEN);
+          exit(EXIT_FAILURE);
         }
 
         // Skip whitespace
@@ -88,11 +91,6 @@ public:
     logger.debug("Total bytes read: {}", total);
   }
 
-  [[nodiscard]] const std::vector<Token> &tokens() const noexcept {
-    return m_tokens;
-  }
-
-private:
   //! @brief Peek at a character at an offset from the current character in the
   //! buffer.
   //!
@@ -184,7 +182,7 @@ private:
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
   //! @brief The path to the file to tokenize.
-  std::unique_ptr<std::istream> p_stream;
+  std::shared_ptr<std::istream> p_stream;
   //! @brief The tokens parsed from the file.
   std::vector<Token> m_tokens;
 };

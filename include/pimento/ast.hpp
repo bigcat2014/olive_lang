@@ -15,9 +15,7 @@ struct IfPredNode;
 struct ScopeNode;
 
 struct TermExprNode {
-  ExprNode *expression;
-
-  // ~TermExprNode() { delete expression; }
+  std::shared_ptr<ExprNode> expression;
 };
 
 struct TermIdentNode {
@@ -29,251 +27,115 @@ struct TermIntLitNode {
 };
 
 struct BinExprLessThanNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprLessThanNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprGreaterThanNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprGreaterThanNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprMinusNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprMinusNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprPlusNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprPlusNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprDivNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprDivNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprMulNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprMulNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprModNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprModNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct BinExprPowerNode {
-  ExprNode *left;
-  ExprNode *right;
-
-  // ~BinExprPowerNode() {
-  //   delete left;
-  //   delete right;
-  // }
+  std::shared_ptr<ExprNode> left;
+  std::shared_ptr<ExprNode> right;
 };
 
 struct IfPredElseNode {
-  ScopeNode *scope;
+  std::shared_ptr<ScopeNode> scope;
 
   // ~IfPredElseNode() { delete scope; }
 };
 
 struct IfPredElifNode {
-  ExprNode *expression;
-  ScopeNode *scope;
-  std::optional<IfPredNode *> ifpred;
-
-  // ~IfPredElifNode() {
-  //   delete expression;
-  //   delete scope;
-  //   if (ifpred.has_value()) {
-  //     delete ifpred.value();
-  //   }
-  // }
+  std::shared_ptr<ExprNode> expression;
+  std::shared_ptr<ScopeNode> scope;
+  std::optional<std::shared_ptr<IfPredNode>> ifpred;
 };
 
 struct StmtExitNode {
-  ExprNode *expression;
-
-  // ~StmtExitNode() { delete expression; }
+  std::shared_ptr<ExprNode> expression;
 };
 
 struct StmtLetNode {
   tokenization::Token identifier;
-  ExprNode *expression;
-
-  // ~StmtLetNode() { delete expression; }
+  std::shared_ptr<ExprNode> expression;
 };
 
 struct StmtAssignNode {
   tokenization::Token identifier;
-  ExprNode *expression;
-
-  // ~StmtAssignNode() { delete expression; }
+  std::shared_ptr<ExprNode> expression;
 };
 
 struct StmtIfNode {
-  ExprNode *expression;
-  ScopeNode *scope;
-  std::optional<IfPredNode *> ifpred;
-
-  // ~StmtIfNode() {
-  //   delete expression;
-  //   delete scope;
-  //   if (ifpred.has_value()) {
-  //     delete ifpred.value();
-  //   }
-  // }
+  std::shared_ptr<ExprNode> expression;
+  std::shared_ptr<ScopeNode> scope;
+  std::optional<std::shared_ptr<IfPredNode>> ifpred;
 };
 
 struct TermNode {
-  std::variant<TermIntLitNode *, TermIdentNode *, TermExprNode *> node;
-
-  //   ~TermNode() {
-  //     const auto visitor = overloads{[](TermIntLitNode *p) { delete p; },
-  //                                    [](TermIdentNode *p) { delete p; },
-  //                                    [](TermExprNode *p) { delete p; }};
-
-  //     std::visit(visitor, node);
-  //   }
-
-  // private:
-  //   template <class... Ts> struct overloads : Ts... { using
-  //   Ts::operator()...; };
+  std::variant<std::shared_ptr<TermIntLitNode>, std::shared_ptr<TermIdentNode>,
+               std::shared_ptr<TermExprNode>>
+      node;
 };
 
 struct BinExprNode {
-  std::variant<BinExprPowerNode *, BinExprModNode *, BinExprMulNode *,
-               BinExprDivNode *, BinExprPlusNode *, BinExprMinusNode *,
-               BinExprLessThanNode *, BinExprGreaterThanNode *>
+  std::variant<
+      std::shared_ptr<BinExprPowerNode>, std::shared_ptr<BinExprModNode>,
+      std::shared_ptr<BinExprMulNode>, std::shared_ptr<BinExprDivNode>,
+      std::shared_ptr<BinExprPlusNode>, std::shared_ptr<BinExprMinusNode>,
+      std::shared_ptr<BinExprLessThanNode>,
+      std::shared_ptr<BinExprGreaterThanNode>>
       node;
-
-  //   ~BinExprNode() {
-  //     // clang-format off
-  //     const auto visitor = overloads{[](BinExprPowerNode *p) { delete p; },
-  //                                    [](BinExprModNode *p) { delete p; },
-  //                                    [](BinExprMulNode *p) { delete p; },
-  //                                    [](BinExprDivNode *p) { delete p; },
-  //                                    [](BinExprPlusNode *p) { delete p; },
-  //                                    [](BinExprMinusNode *p) { delete p; },
-  //                                    [](BinExprLessThanNode *p) { delete p;
-  //                                    },
-  //                                    [](BinExprGreaterThanNode *p) { delete
-  //                                    p; },
-  //     };
-  //     // clang-format on
-
-  //     std::visit(visitor, node);
-  //   }
-
-  // private:
-  //   template <class... Ts> struct overloads : Ts... { using
-  //   Ts::operator()...; };
 };
 
 struct ExprNode {
-  std::variant<TermNode *, BinExprNode *> node;
-
-  //   ~ExprNode() {
-  //     const auto visitor = overloads{[](TermNode *p) { delete p; },
-  //                                    [](BinExprNode *p) { delete p; }};
-
-  //     std::visit(visitor, node);
-  //   }
-
-  // private:
-  //   template <class... Ts> struct overloads : Ts... { using
-  //   Ts::operator()...; };
+  std::variant<std::shared_ptr<TermNode>, std::shared_ptr<BinExprNode>> node;
 };
 
 struct IfPredNode {
-  std::variant<IfPredElifNode *, IfPredElseNode *> node;
-
-  //   ~IfPredNode() {
-  //     const auto visitor = overloads{[](IfPredElifNode *p) { delete p; },
-  //                                    [](IfPredElseNode *p) { delete p; }};
-
-  //     std::visit(visitor, node);
-  //   }
-
-  // private:
-  //   template <class... Ts> struct overloads : Ts... { using
-  //   Ts::operator()...; };
+  std::variant<std::shared_ptr<IfPredElifNode>, std::shared_ptr<IfPredElseNode>>
+      node;
 };
 
 struct StmtNode {
-  std::variant<StmtExitNode *, StmtLetNode *, StmtAssignNode *, StmtIfNode *,
-               ScopeNode *>
+  std::variant<std::shared_ptr<StmtExitNode>, std::shared_ptr<StmtLetNode>,
+               std::shared_ptr<StmtAssignNode>, std::shared_ptr<StmtIfNode>,
+               std::shared_ptr<ScopeNode>>
       node;
-
-  // ~StmtNode() {
-  //   const auto visitor = overloads{
-  //       [](StmtExitNode *p) { delete p; }, [](StmtLetNode *p) { delete p; },
-  //       [](StmtAssignNode *p) { delete p; }, [](StmtIfNode *p) { delete p; },
-  //       [](StmtIfNode *p) { delete p; }};
-
-  //   std::visit(visitor, node);
-  // }
-
-  // private:
-  //   template <class... Ts> struct overloads : Ts... { using
-  //   Ts::operator()...; };
 };
 
 struct ScopeNode {
-  std::vector<StmtNode *> statements;
-
-  // ~ScopeNode() {
-  //   for (auto p : statements) {
-  //     delete p;
-  //   }
-  // }
+  std::vector<std::shared_ptr<StmtNode>> statements;
 };
 
 struct ProgNode {
-  std::vector<StmtNode *> statements;
-
-  // ~ProgNode() {
-  //   for (auto p : statements) {
-  //     delete p;
-  //   }
-  // }
+  std::vector<std::shared_ptr<StmtNode>> statements;
 };
 
 } // namespace pimento::ast::node

@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <istream>
 #include <memory>
 #include <ostream>
 #include <pimento/ast.hpp>
+#include <pimento/parser.hpp>
 #include <pimento/utils.hpp>
 #include <ranges>
 #include <sstream>
@@ -17,30 +19,33 @@ namespace pimento::generation {
 
 class Generator {
 public:
-  explicit Generator(std::ostream *stream, const ast::node::ProgNode &prog)
-      : p_output(stream), m_prog(prog) {}
+  explicit Generator(std::shared_ptr<std::istream> istream,
+                     std::shared_ptr<std::ostream> ostream)
+      : m_parser(istream), p_output(ostream) {}
 
   void generate() noexcept {
     *p_output << "global _start\n_start:\n";
 
-    for (const auto statement : m_prog.statements) {
+    const ast::node::ProgNode program = m_parser.get_program();
+    for (const auto &statement : program.statements) {
       gen_statement(statement);
     }
   }
 
 private:
-  void gen_statement(const ast::node::StmtNode *const stmt) noexcept {
+  void gen_statement(std::shared_ptr<ast::node::StmtNode> stmt) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void operator()(const ast::node::StmtExitNode *const stmt_node) const {
+      void
+      operator()(std::shared_ptr<ast::node::StmtExitNode> stmt_node) const {
         gen.gen_expression(stmt_node->expression);
         *gen.p_output << "    mov rax, 60\n";
         gen.pop("rdi");
         *gen.p_output << "    syscall\n";
       }
 
-      void operator()(const ast::node::StmtLetNode *const stmt_node) const {
+      void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt_node) const {
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match{false};
@@ -107,7 +112,8 @@ private:
         gen.gen_expression(stmt_node->expression);
       }
 
-      void operator()(const ast::node::StmtAssignNode *const stmt_node) const {
+      void
+      operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt_node) const {
         gen.gen_expression(stmt_node->expression);
 
         const auto it = std::ranges::find_if(
@@ -164,13 +170,13 @@ private:
                       << "], rax\n";
       }
 
-      void operator()(const ast::node::ScopeNode *const stmt_node) const {
+      void operator()(std::shared_ptr<ast::node::ScopeNode> stmt_node) const {
         *gen.p_output << "    ;; scope\n";
         gen.gen_scope(stmt_node);
         *gen.p_output << "    ;; /scope\n";
       }
 
-      void operator()(const ast::node::StmtIfNode *const stmt_node) const {
+      void operator()(std::shared_ptr<ast::node::StmtIfNode> stmt_node) const {
 
         gen.gen_expression(stmt_node->expression);
         gen.pop("rax");
@@ -196,15 +202,15 @@ private:
     std::visit(visitor, stmt->node);
   }
 
-  void gen_expression(const ast::node::ExprNode *const expr) noexcept {
+  void gen_expression(std::shared_ptr<ast::node::ExprNode> expr) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void operator()(const ast::node::TermNode *const term) const {
+      void operator()(std::shared_ptr<ast::node::TermNode> term) const {
         gen.gen_term(term);
       }
 
-      void operator()(const ast::node::BinExprNode *const bin_expr) const {
+      void operator()(std::shared_ptr<ast::node::BinExprNode> bin_expr) const {
         gen.gen_bin_expr(bin_expr);
       }
     };
@@ -213,22 +219,22 @@ private:
     std::visit(visitor, expr->node);
   }
 
-  void gen_scope(const ast::node::ScopeNode *const scope) noexcept {
-    for (const auto stmt : scope->statements) {
+  void gen_scope(std::shared_ptr<ast::node::ScopeNode> scope) noexcept {
+    for (const auto &stmt : scope->statements) {
       begin_scope();
       gen_statement(stmt);
       end_scope();
     }
   }
 
-  void gen_ifpred(const ast::node::IfPredNode *const ifpred,
+  void gen_ifpred(std::shared_ptr<ast::node::IfPredNode> ifpred,
                   const std::string &end_label) noexcept {
     struct Visitor {
       Generator &gen;
       const std::string &end_label;
 
       void
-      operator()(const ast::node::IfPredElifNode *const ifpred_elif) const {
+      operator()(std::shared_ptr<ast::node::IfPredElifNode> ifpred_elif) const {
 
         gen.gen_expression(ifpred_elif->expression);
         gen.pop("rax");
@@ -246,7 +252,7 @@ private:
       }
 
       void
-      operator()(const ast::node::IfPredElseNode *const ifpred_else) const {
+      operator()(std::shared_ptr<ast::node::IfPredElseNode> ifpred_else) const {
         gen.gen_scope(ifpred_else->scope);
       }
     };
@@ -255,11 +261,12 @@ private:
     std::visit(visitor, ifpred->node);
   }
 
-  void gen_term(const ast::node::TermNode *const term) noexcept {
+  void gen_term(std::shared_ptr<ast::node::TermNode> term) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void operator()(const ast::node::TermIntLitNode *const int_lit) const {
+      void
+      operator()(std::shared_ptr<ast::node::TermIntLitNode> int_lit) const {
         // TODO(lthomas): Probably a cleaner way to do this... Refactor later
         struct TokenVisitor {
           Generator &gen;
@@ -275,7 +282,7 @@ private:
         std::visit(TokenVisitor(gen), int_lit->int_lit_token.properties);
       }
 
-      void operator()(const ast::node::TermIdentNode *const ident) const {
+      void operator()(std::shared_ptr<ast::node::TermIdentNode> ident) const {
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match = false;
@@ -330,7 +337,7 @@ private:
         gen.push(offset.str());
       }
 
-      void operator()(const ast::node::TermExprNode *const expr) const {
+      void operator()(std::shared_ptr<ast::node::TermExprNode> expr) const {
         gen.gen_expression(expr->expression);
       }
     };
@@ -339,11 +346,11 @@ private:
     std::visit(visitor, term->node);
   }
 
-  void gen_bin_expr(const ast::node::BinExprNode *const bin_expr) noexcept {
+  void gen_bin_expr(std::shared_ptr<ast::node::BinExprNode> bin_expr) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void operator()(const ast::node::BinExprPowerNode *const node) const {
+      void operator()(std::shared_ptr<ast::node::BinExprPowerNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
 
@@ -366,7 +373,7 @@ private:
         gen.push("rax");
       }
 
-      void operator()(const ast::node::BinExprModNode *const node) const {
+      void operator()(std::shared_ptr<ast::node::BinExprModNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
@@ -375,7 +382,7 @@ private:
         gen.push("rdx");
       }
 
-      void operator()(const ast::node::BinExprMulNode *const node) const {
+      void operator()(std::shared_ptr<ast::node::BinExprMulNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
@@ -384,7 +391,7 @@ private:
         gen.push("rax");
       }
 
-      void operator()(const ast::node::BinExprDivNode *const node) const {
+      void operator()(std::shared_ptr<ast::node::BinExprDivNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
@@ -393,7 +400,7 @@ private:
         gen.push("rax");
       }
 
-      void operator()(const ast::node::BinExprPlusNode *const node) const {
+      void operator()(std::shared_ptr<ast::node::BinExprPlusNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
@@ -402,7 +409,7 @@ private:
         gen.push("rax");
       }
 
-      void operator()(const ast::node::BinExprMinusNode *const node) const {
+      void operator()(std::shared_ptr<ast::node::BinExprMinusNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
@@ -411,7 +418,8 @@ private:
         gen.push("rax");
       }
 
-      void operator()(const ast::node::BinExprLessThanNode *const node) const {
+      void
+      operator()(std::shared_ptr<ast::node::BinExprLessThanNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
 
@@ -430,8 +438,8 @@ private:
         gen.push("rax");
       }
 
-      void
-      operator()(const ast::node::BinExprGreaterThanNode *const node) const {
+      void operator()(
+          std::shared_ptr<ast::node::BinExprGreaterThanNode> node) const {
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
 
@@ -496,8 +504,8 @@ private:
   // helpers for visitors
   template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 
-  std::unique_ptr<std::ostream> p_output;
-  const ast::node::ProgNode &m_prog;
+  ast::Parser m_parser;
+  std::shared_ptr<std::ostream> p_output;
 
   size_t m_stack_size{0};
   std::vector<Var> m_vars{};

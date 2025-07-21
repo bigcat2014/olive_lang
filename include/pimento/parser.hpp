@@ -4,8 +4,10 @@
 
 #pragma once
 
+#include <istream>
 #include <optional>
 #include <pimento/ast.hpp>
+#include <pimento/lexer.hpp>
 #include <pimento/tokens.hpp>
 #include <pimento/utils.hpp>
 #include <utility>
@@ -18,15 +20,9 @@ class Parser {
 public:
   //! @brief Construct a new Parser object.
   //! @param tokens std::vector<tokenization::Token> The tokens to parse.
-  inline explicit Parser(const std::vector<tokenization::Token> &tokens)
-      : m_tokens(tokens) {}
-
-  //! @brief Parse all tokens.
-  void parse() {
-    while (peek().has_value()) {
-      node::StmtNode *stmt = parse_statement();
-      m_prog.statements.push_back(stmt);
-    }
+  inline explicit Parser(std::shared_ptr<std::istream> istream)
+      : m_lexer(istream) {
+    parse();
   }
 
   [[nodiscard]] const node::ProgNode &get_program() const noexcept {
@@ -34,6 +30,14 @@ public:
   }
 
 private:
+  //! @brief Parse all tokens.
+  void parse() {
+    while (peek().has_value()) {
+      std::shared_ptr<node::StmtNode> stmt = parse_statement();
+      m_prog.statements.push_back(stmt);
+    }
+  }
+
   //! @brief Peek at a token at an offset from the current token in the buffer.
   //! @param current_index size_t The index of the current token in the
   //! buffer.
@@ -44,6 +48,8 @@ private:
   //! from the current index or {} if attempting to peek out of bounds.
   [[nodiscard]] inline std::optional<tokenization::Token>
   peek(size_t lookahead = 0) const noexcept {
+    //! @brief The tokens to parse.
+    const std::vector<tokenization::Token> m_tokens = m_lexer.tokens();
     try {
       return m_tokens.at(m_index + lookahead);
     } catch (const std::out_of_range &) {
@@ -86,10 +92,10 @@ private:
 
   //! @brief Parse a statement into the AST.
   //! @return std::unique_ptr<node::StmtNode> The Statement node of the AST.
-  node::StmtNode *parse_statement() {
+  std::shared_ptr<node::StmtNode> parse_statement() {
     auto &logger = utils::get_logger();
 
-    node::StmtNode *stmt = new node::StmtNode;
+    std::shared_ptr<node::StmtNode> stmt;
     tokenization::Token current_token;
 
     if (auto token_opt = peek()) {
@@ -105,12 +111,13 @@ private:
       try_consume(tokenization::TokenType::TT_EXIT);
       try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
-      node::ExprNode *expression = parse_expression();
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
 
       try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
       try_consume(tokenization::TokenType::TT_SEMI);
 
-      stmt->node = new node::StmtExitNode{.expression = expression};
+      stmt = std::make_shared<node::StmtNode>(
+          std::make_shared<node::StmtExitNode>(expression));
       break;
     }
     // Parse format let ident = [Expr];
@@ -121,12 +128,12 @@ private:
 
       try_consume(tokenization::TokenType::TT_EQUAL);
 
-      node::ExprNode *expression = parse_expression();
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
 
       try_consume(tokenization::TokenType::TT_SEMI);
 
-      stmt->node = new node::StmtLetNode{.identifier = identifier,
-                                         .expression = expression};
+      stmt = std::make_shared<node::StmtNode>(
+          std::make_shared<node::StmtLetNode>(identifier, expression));
       break;
     }
     // Parse format ident = [Expr];
@@ -134,12 +141,12 @@ private:
       try_consume(tokenization::TokenType::TT_IDENTIFIER);
       try_consume(tokenization::TokenType::TT_EQUAL);
 
-      node::ExprNode *expression = parse_expression();
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
 
       try_consume(tokenization::TokenType::TT_SEMI);
 
-      stmt->node = new node::StmtAssignNode{.identifier = current_token,
-                                            .expression = expression};
+      stmt = std::make_shared<node::StmtNode>(
+          std::make_shared<node::StmtAssignNode>(current_token, expression));
       break;
     }
     // Parse format if ([Expr]) [Scope] [IfPred]
@@ -147,22 +154,22 @@ private:
       try_consume(tokenization::TokenType::TT_IF);
       // try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
-      node::ExprNode *expression = parse_expression();
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
 
       // try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
 
-      node::ScopeNode *scope = parse_scope();
+      std::shared_ptr<node::ScopeNode> scope = parse_scope();
 
-      std::optional<node::IfPredNode *> ifpred = parse_ifpred();
+      std::optional<std::shared_ptr<node::IfPredNode>> ifpred = parse_ifpred();
 
-      stmt->node = new node::StmtIfNode{
-          .expression = expression, .scope = scope, .ifpred = ifpred};
+      stmt = std::make_shared<node::StmtNode>(
+          std::make_shared<node::StmtIfNode>(expression, scope, ifpred));
 
       break;
     }
     // Parse format {[Stmt]*}
     case tokenization::TokenType::TT_LEFT_CURLY: {
-      stmt->node = parse_scope();
+      stmt = std::make_shared<node::StmtNode>(parse_scope());
       break;
     }
     default: {
@@ -175,11 +182,11 @@ private:
 
   //! @brief Parse an expression into the AST.
   //! @return std::unique_ptr<node::ExprNode> The expression node of the AST.
-  node::ExprNode *parse_expression(uint8_t min_precedence = 0) {
+  std::shared_ptr<node::ExprNode> parse_expression(uint8_t min_precedence = 0) {
     auto &logger = utils::get_logger();
-    node::ExprNode *expr = new node::ExprNode;
+    std::shared_ptr<node::ExprNode> expr;
 
-    node::TermNode *term_lhs = parse_term();
+    std::shared_ptr<node::TermNode> term_lhs = parse_term();
 
     while (std::optional<tokenization::Token> next = peek()) {
       tokenization::Token current_token = next.value();
@@ -193,17 +200,20 @@ private:
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
               properties.second == tokenization::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprPowerNode *bin_expr = new node::BinExprPowerNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprPowerNode> bin_expr =
+              std::make_shared<node::BinExprPowerNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -213,18 +223,21 @@ private:
             tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
-        uint8_t next_prec =
-            properties.second == tokenization::Associativity::LEFT
-                ? properties.first + 1
-                : properties.first;
-
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprModNode *bin_expr = new node::BinExprModNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          uint8_t next_prec =
+              properties.second == tokenization::Associativity::LEFT
+                  ? properties.first + 1
+                  : properties.first;
+
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprModNode> bin_expr =
+              std::make_shared<node::BinExprModNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -235,17 +248,20 @@ private:
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
               properties.second == tokenization::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprMulNode *bin_expr = new node::BinExprMulNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprMulNode> bin_expr =
+              std::make_shared<node::BinExprMulNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -255,18 +271,21 @@ private:
             tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
-        uint8_t next_prec =
-            properties.second == tokenization::Associativity::LEFT
-                ? properties.first + 1
-                : properties.first;
-
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprDivNode *bin_expr = new node::BinExprDivNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          uint8_t next_prec =
+              properties.second == tokenization::Associativity::LEFT
+                  ? properties.first + 1
+                  : properties.first;
+
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprDivNode> bin_expr =
+              std::make_shared<node::BinExprDivNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -276,18 +295,21 @@ private:
             tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
-        uint8_t next_prec =
-            properties.second == tokenization::Associativity::LEFT
-                ? properties.first + 1
-                : properties.first;
-
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprPlusNode *bin_expr = new node::BinExprPlusNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          uint8_t next_prec =
+              properties.second == tokenization::Associativity::LEFT
+                  ? properties.first + 1
+                  : properties.first;
+
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprPlusNode> bin_expr =
+              std::make_shared<node::BinExprPlusNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -297,18 +319,21 @@ private:
             tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
-        uint8_t next_prec =
-            properties.second == tokenization::Associativity::LEFT
-                ? properties.first + 1
-                : properties.first;
-
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprMinusNode *bin_expr = new node::BinExprMinusNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          uint8_t next_prec =
+              properties.second == tokenization::Associativity::LEFT
+                  ? properties.first + 1
+                  : properties.first;
+
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprMinusNode> bin_expr =
+              std::make_shared<node::BinExprMinusNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -318,18 +343,21 @@ private:
             tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
-        uint8_t next_prec =
-            properties.second == tokenization::Associativity::LEFT
-                ? properties.first + 1
-                : properties.first;
-
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprLessThanNode *bin_expr = new node::BinExprLessThanNode{
-              .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          uint8_t next_prec =
+              properties.second == tokenization::Associativity::LEFT
+                  ? properties.first + 1
+                  : properties.first;
+
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprLessThanNode> bin_expr =
+              std::make_shared<node::BinExprLessThanNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
@@ -339,24 +367,26 @@ private:
             tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
-        uint8_t next_prec =
-            properties.second == tokenization::Associativity::LEFT
-                ? properties.first + 1
-                : properties.first;
-
         if (properties.first < min_precedence) {
-          expr->node = term_lhs;
+          expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
-          node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-          node::BinExprGreaterThanNode *bin_expr =
-              new node::BinExprGreaterThanNode{
-                  .left = lhs, .right = parse_expression(next_prec)};
-          expr->node = new node::BinExprNode{.node = bin_expr};
+          uint8_t next_prec =
+              properties.second == tokenization::Associativity::LEFT
+                  ? properties.first + 1
+                  : properties.first;
+
+          std::shared_ptr<node::ExprNode> lhs =
+              std::make_shared<node::ExprNode>(term_lhs);
+          std::shared_ptr<node::BinExprGreaterThanNode> bin_expr =
+              std::make_shared<node::BinExprGreaterThanNode>(
+                  lhs, parse_expression(next_prec));
+          expr = std::make_shared<node::ExprNode>(
+              std::make_shared<node::BinExprNode>(bin_expr));
         }
         break;
       }
       default: {
-        expr->node = term_lhs;
+        expr = std::make_shared<node::ExprNode>(term_lhs);
       }
       }
 
@@ -369,10 +399,11 @@ private:
 
   //! @brief Parse a scope into the AST.
   //! @return std::unique_ptr<node::ScopeNode> The scope node of the AST.
-  node::ScopeNode *parse_scope() {
+  std::shared_ptr<node::ScopeNode> parse_scope() {
     try_consume(tokenization::TokenType::TT_LEFT_CURLY);
 
-    node::ScopeNode *scope = new node::ScopeNode;
+    std::shared_ptr<node::ScopeNode> scope =
+        std::make_shared<node::ScopeNode>();
     while (true) {
       std::optional<tokenization::Token> next = peek();
       if (!next.has_value() ||
@@ -380,7 +411,7 @@ private:
         break;
       }
 
-      node::StmtNode *statement = parse_statement();
+      std::shared_ptr<node::StmtNode> statement = parse_statement();
       scope->statements.push_back(statement);
     }
 
@@ -391,9 +422,9 @@ private:
   // TODO(lthomas): Fill out this function body.
   //! @brief Parse an if predicate into the AST.
   //! @return std::unique_ptr<node::IfPred> The if predicate node of the AST.
-  std::optional<node::IfPredNode *> parse_ifpred() {
+  std::optional<std::shared_ptr<node::IfPredNode>> parse_ifpred() {
     auto &logger = utils::get_logger();
-    std::optional<node::IfPredNode *> ifpred;
+    std::optional<std::shared_ptr<node::IfPredNode>> ifpred;
     tokenization::Token current_token;
 
     if (auto token_opt = peek()) {
@@ -407,21 +438,21 @@ private:
     // Parse format ident;
     case tokenization::TokenType::TT_ELIF: {
       try_consume(tokenization::TokenType::TT_ELIF);
-      node::ExprNode *expression = parse_expression();
-      node::ScopeNode *scope = parse_scope();
-      std::optional<node::IfPredNode *> if_pred_elif = parse_ifpred();
-      ifpred = new node::IfPredNode{
-          .node = new node::IfPredElifNode{.expression = expression,
-                                           .scope = scope,
-                                           .ifpred = if_pred_elif}};
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
+      std::shared_ptr<node::ScopeNode> scope = parse_scope();
+      std::optional<std::shared_ptr<node::IfPredNode>> if_pred_elif =
+          parse_ifpred();
+      ifpred = std::make_shared<node::IfPredNode>(
+          std::make_shared<node::IfPredElifNode>(expression, scope,
+                                                 if_pred_elif));
       break;
     }
     // Parse format int_lit
     case tokenization::TokenType::TT_ELSE: {
       try_consume(tokenization::TokenType::TT_ELSE);
-      node::ScopeNode *scope = parse_scope();
-      ifpred = new node::IfPredNode{
-          .node = new node::IfPredElseNode{.scope = scope}};
+      std::shared_ptr<node::ScopeNode> scope = parse_scope();
+      ifpred = std::make_shared<node::IfPredNode>(
+          std::make_shared<node::IfPredElseNode>(scope));
       break;
     }
     default:
@@ -433,9 +464,9 @@ private:
 
   //! @brief Parse a term into the AST.
   //! @return std::unique_ptr<node::TermNode> The term node of the AST.
-  node::TermNode *parse_term() {
+  std::shared_ptr<node::TermNode> parse_term() {
     auto &logger = utils::get_logger();
-    node::TermNode *term = new node::TermNode;
+    std::shared_ptr<node::TermNode> term;
     tokenization::Token current_token;
 
     if (auto token_opt = try_consume()) {
@@ -448,20 +479,23 @@ private:
     switch (current_token.token_type) {
     // Parse format ident;
     case tokenization::TokenType::TT_IDENTIFIER: {
-      term->node = new node::TermIdentNode{.identifier_token = current_token};
+      term = std::make_shared<node::TermNode>(
+          std::make_shared<node::TermIdentNode>(current_token));
       break;
     }
     // Parse format int_lit
     case tokenization::TokenType::TT_INT_LITERAL: {
-      term->node = new node::TermIntLitNode{.int_lit_token = current_token};
+      term = std::make_shared<node::TermNode>(
+          std::make_shared<node::TermIntLitNode>(current_token));
       break;
     }
     // Parse format ident = ([Expr]);
     case tokenization::TokenType::TT_LEFT_PAREN: {
-      node::ExprNode *expression = parse_expression();
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
       try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
 
-      term->node = new node::TermExprNode{.expression = expression};
+      term = std::make_shared<node::TermNode>(
+          std::make_shared<node::TermExprNode>(expression));
       break;
     }
     default:
@@ -473,10 +507,9 @@ private:
   }
 
 private:
+  tokenization::Lexer m_lexer;
   //! @brief The current parsing index
   size_t m_index{0};
-  //! @brief The tokens to parse.
-  const std::vector<tokenization::Token> m_tokens;
   //! @brief The root node of the ast
   node::ProgNode m_prog;
 };

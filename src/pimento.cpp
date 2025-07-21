@@ -6,10 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <pimento/generator.hpp>
-#include <pimento/lexer.hpp>
-#include <pimento/parser.hpp>
 #include <pimento/utils.hpp>
 #include <string>
 
@@ -86,26 +83,19 @@ int main(int argc, char *argv[]) {
   output_resolved_path = output_resolved_path.lexically_normal();
   logger.debug("Sanitized output file path: {}", output_resolved_path.string());
 
-  std::fstream *input_file =
-      new std::fstream{input_resolved_path.value(), std::ios::in};
+  std::shared_ptr<std::fstream> input_file =
+      std::make_shared<std::fstream>(input_resolved_path.value(), std::ios::in);
   if (!input_file) {
     throw std::runtime_error("cannot open " +
                              input_resolved_path.value().string());
   }
-
-  pimento::tokenization::Lexer lexer(input_file);
-  lexer.tokenize();
-
-  pimento::ast::Parser parser(lexer.tokens());
-  parser.parse();
-
-  std::fstream *output_file =
-      new std::fstream{output_resolved_path, std::ios::out};
+  std::shared_ptr<std::fstream> output_file =
+      std::make_shared<std::fstream>(output_resolved_path, std::ios::out);
   if (!output_file) {
     throw std::runtime_error("cannot open " + output_resolved_path.string());
   }
 
-  pimento::generation::Generator generator(output_file, parser.get_program());
+  pimento::generation::Generator generator(input_file, output_file);
   generator.generate();
 
   // system("nasm -felf64 out.asm");

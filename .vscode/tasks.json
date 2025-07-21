@@ -24,15 +24,15 @@
 			"detail": "CMake template install task"
 		},
 		{
-			"type": "cmake",
-			"label": "CMake: test",
-			"command": "test",
-			"targets": [
-				"all"
-			],
+			"type": "shell",
+			"label": "CMake: Run Tests",
+			"command": "ctest",
+			"options": {
+				"cwd": "${workspaceFolder}/build"
+			},
 			"group": "none",
 			"problemMatcher": [],
-			"detail": "CMake template install task"
+			"detail": "Run unit tests"
 		}
 	]
 }
