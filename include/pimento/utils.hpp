@@ -1,3 +1,7 @@
+//! @file utils.hpp
+//! @brief Pimento utility functions.
+//! @author Logan Thomas
+
 #pragma once
 
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -11,15 +15,22 @@
 
 namespace pimento::utils {
 
+//! @brief Gets the global logger.
+//! @return spdlog::logger& Global logger.
 spdlog::logger& getLogger() {
   static auto logger = spdlog::stderr_color_mt("pimento");
   return *logger;
 }
 
+//! @brief Configures the logger.
+//! @param level The log level to configure the logger with.
 void configureLogger(spdlog::level::level_enum level) {
   getLogger().set_level(level);
 }
 
+//! @brief Expands `~` and environment variables in input path.
+//! @param inputPath The file path in which to expand the variables.
+//! @return std::filesystem::path The file path with variables expanded.
 std::filesystem::path expandVars(const std::string& inputPath) {
   auto logger = getLogger();
 
@@ -69,6 +80,14 @@ std::filesystem::path expandVars(const std::string& inputPath) {
   return std::filesystem::path(result);
 }
 
+//! @brief Sanitize the input path.
+//!
+//! Sanitize the input path by expanding `~` and environment variables,
+//! normalizing the path, and ensuring it is a file. Additionally checks the
+//! file extension and warns the user if the extension is not the expected
+//! `.oil` extension.
+//! @param inputPath The file path to sanitize.
+//! @return std::optional<std::filesystem::path> The sanitized path.
 std::optional<std::filesystem::path> sanitizePath(
     const std::string& inputPath) {
   auto logger = getLogger();

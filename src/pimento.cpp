@@ -1,3 +1,7 @@
+//! @file pimento.cpp
+//! @brief Pimento executable
+//! @author Logan Thomas
+
 #include <argparse/argparse.hpp>
 #include <filesystem>
 #include <iostream>
