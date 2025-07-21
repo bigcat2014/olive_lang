@@ -84,28 +84,6 @@ private:
     return next.value();
   }
 
-  //! @brief Assert the next token to be a specific TokenType.
-  //!
-  //! Assert the next token to be a specific TokenType. If the token type
-  //! matches, consume it, otherwise log an error and exit.
-  //! @param token_type tokenization::TokenType The token type we are asserting
-  //! is next.
-  inline std::pair<bool, tokenization::Token>
-  compare_next_token(tokenization::TokenType token_type) noexcept {
-    auto next = try_consume();
-    if (!next.has_value()) {
-      // TODO(lthomas): I don't know if I want to log and exit here
-      auto &logger = utils::get_logger();
-      logger.error("Expected `{}` at TODO Line & Column number",
-                   tokenization::TokenTypeUtil::get_token_str(token_type));
-      exit(EXIT_FAILURE);
-    }
-    if (next.value().token_type != token_type) {
-      return std::make_pair<bool, tokenization::Token &>(false, next.value());
-    }
-    return std::make_pair<bool, tokenization::Token &>(true, next.value());
-  }
-
   //! @brief Parse a statement into the AST.
   //! @return std::unique_ptr<node::StmtNode> The Statement node of the AST.
   node::StmtNode *parse_statement() {
@@ -207,6 +185,7 @@ private:
     while (std::optional<tokenization::Token> next = peek()) {
       tokenization::Token current_token = next.value();
 
+      // TODO(lthomas): I don't like this logic here. Lots of repetitive code
       switch (current_token.token_type) {
       case tokenization::TokenType::TT_DOUBLE_CARET: {
         try_consume(tokenization::TokenType::TT_DOUBLE_CARET);
