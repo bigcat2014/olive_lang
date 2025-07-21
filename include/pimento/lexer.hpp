@@ -69,9 +69,13 @@ class Lexer {
 
         if (!m_tokens.empty() && token_added) {
           Token token = m_tokens.back();
-          logger.debug("Token: `{}`; Value: `{}`",
-                       token_to_str(token.token_type).name,
-                       token.value.has_value() ? token.value.value() : "None");
+          try {
+            logger.debug("Token: `{}`; Value: `{}`",
+                         token_str.at(token.token_type),
+                         token.value.has_value() ? token.value.value() : "None");
+          } catch (std::out_of_range) {
+            logger.debug("Unknown token");
+          }
         }
       }
 
@@ -111,32 +115,23 @@ class Lexer {
       return false;
     }
 
-    for (const TokenType token_type :
-         enum_range(TokenType::_BEGIN, TokenType::NUM_TOKENS)) {
-      if (std::find(SPECIAL_TOKENS.begin(), SPECIAL_TOKENS.end(), token_type) !=
-          SPECIAL_TOKENS.end()) {
-        // Int literal special case
-        if (std::isdigit(token_buffer.back())) {
-          if (!std::isdigit(next)) {
-            m_tokens.emplace_back(TokenType::TT_INT_LITERAL, token_buffer);
-            token_buffer.clear();
-            return true;
-          }
-          return false;
-          // Identifier special case
-        } else if (std::isalpha(token_buffer.back())) {
-          if (!std::isalpha(next)) {
-            m_tokens.emplace_back(TokenType::TT_IDENTIFIER, token_buffer);
-            token_buffer.clear();
-            return true;
-          }
-          return false;
+    try {
+      TokenType token_type = token_lookup.at(token_buffer);
+      m_tokens.emplace_back(token_type);
+      token_buffer.clear();
+      return true;
+    } catch (std::out_of_range) {
+      // Int literal special case
+      if (std::isdigit(token_buffer.back())) {
+        if (!std::isdigit(next)) {
+          m_tokens.emplace_back(TokenType::TT_INT_LITERAL, token_buffer);
+          token_buffer.clear();
+          return true;
         }
-        continue;
-      } else {
-        TokenString token_str = token_to_str(token_type);
-        if (std::strcmp(token_buffer.c_str(), token_str.token.c_str()) == 0) {
-          m_tokens.emplace_back(token_type);
+        // Identifier special case
+      } else if (std::isalpha(token_buffer.back())) {
+        if (!std::isalpha(next)) {
+          m_tokens.emplace_back(TokenType::TT_IDENTIFIER, token_buffer);
           token_buffer.clear();
           return true;
         }
