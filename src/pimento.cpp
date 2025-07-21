@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
   pimento::ast::Parser parser(lexer.tokens());
   parser.parse();
 
-  pimento::generation::Generator generator(parser.get_program(),
-                                           output_resolved_path);
+  pimento::generation::Generator generator(output_resolved_path,
+                                           parser.get_program());
   generator.generate();
 
   // system("nasm -felf64 out.asm");

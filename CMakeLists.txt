@@ -50,11 +50,6 @@ set(COMPILE_FLAGS "${COMPILE_FLAGS} -Werror")
 endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${COMPILE_FLAGS})
 
-install(
-    DIRECTORY include/
-    DESTINATION include
-)
-
 include(CTest)
 enable_testing()
 if (BUILD_TESTING)
@@ -98,7 +93,7 @@ install(
 
 install(EXPORT export_${PROJECT_NAME}
     DESTINATION "share/${PROJECT_NAME}/cmake"
-    FILE export_${PROEJCT_NAME}.cmake
+    FILE export_${PROJECT_NAME}.cmake
     COMPONENT dev)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

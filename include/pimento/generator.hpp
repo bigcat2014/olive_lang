@@ -17,9 +17,9 @@ namespace pimento::generation {
 
 class Generator {
 public:
-  explicit Generator(const ast::node::ProgNode &prog,
-                     const std::filesystem::path &path)
-      : m_prog(prog), m_output_path(path) {}
+  explicit Generator(const std::filesystem::path &path,
+                     const ast::node::ProgNode &prog)
+      : m_output_path(path), m_prog(prog) {}
 
   void generate() noexcept {
     m_output << "global _start\n_start:\n";
@@ -498,8 +498,6 @@ private:
 
   // helpers for visitors
   template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-
-  template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
   // TODO(lthomas): Write output to this file
   std::filesystem::path m_output_path;
