@@ -24,12 +24,8 @@ std::filesystem::path expandUserHome(const std::string& path) {
   auto logger = getLogger();
 
   if (!path.empty() && path[0] == '~') {
-#ifdef _WIN32
-    const char* home = std::getenv("USERPROFILE");
-#else
     const char* home = std::getenv("HOME");
-#endif
-    if (!home) {
+    if (home == nullptr) {
       throw std::runtime_error("Unable to determine home directory.");
     }
 
