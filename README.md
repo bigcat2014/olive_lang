@@ -97,7 +97,7 @@ $$
     \end{cases} \\ 
     [\text{Term}] &\to
     \begin{cases}
-        \text{int\_lit} \\
+        \text{intlit} \\
         \text{ident} \\
         ([\text{Expr}])
     \end{cases}
