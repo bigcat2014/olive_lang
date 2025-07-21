@@ -13,17 +13,19 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace pimento {
+namespace pimento::tokenization {
 
 class Lexer {
  public:
+  //! @brief Constructor for the Lexer
+  //! @param path const std::filesystem::path& The path to the file to tokenize.
   Lexer(const std::filesystem::path& path) : m_path(path) {
     m_tokens.reserve(BUFFER_SIZE);
   }
 
   //! @brief Tokenize the input file.
   void tokenize() {
-    auto& logger = utils::get_logger();
+    auto& logger = pimento::utils::get_logger();
     std::fstream file(m_path, std::ios::in);
     if (!file) {
       throw std::runtime_error("cannot open " + m_path.string());
@@ -52,99 +54,27 @@ class Lexer {
           throw std::runtime_error(msg.str());
         }
 
+        // Skip whitespace
         if (std::isspace(file_buffer[i])) {
           token_buffer.clear();
           continue;
         }
 
+        // Add next character to token buffer
         token_buffer.push_back(file_buffer[i]);
 
-        // TODO(lthomas): I hate these strcmp calls, maybe there's a better way?
-        // I also need to save specific data, like identifiers and int literals,
-        // and I could probably clean this up by wrapping some of this logic
-        // into a function
-        if (std::strcmp(token_buffer.c_str(), "exit") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_EXIT));
-          m_tokens.emplace_back(TokenType::TT_EXIT);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "if") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_IF));
-          m_tokens.emplace_back(TokenType::TT_IF);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "elif") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_ELIF));
-          m_tokens.emplace_back(TokenType::TT_ELIF);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "else") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_ELSE));
-          m_tokens.emplace_back(TokenType::TT_ELSE);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "let") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_LET));
-          m_tokens.emplace_back(TokenType::TT_LET);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "(") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_LEFT_PAREN));
-          m_tokens.emplace_back(TokenType::TT_LEFT_PAREN);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), ")") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_RIGHT_PAREN));
-          m_tokens.emplace_back(TokenType::TT_RIGHT_PAREN);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "{") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_LEFT_CURLY));
-          m_tokens.emplace_back(TokenType::TT_LEFT_CURLY);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "}") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_RIGHT_CURLY));
-          m_tokens.emplace_back(TokenType::TT_RIGHT_CURLY);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "^^") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_DOUBLE_CARET));
-          m_tokens.emplace_back(TokenType::TT_DOUBLE_CARET);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "%") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_PERCENT));
-          m_tokens.emplace_back(TokenType::TT_PERCENT);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "*") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_STAR));
-          m_tokens.emplace_back(TokenType::TT_STAR);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "/") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_FORWARD_SLASH));
-          m_tokens.emplace_back(TokenType::TT_FORWARD_SLASH);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "+") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_PLUS));
-          m_tokens.emplace_back(TokenType::TT_PLUS);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "-") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_MINUS));
-          m_tokens.emplace_back(TokenType::TT_MINUS);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), ";") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_SEMI));
-          m_tokens.emplace_back(TokenType::TT_SEMI);
-          token_buffer.clear();
-        } else if (std::strcmp(token_buffer.c_str(), "=") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_EQUAL));
-          m_tokens.emplace_back(TokenType::TT_EQUAL);
-          token_buffer.clear();
-        } else if (std::isdigit(file_buffer[i])) {
-          if (i + 1 >= n || !std::isdigit(file_buffer[i + 1])) {
-            logger.debug("Token `{}`", token_to_str(TokenType::TT_INT_LITERAL));
-            m_tokens.emplace_back(TokenType::TT_INT_LITERAL);
-            token_buffer.clear();
-          }
-        } else if (std::isalpha(file_buffer[i])) {
-          if (i + 1 >= n || !std::isalpha(file_buffer[i + 1])) {
-            logger.debug("Token `{}`", token_to_str(TokenType::TT_IDENTIFIER));
-            m_tokens.emplace_back(TokenType::TT_IDENTIFIER);
-            token_buffer.clear();
-          }
+        // Attempt to parse token from token buffer
+        const char next = peek_next(i, file_buffer.data(), n);
+        bool token_added = try_parse_token(token_buffer, next);
+
+        if (!m_tokens.empty() && token_added) {
+          Token token = m_tokens.back();
+          logger.debug("Token: `{}`; Value: `{}`",
+                       token_to_str(token.token_type).name,
+                       token.value.has_value() ? token.value.value() : "None");
         }
       }
+
       logger.debug("Finished chunk {}", total_chunks++);
     }
 
@@ -153,6 +83,64 @@ class Lexer {
   }
 
  private:
+  //! @brief Peek at the next character in the buffer.
+  //!
+  //! Peek at the next character in the buffer. If there are no more characters,
+  //! return whitespace.
+  //! @param current_index size_t The index of the current character in the
+  //! buffer.
+  //! @param buffer const char* The buffer from which to get the next token.
+  //! @param size size_t The length of the buffer.
+  //! @return char The next character or ` ` if there is no next character.
+  inline char peek_next(size_t current_index, const char* buffer,
+                        size_t size) const noexcept {
+    return current_index + 1 > size ? ' ' : buffer[current_index + 1];
+  }
+
+  //! @brief Attmpt to parse a token from the buffer.
+  //! @param token_buffer std::string The buffer from which to attempt to parse
+  //! a token.
+  //! @param next const char The next character in the buffer.
+  //! @return bool Whether or not we successfully parsed a full token.
+  bool try_parse_token(std::string& token_buffer, const char next) noexcept {
+    if (token_buffer.empty()) {
+      return false;
+    }
+
+    for (const TokenType token_type :
+         enum_range(TokenType::_BEGIN, TokenType::NUM_TOKENS)) {
+      if (std::find(SPECIAL_TOKENS.begin(), SPECIAL_TOKENS.end(), token_type) !=
+          SPECIAL_TOKENS.end()) {
+        // Int literal special case
+        if (std::isdigit(token_buffer.back())) {
+          if (!std::isdigit(next)) {
+            m_tokens.emplace_back(TokenType::TT_INT_LITERAL, token_buffer);
+            token_buffer.clear();
+            return true;
+          }
+          return false;
+          // Identifier special case
+        } else if (std::isalpha(token_buffer.back())) {
+          if (!std::isalpha(next)) {
+            m_tokens.emplace_back(TokenType::TT_IDENTIFIER, token_buffer);
+            token_buffer.clear();
+            return true;
+          }
+          return false;
+        }
+        continue;
+      } else {
+        TokenString token_str = token_to_str(token_type);
+        if (std::strcmp(token_buffer.c_str(), token_str.token.c_str()) == 0) {
+          m_tokens.emplace_back(token_type);
+          token_buffer.clear();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   //! @brief The size in bytes of the chunks to read from the file.
   constexpr static size_t BUFFER_SIZE = 4096;
   //! @brief The size in bytes of the maximum token length.
@@ -163,4 +151,4 @@ class Lexer {
   std::vector<Token> m_tokens;
 };
 
-}  // namespace pimento
+}  // namespace pimento::tokenization

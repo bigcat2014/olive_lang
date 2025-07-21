@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 
   logger.debug("Sanitized file path: {}", resolvedPath.value().string());
 
-  pimento::Lexer lexer(resolvedPath.value());
+  pimento::tokenization::Lexer lexer(resolvedPath.value());
   lexer.tokenize();
 
   return EXIT_SUCCESS;
