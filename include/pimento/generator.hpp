@@ -7,13 +7,14 @@
 #include <istream>
 #include <memory>
 #include <ostream>
+#include <sstream>
+#include <string>
+#include <variant>
+
 #include <pimento/ast.hpp>
 #include <pimento/parser.hpp>
 #include <pimento/utils.hpp>
 #include <ranges>
-#include <sstream>
-#include <string>
-#include <variant>
 
 namespace pimento::generation {
 

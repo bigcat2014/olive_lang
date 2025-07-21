@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-
 #include <filesystem>
 #include <optional>
 #include <regex>
 #include <stdexcept>
 #include <string>
+
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 
 namespace pimento::utils {
 

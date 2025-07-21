@@ -2,13 +2,14 @@
 //! @brief Pimento executable
 //! @author Logan Thomas
 
-#include <argparse/argparse.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <string>
+
+#include <argparse/argparse.hpp>
 #include <pimento/generator.hpp>
 #include <pimento/utils.hpp>
-#include <string>
 
 #ifndef PROJECT_VERSION
 #define PROJECT_VERSION "unknown"

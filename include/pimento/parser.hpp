@@ -6,12 +6,13 @@
 
 #include <istream>
 #include <optional>
+#include <utility>
+#include <vector>
+
 #include <pimento/ast.hpp>
 #include <pimento/lexer.hpp>
 #include <pimento/tokens.hpp>
 #include <pimento/utils.hpp>
-#include <utility>
-#include <vector>
 
 namespace pimento::ast {
 

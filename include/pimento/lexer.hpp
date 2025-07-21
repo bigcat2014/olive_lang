@@ -7,10 +7,11 @@
 #include <array>
 #include <cctype>
 #include <istream>
-#include <pimento/tokens.hpp>
-#include <pimento/utils.hpp>
 #include <sstream>
 #include <variant>
+
+#include <pimento/tokens.hpp>
+#include <pimento/utils.hpp>
 
 namespace pimento::tokenization {
 

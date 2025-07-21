@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include <boost/bimap.hpp>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <variant>
+
+#include <boost/bimap.hpp>
 
 namespace pimento::tokenization {
 
@@ -17,7 +18,7 @@ namespace pimento::tokenization {
 // to parse these as their single version and handle doubles in the parser.
 //! @brief The supported token types.
 enum class TokenType {
-  _BEGIN = 0,
+  BEGIN = 0,
   // Keywords
   TT_ELSE,
   TT_EXIT,
@@ -84,7 +85,7 @@ public:
   [[nodiscard]] static inline std::string
   get_type_as_str(TokenType token_type) {
     try {
-      return s_token_str.at(token_type);
+      return get_token_str_map().at(token_type);
     } catch (const std::out_of_range &) {
       return "UNKNOWN_TOKEN";
     }
@@ -96,7 +97,7 @@ public:
   //! @return std::string The string representation of the token for parsing.
   [[nodiscard]] static inline std::string get_token_str(TokenType token_type) {
     try {
-      return s_token_lookup.right.at(token_type);
+      return get_token_bimap().right.at(token_type);
     } catch (const std::out_of_range &) {
       return "UNKNOWN_TOKEN";
     }
@@ -105,7 +106,7 @@ public:
   [[nodiscard]] static inline std::string
   get_associativity_str(Associativity assoc) {
     try {
-      return s_associativity_str.at(assoc);
+      return get_associativity_str_map().at(assoc);
     } catch (const std::out_of_range &) {
       return "UNKNOWN_ASSOCIATIVITY";
     }
@@ -117,13 +118,13 @@ public:
   //! string.
   [[nodiscard]] static inline TokenType get_token_type(std::string token) {
     // Bubble up exception
-    return s_token_lookup.left.at(token);
+    return get_token_bimap().left.at(token);
   }
 
   [[nodiscard]] static inline std::pair<uint8_t, Associativity>
   get_bin_expr_properties(TokenType token) {
     // Bubble up exception
-    return s_bin_expr_properties.at(token);
+    return get_bin_expr_properties_map().at(token);
   }
 
 private:
@@ -141,81 +142,102 @@ private:
   }
 
 private:
-  // clang-format off
-  //! @brief Map from token types to printable strings.
-  static const inline std::unordered_map<Associativity, std::string> s_associativity_str{
-      {Associativity::LEFT,  "LEFT"},
-      {Associativity::RIGHT, "RIGHT"}
-  };
-  // clang-format on
+  using AssociativityMap = std::unordered_map<Associativity, std::string>;
+  using TokenStrMap = std::unordered_map<TokenType, std::string>;
+  using TokenBimap = boost::bimap<std::string, TokenType>;
+  using BinExprMap =
+      std::unordered_map<TokenType, std::pair<uint8_t, Associativity>>;
 
-  // clang-format off
   //! @brief Map from token types to printable strings.
-  static const inline std::unordered_map<TokenType, std::string> s_token_str{
-      {TokenType::TT_ELSE,          "TT_ELSE"},
-      {TokenType::TT_EXIT,          "TT_EXIT"},
-      {TokenType::TT_IF,            "TT_IF"},
-      {TokenType::TT_ELIF,          "TT_ELIF"},
-      {TokenType::TT_LET,           "TT_LET"},
-      {TokenType::TT_LEFT_CURLY,    "TT_LEFT_CURLY"},
-      {TokenType::TT_LEFT_PAREN,    "TT_LEFT_PAREN"},
-      {TokenType::TT_RIGHT_CURLY,   "TT_RIGHT_CURLY"},
-      {TokenType::TT_RIGHT_PAREN,   "TT_RIGHT_PAREN"},
-      {TokenType::TT_DOUBLE_CARET,  "TT_DOUBLE_CARET"},
-      {TokenType::TT_FORWARD_SLASH, "TT_FORWARD_SLASH"},
-      {TokenType::TT_MINUS,         "TT_MINUS"},
-      {TokenType::TT_PERCENT,       "TT_PERCENT"},
-      {TokenType::TT_PLUS,          "TT_PLUS"},
-      {TokenType::TT_STAR,          "TT_STAR"},
-      {TokenType::TT_LT,            "TT_LT"},
-      {TokenType::TT_GT,            "TT_GT"},
-      {TokenType::TT_EQUAL,         "TT_EQUAL"},
-      {TokenType::TT_IDENTIFIER,    "TT_IDENTIFIER"},
-      {TokenType::TT_INT_LITERAL,   "TT_INT_LITERAL"},
-      {TokenType::TT_SEMI,          "TT_SEMI"},
-  };
-  // clang-format on
+  [[nodiscard]] static AssociativityMap get_associativity_str_map() noexcept {
+    // clang-format off
+    static const AssociativityMap associativity_str{
+        {Associativity::LEFT,  "LEFT"},
+        {Associativity::RIGHT, "RIGHT"}
+    };
+    // clang-format on
 
-  // clang-format off
+    return associativity_str;
+  }
+
+  //! @brief Map from token types to printable strings.
+  [[nodiscard]] static TokenStrMap get_token_str_map() noexcept {
+    // clang-format off
+    static const TokenStrMap token_str{
+        {TokenType::TT_ELSE,          "TT_ELSE"},
+        {TokenType::TT_EXIT,          "TT_EXIT"},
+        {TokenType::TT_IF,            "TT_IF"},
+        {TokenType::TT_ELIF,          "TT_ELIF"},
+        {TokenType::TT_LET,           "TT_LET"},
+        {TokenType::TT_LEFT_CURLY,    "TT_LEFT_CURLY"},
+        {TokenType::TT_LEFT_PAREN,    "TT_LEFT_PAREN"},
+        {TokenType::TT_RIGHT_CURLY,   "TT_RIGHT_CURLY"},
+        {TokenType::TT_RIGHT_PAREN,   "TT_RIGHT_PAREN"},
+        {TokenType::TT_DOUBLE_CARET,  "TT_DOUBLE_CARET"},
+        {TokenType::TT_FORWARD_SLASH, "TT_FORWARD_SLASH"},
+        {TokenType::TT_MINUS,         "TT_MINUS"},
+        {TokenType::TT_PERCENT,       "TT_PERCENT"},
+        {TokenType::TT_PLUS,          "TT_PLUS"},
+        {TokenType::TT_STAR,          "TT_STAR"},
+        {TokenType::TT_LT,            "TT_LT"},
+        {TokenType::TT_GT,            "TT_GT"},
+        {TokenType::TT_EQUAL,         "TT_EQUAL"},
+        {TokenType::TT_IDENTIFIER,    "TT_IDENTIFIER"},
+        {TokenType::TT_INT_LITERAL,   "TT_INT_LITERAL"},
+        {TokenType::TT_SEMI,          "TT_SEMI"},
+    };
+    // clang-format on
+
+    return token_str;
+  }
+
   //! @brief Bidirectional map between token strings and token types
-  static const inline boost::bimap<std::string, TokenType> s_token_lookup =
-      make_bimap<std::string, TokenType>({{"else", TokenType::TT_ELSE},
-                                          {"exit", TokenType::TT_EXIT},
-                                          {"if",   TokenType::TT_IF},
-                                          {"elif", TokenType::TT_ELIF},
-                                          {"let",  TokenType::TT_LET},
-                                          {"{",    TokenType::TT_LEFT_CURLY},
-                                          {"(",    TokenType::TT_LEFT_PAREN},
-                                          {"}",    TokenType::TT_RIGHT_CURLY},
-                                          {")",    TokenType::TT_RIGHT_PAREN},
-                                          {"^^",   TokenType::TT_DOUBLE_CARET},
-                                          {"/",    TokenType::TT_FORWARD_SLASH},
-                                          {"-",    TokenType::TT_MINUS},
-                                          {"%",    TokenType::TT_PERCENT},
-                                          {"+",    TokenType::TT_PLUS},
-                                          {"*",    TokenType::TT_STAR},
-                                          {"<",    TokenType::TT_LT},
-                                          {">",    TokenType::TT_GT},
-                                          {"=",    TokenType::TT_EQUAL},
-                                          {";",    TokenType::TT_SEMI},
-        });
-  // clang-format on
+  [[nodiscard]] static TokenBimap get_token_bimap() noexcept {
+    // clang-format off
+    static const TokenBimap token_lookup =
+        make_bimap<std::string, TokenType>({{"else", TokenType::TT_ELSE},
+                                            {"exit", TokenType::TT_EXIT},
+                                            {"if",   TokenType::TT_IF},
+                                            {"elif", TokenType::TT_ELIF},
+                                            {"let",  TokenType::TT_LET},
+                                            {"{",    TokenType::TT_LEFT_CURLY},
+                                            {"(",    TokenType::TT_LEFT_PAREN},
+                                            {"}",    TokenType::TT_RIGHT_CURLY},
+                                            {")",    TokenType::TT_RIGHT_PAREN},
+                                            {"^^",   TokenType::TT_DOUBLE_CARET},
+                                            {"/",    TokenType::TT_FORWARD_SLASH},
+                                            {"-",    TokenType::TT_MINUS},
+                                            {"%",    TokenType::TT_PERCENT},
+                                            {"+",    TokenType::TT_PLUS},
+                                            {"*",    TokenType::TT_STAR},
+                                            {"<",    TokenType::TT_LT},
+                                            {">",    TokenType::TT_GT},
+                                            {"=",    TokenType::TT_EQUAL},
+                                            {";",    TokenType::TT_SEMI},
+          });
+    // clang-format on
 
-  // clang-format off
+    return token_lookup;
+  }
+
   //! @brief Map from token types to printable strings.
-  static const inline std::unordered_map<TokenType,
-                                         std::pair<uint8_t, Associativity>>
-      s_bin_expr_properties{
-          {TokenType::TT_DOUBLE_CARET,  {3, Associativity::RIGHT}},
-          {TokenType::TT_STAR,          {2, Associativity::LEFT}},
-          {TokenType::TT_FORWARD_SLASH, {2, Associativity::LEFT}},
-          {TokenType::TT_PERCENT,       {2, Associativity::LEFT}},
-          {TokenType::TT_PLUS,          {1, Associativity::LEFT}},
-          {TokenType::TT_MINUS,         {1, Associativity::LEFT}},
-          {TokenType::TT_LT,            {0, Associativity::LEFT}},
-          {TokenType::TT_GT,            {0, Associativity::LEFT}},
-      };
-  // clang-format on
+  [[nodiscard]] static BinExprMap get_bin_expr_properties_map() noexcept {
+    // clang-format off
+    static const BinExprMap
+        bin_expr_properties{
+            {TokenType::TT_DOUBLE_CARET,  {3, Associativity::RIGHT}},
+            {TokenType::TT_STAR,          {2, Associativity::LEFT}},
+            {TokenType::TT_FORWARD_SLASH, {2, Associativity::LEFT}},
+            {TokenType::TT_PERCENT,       {2, Associativity::LEFT}},
+            {TokenType::TT_PLUS,          {1, Associativity::LEFT}},
+            {TokenType::TT_MINUS,         {1, Associativity::LEFT}},
+            {TokenType::TT_LT,            {0, Associativity::LEFT}},
+            {TokenType::TT_GT,            {0, Associativity::LEFT}},
+        };
+    // clang-format on
+
+    return bin_expr_properties;
+  }
 };
 
 class TokenFactory {

@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include <pimento/tokens.hpp>
 #include <variant>
 #include <vector>
+
+#include <pimento/tokens.hpp>
 
 namespace pimento::ast::node {
 
