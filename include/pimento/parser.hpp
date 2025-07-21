@@ -25,7 +25,7 @@ public:
   void parse() {
     while (peek(m_index).has_value()) {
       std::unique_ptr<node::StmtNode> stmt = parse_statement();
-      prog.statements.emplace_back(std::move(stmt));
+      m_prog.statements.emplace_back(std::move(stmt));
 
       // switch (current_token.token_type) {
       // case tokenization::TokenType::TT_ELSE: {
@@ -152,6 +152,10 @@ public:
       //                  current_token.token_type));
       // consume();
     }
+  }
+
+  [[nodiscard]] const node::ProgNode &get_program() const noexcept {
+    return m_prog;
   }
 
 private:
@@ -497,65 +501,6 @@ private:
   }
 
   // TODO(lthomas): Fill out this function body.
-  //! @brief Parse a binary expression into the AST.
-  //! @return std::unique_ptr<node::BinExprNode> The binary expression node of
-  //! the AST.
-  std::unique_ptr<node::BinExprNode> parse_bin_expression() {
-    auto &logger = utils::get_logger();
-    logger.error("Expected binexpr at TODO Line & Column number");
-    exit(EXIT_FAILURE);
-
-    std::unique_ptr<node::ExprNode> expr = std::make_unique<node::ExprNode>();
-    std::unique_ptr<node::TermNode> term_lhs = parse_term();
-
-    // while (auto next = try_consume()) {
-    //   tokenization::Token current_token = next.value();
-
-    //   switch (current_token.token_type) {
-    //   // Parse format ident;
-    //   case tokenization::TokenType::TT_DOUBLE_CARET: {
-    //     std::unique_ptr<node::BinExprPowerNode> bin_expr =
-    //         parse_bin_expression();
-    //     expr->node = std::make_unique<node::BinExprNode>();
-    //     break;
-    //   }
-    //   // Parse format int_lit
-    //   case tokenization::TokenType::TT_PERCENT: {
-    //     std::unique_ptr<node::BinExprModNode> bin_expr =
-    //     parse_bin_expression(); expr->node =
-    //     std::make_unique<node::BinExprNode>(); break;
-    //   }
-    //   // Parse format ident = ([Expr]);
-    //   case tokenization::TokenType::TT_STAR: {
-    //     std::unique_ptr<node::BinExprMulNode> bin_expr =
-    //     parse_bin_expression(); expr->node =
-    //     std::make_unique<node::BinExprNode>(); break;
-    //   }
-    //   // Parse format ident = ([Expr]);
-    //   case tokenization::TokenType::TT_FORWARD_SLASH: {
-    //     std::unique_ptr<node::BinExprDivNode> bin_expr =
-    //     parse_bin_expression(); expr->node =
-    //     std::make_unique<node::BinExprNode>(); break;
-    //   }
-    //   // Parse format ident = ([Expr]);
-    //   case tokenization::TokenType::TT_PLUS: {
-    //     std::unique_ptr<node::BinExprPlusNode> bin_expr =
-    //         parse_bin_expression();
-    //     expr->node = std::make_unique<node::BinExprNode>();
-    //     break;
-    //   }
-    //   // Parse format ident = ([Expr]);
-    //   case tokenization::TokenType::TT_MINUS: {
-    //     std::unique_ptr<node::BinExprMinusNode> bin_expr =
-    //         parse_bin_expression();
-    //     expr->node = std::make_unique<node::BinExprNode>();
-    //     break;
-    //   }
-    //   }
-    // }
-  }
-
-  // TODO(lthomas): Fill out this function body.
   //! @brief Parse a term into the AST.
   //! @return std::unique_ptr<node::TermNode> The term node of the AST.
   std::unique_ptr<node::TermNode> parse_term() {
@@ -603,7 +548,7 @@ private:
   //! @brief The tokens to parse.
   const std::vector<tokenization::Token> m_tokens;
   //! @brief The root node of the ast
-  node::ProgNode prog;
+  node::ProgNode m_prog;
 };
 
 } // namespace pimento::ast

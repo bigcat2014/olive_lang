@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <iostream>
 #include <optional>
+#include <pimento/generator.hpp>
 #include <pimento/lexer.hpp>
 #include <pimento/parser.hpp>
 #include <pimento/utils.hpp>
@@ -76,6 +77,9 @@ int main(int argc, char *argv[]) {
 
   pimento::ast::Parser parser(lexer.tokens());
   parser.parse();
+
+  pimento::generation::Generator generator(parser.get_program());
+  generator.generate();
 
   return EXIT_SUCCESS;
 }
