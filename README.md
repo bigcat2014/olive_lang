@@ -106,7 +106,6 @@ From the root of the project, run the following command:
 - Precedence climbing for order of operations not currently working quite right.
 - If building with Clang >= 14, you need valgrind >= 3.20 in order to run the memcheck unit tests.
     - https://bugs.kde.org/show_bug.cgi?id=452758
-- Coverage not currently working with Clang.
 
 # Grammar
 ## Subject to change
