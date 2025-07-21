@@ -1,22 +1,23 @@
 cmake_minimum_required(VERSION 3.22)
 project(pimento)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors")
-if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-endif()
-
 set(${PROJECT_NAME}_MAJOR_VERSION 0)
 set(${PROJECT_NAME}_MINOR_VERSION 1)
 set(${PROJECT_NAME}_PATCH_VERSION 0)
 set(${PROJECT_NAME}_VERSION
     ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 
-include(FetchContent)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors")
+if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif()
+
+set(${PROJECT_NAME}_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Fetch argparse
+include(FetchContent)
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
@@ -36,15 +37,15 @@ set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.74.0 REQUIRED)
 
 # Utils library target
-add_library(${PROJECT_NAME}_utils
-src/utils.cpp)
+add_library(${PROJECT_NAME}_utils STATIC
+    src/utils.cpp)
 target_include_directories(${PROJECT_NAME}_utils PRIVATE
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME}_utils PRIVATE spdlog::spdlog_header_only)
 
 # Lexer library target
-add_library(${PROJECT_NAME}_lexer
+add_library(${PROJECT_NAME}_lexer STATIC
     src/lexer.cpp)
 target_include_directories(${PROJECT_NAME}_lexer PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -53,7 +54,7 @@ target_include_directories(${PROJECT_NAME}_lexer PRIVATE
 target_link_libraries(${PROJECT_NAME}_lexer PRIVATE ${PROJECT_NAME}_utils ${Boost_LIBRARIES})
 
 # Parser library target
-add_library(${PROJECT_NAME}_parser
+add_library(${PROJECT_NAME}_parser STATIC
     src/parser.cpp)
 target_include_directories(${PROJECT_NAME}_parser PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -61,7 +62,7 @@ target_include_directories(${PROJECT_NAME}_parser PRIVATE
 target_link_libraries(${PROJECT_NAME}_parser PRIVATE ${PROJECT_NAME}_lexer)
 
 # Generator library target
-add_library(${PROJECT_NAME}_generator
+add_library(${PROJECT_NAME}_generator STATIC
     src/generator.cpp)
 target_include_directories(${PROJECT_NAME}_generator PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -81,7 +82,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_
 
 if (BUILD_TESTING)
     enable_testing()
-    find_package(GTest REQUIRED)
+
+    set(${PROJECT_NAME}_TEST_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
 
     add_test(NAME ${PROJECT_NAME}_valgrind_file
         COMMAND valgrind
@@ -90,7 +92,7 @@ if (BUILD_TESTING)
         --leak-check=full
         --errors-for-leak-kinds=definite
         --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil
+        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
     add_test(NAME ${PROJECT_NAME}_valgrind_stdout
@@ -100,9 +102,26 @@ if (BUILD_TESTING)
         --leak-check=full
         --errors-for-leak-kinds=definite
         --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil --stdout
+        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --stdout
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
+    # Gcovr
+    list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
+    include(CodeCoverage)
+    append_coverage_compiler_flags()
+    set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
+    # Use llvm-cov gcov for Clang
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        find_program(LLVM_COV_PATH llvm-cov)
+        if(NOT LLVM_COV_PATH)
+            message(FATAL_ERROR "llvm-cov not found! Aborting...")
+        endif() # NOT LLVM_COV_PATH
+        list(APPEND GCOVR_ADDITIONAL_ARGS --gcov-executable "${LLVM_COV_PATH} gcov")
+    endif()
+    setup_target_for_coverage_gcovr_html(NAME coverage)
+
+    # GTest
+    find_package(GTest REQUIRED)
     add_executable(lexer_test
         tests/lexer_test.cpp)
     target_include_directories(lexer_test PRIVATE
@@ -120,7 +139,6 @@ if (BUILD_TESTING)
         ${Boost_INCLUDE_DIRS})
     target_link_libraries(parser_test PRIVATE ${PROJECT_NAME}_parser GTest::gtest_main)
     gtest_discover_tests(parser_test)
-
 endif()
 
 install(
@@ -137,10 +155,10 @@ export(EXPORT export_${PROJECT_NAME}
     FILE "${PROJECT_BINARY_DIR}/export_${PROJECT_NAME}.cmake")
 
 set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-configure_file(cmake/${PROJECT_NAME}Config.cmake.in
+configure_file(${${PROJECT_NAME}_CMAKE_DIR}/${PROJECT_NAME}Config.cmake.in
     "${PROJECT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake" @ONLY)
 
-configure_file(cmake/${PROJECT_NAME}ConfigVersion.cmake.in
+configure_file(${${PROJECT_NAME}_CMAKE_DIR}/${PROJECT_NAME}ConfigVersion.cmake.in
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" @ONLY)
 
 install(

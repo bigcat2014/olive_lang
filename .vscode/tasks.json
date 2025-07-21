@@ -26,13 +26,32 @@
 		{
 			"type": "shell",
 			"label": "CMake: Run Tests",
-			"command": "ctest",
+			"command": "ctest; exit 0", // Always exit 0 to allow future tasks to continue
 			"options": {
 				"cwd": "${workspaceFolder}/build"
 			},
 			"group": "none",
 			"problemMatcher": [],
-			"detail": "Run unit tests"
-		}
+			"detail": "Run unit tests",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"CMake: build"
+			]
+		},
+		{
+			"type": "cmake",
+			"label": "CMake: coverage",
+			"command": "build",
+			"targets": [
+				"coverage"
+			],
+			"group": "none",
+			"problemMatcher": [],
+			"detail": "CMake template coverage task",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"CMake: Run Tests"
+			]
+		},
 	]
 }
