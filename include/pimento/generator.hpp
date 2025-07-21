@@ -132,6 +132,7 @@ private:
       void
       operator()(const ast::node::IfPredElseNode *const ifpred_else) const {
         gen.m_output << "    ;; else\n";
+        gen.gen_scope(ifpred_else->scope);
         gen.m_output << "    ;; /else\n";
       }
     };

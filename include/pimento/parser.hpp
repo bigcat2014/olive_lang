@@ -339,10 +339,11 @@ private:
       try_consume(tokenization::TokenType::TT_ELIF);
       node::ExprNode *expression = parse_expression();
       node::ScopeNode *scope = parse_scope();
-      std::optional<node::IfPredNode *> if_pred = parse_ifpred();
+      std::optional<node::IfPredNode *> if_pred_elif = parse_ifpred();
       ifpred = new node::IfPredNode{
-          .node = new node::IfPredElifNode{
-              .expression = expression, .scope = scope, .ifpred = ifpred}};
+          .node = new node::IfPredElifNode{.expression = expression,
+                                           .scope = scope,
+                                           .ifpred = if_pred_elif}};
       break;
     }
     // Parse format int_lit
