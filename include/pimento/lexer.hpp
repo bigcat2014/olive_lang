@@ -83,18 +83,21 @@ class Lexer {
   }
 
  private:
-  //! @brief Peek at a character at an offset from the current character in the buffer.
+  //! @brief Peek at a character at an offset from the current character in the
+  //! buffer.
   //!
-  //! Peek at a character at an offset from the current character in the buffer. If attempting to peek out of bounds,
-  //! return whitespace.
+  //! Peek at a character at an offset from the current character in the buffer.
+  //! If attempting to peek out of bounds, return whitespace.
   //! @param current_index size_t The index of the current character in the
   //! buffer.
-  //! @param buffer const char* const The buffer from which to get the character.
+  //! @param buffer const char* const The buffer from which to get the
+  //! character.
   //! @param size size_t The length of the buffer.
   //! @param lookahead size_t Optional lookahead distance to peek.
-  //! @return char The character at `lookahead` offset from the current index or ` ` if attempting to peek out of bounds.
-  inline char peek(size_t current_index, const char* const buffer,
-                        size_t size, size_t lookahead = 1) const noexcept {
+  //! @return char The character at `lookahead` offset from the current index or
+  //! ` ` if attempting to peek out of bounds.
+  inline char peek(size_t current_index, const char* const buffer, size_t size,
+                   size_t lookahead = 1) const noexcept {
     return current_index + lookahead > size ? ' ' : buffer[current_index + 1];
   }
 
