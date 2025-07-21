@@ -6,59 +6,146 @@
 #include <sstream>
 #include <variant>
 
+#include "parser_test.hpp"
+
 #include <gtest/gtest.h>
 #include <pimento/parser.hpp>
 #include <pimento/tokens.hpp>
 
+using namespace pimento::ast;
+
 TEST(Parser, EmptyStream) {
   std::istringstream iss;
-  pimento::ast::Parser parser(iss);
+  Parser parser(iss);
 
   EXPECT_TRUE(parser.get_program().statements.empty());
 }
 
+TEST(Parser, StmtExit) {
+  std::istringstream iss{"exit(0);"};
+  Parser parser(iss);
+
+  ASSERT_EQ(parser.get_program().statements.size(), 1);
+  // Ensure node is "Statement Exit AST node"
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::StmtExitNode>>(
+      parser.get_program().statements[0]->node));
+  std::shared_ptr<node::StmtExitNode> stmt_exit_node =
+      std::get<std::shared_ptr<node::StmtExitNode>>(
+          parser.get_program().statements[0]->node);
+
+  // Check that the expression is correct
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
+      stmt_exit_node->expression->node));
+  std::shared_ptr<node::TermNode> term_node =
+      std::get<std::shared_ptr<node::TermNode>>(
+          stmt_exit_node->expression->node);
+
+  TEST_INT_LIT_TERM(term_node->node, 0);
+}
+
 TEST(Parser, StmtLet) {
   std::istringstream iss{"let x = 1;"};
-  pimento::ast::Parser parser(iss);
+  Parser parser(iss);
 
   ASSERT_EQ(parser.get_program().statements.size(), 1);
   // Ensure node is "Statement Let AST node"
-  ASSERT_TRUE(
-      std::holds_alternative<std::shared_ptr<pimento::ast::node::StmtLetNode>>(
-          parser.get_program().statements[0]->node));
-  std::shared_ptr<pimento::ast::node::StmtLetNode> stmt_let_node =
-      std::get<std::shared_ptr<pimento::ast::node::StmtLetNode>>(
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::StmtLetNode>>(
+      parser.get_program().statements[0]->node));
+  std::shared_ptr<node::StmtLetNode> stmt_let_node =
+      std::get<std::shared_ptr<node::StmtLetNode>>(
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-  EXPECT_EQ(stmt_let_node->identifier.token_type,
-            pimento::tokenization::TokenType::TT_IDENTIFIER);
-  ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IdentProperties>(
-      stmt_let_node->identifier.properties));
-  pimento::tokenization::IdentProperties ident_properties =
-      std::get<pimento::tokenization::IdentProperties>(
-          stmt_let_node->identifier.properties);
-  EXPECT_EQ(ident_properties.identifier, "x");
+  TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
-  ASSERT_TRUE(
-      std::holds_alternative<std::shared_ptr<pimento::ast::node::TermNode>>(
-          stmt_let_node->expression->node));
-  std::shared_ptr<pimento::ast::node::TermNode> term_node =
-      std::get<std::shared_ptr<pimento::ast::node::TermNode>>(
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
+      stmt_let_node->expression->node));
+  std::shared_ptr<node::TermNode> term_node =
+      std::get<std::shared_ptr<node::TermNode>>(
           stmt_let_node->expression->node);
-  ASSERT_TRUE(std::holds_alternative<
-              std::shared_ptr<pimento::ast::node::TermIntLitNode>>(
-      term_node->node));
-  std::shared_ptr<pimento::ast::node::TermIntLitNode> term_int_lit_node =
-      std::get<std::shared_ptr<pimento::ast::node::TermIntLitNode>>(
-          term_node->node);
-  EXPECT_EQ(term_int_lit_node->int_lit_token.token_type,
-            pimento::tokenization::TokenType::TT_INT_LITERAL);
-  ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IntLitProperties>(
-      term_int_lit_node->int_lit_token.properties));
-  pimento::tokenization::IntLitProperties int_lit_properties =
-      std::get<pimento::tokenization::IntLitProperties>(
-          term_int_lit_node->int_lit_token.properties);
-  EXPECT_EQ(int_lit_properties.value, 1);
+
+  TEST_INT_LIT_TERM(term_node->node, 1);
+}
+
+TEST(Parser, StmtAssign) {
+  std::istringstream iss{"x = 1;"};
+  Parser parser(iss);
+
+  ASSERT_EQ(parser.get_program().statements.size(), 1);
+  // Ensure node is "Statement Assign AST node"
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::StmtAssignNode>>(
+      parser.get_program().statements[0]->node));
+  std::shared_ptr<node::StmtAssignNode> stmt_assign_node =
+      std::get<std::shared_ptr<node::StmtAssignNode>>(
+          parser.get_program().statements[0]->node);
+
+  // Check the token type and properties are correct
+  TEST_IDENTIFIER_TOKEN(stmt_assign_node->identifier, "x");
+
+  // Check that the expression is correct
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
+      stmt_assign_node->expression->node));
+  std::shared_ptr<node::TermNode> term_node =
+      std::get<std::shared_ptr<node::TermNode>>(
+          stmt_assign_node->expression->node);
+
+  TEST_INT_LIT_TERM(term_node->node, 1);
+}
+
+TEST(Parser, StmtIf) {
+  std::istringstream iss{"if 0 {\n    let x = 1;\n}"};
+  Parser parser(iss);
+
+  ASSERT_EQ(parser.get_program().statements.size(), 1);
+  // Ensure node is "Statement If AST node"
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::StmtIfNode>>(
+      parser.get_program().statements[0]->node));
+  std::shared_ptr<node::StmtIfNode> stmt_if_node =
+      std::get<std::shared_ptr<node::StmtIfNode>>(
+          parser.get_program().statements[0]->node);
+
+  // Check that the expression is correct
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
+      stmt_if_node->expression->node));
+  std::shared_ptr<node::TermNode> term_node =
+      std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
+
+  TEST_INT_LIT_TERM(term_node->node, 0);
+
+  EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
+  EXPECT_FALSE(stmt_if_node->ifpred.has_value());
+}
+
+TEST(Parser, Scope) {
+  std::istringstream iss{"{\n    let x = 1;\n}"};
+  Parser parser(iss);
+
+  ASSERT_EQ(parser.get_program().statements.size(), 1);
+  // Ensure node is "Scope AST node"
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::ScopeNode>>(
+      parser.get_program().statements[0]->node));
+  std::shared_ptr<node::ScopeNode> scope_node =
+      std::get<std::shared_ptr<node::ScopeNode>>(
+          parser.get_program().statements[0]->node);
+
+  ASSERT_EQ(scope_node->statements.size(), 1);
+  // Ensure node is "Statement Let AST node"
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::StmtLetNode>>(
+      scope_node->statements[0]->node));
+  std::shared_ptr<node::StmtLetNode> stmt_let_node =
+      std::get<std::shared_ptr<node::StmtLetNode>>(
+          scope_node->statements[0]->node);
+
+  // Check the token type and properties are correct
+  TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+
+  // Check that the expression is correct
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
+      stmt_let_node->expression->node));
+  std::shared_ptr<node::TermNode> term_node =
+      std::get<std::shared_ptr<node::TermNode>>(
+          stmt_let_node->expression->node);
+
+  TEST_INT_LIT_TERM(term_node->node, 1);
 }
