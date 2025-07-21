@@ -3,19 +3,43 @@
 - cmake
 - libspdlog-dev
 - libboost-dev
+## Building unit tests
 - libgtest-dev
+- valgrind (See [known issues](#known-issues))
 
 ## CMake Configuration
 ### Debug
-From the root of the project run
+From the root of the project run the following command, replacing the compiler filepaths with your desired compiler.
 ```bash
-cmake -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_INSTALL_PREFIX:STRING=./install -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON --no-warn-unused-cli -S. -Bbuild -G Ninja
+cmake \
+    -DCMAKE_BUILD_TYPE:STRING=Debug \
+    -DCMAKE_INSTALL_PREFIX:STRING=./install \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE \
+    -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 \
+    -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 \
+    --no-warn-unused-cli \
+    -G Ninja \
+    -S. -Bbuild
 ```
 
 ### Release
-From the root of the project run
+From the root of the project run the following command, replacing the compiler filepaths with your desired compiler.
 ```bash
-cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_INSTALL_PREFIX:STRING=./install -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON --no-warn-unused-cli -S. -Bbuild -G Ninja
+cmake \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DCMAKE_INSTALL_PREFIX:STRING=./install \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE \
+    -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 \
+    -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 \
+    --no-warn-unused-cli \
+    -G Ninja \
+    -S. -Bbuild
+```
+
+### Building unit tests
+Add the following option to one of the above configuration commands.
+```bash
+-DBUILD_TESTING:BOOL=TRUE
 ```
 
 ## Building
@@ -54,14 +78,19 @@ ctest -V
 ### Not Installed
 From the root of the project, run the following command:
 ```bash
-./build/pimento
+./build/pimento --help
 ```
 
 ### Installed
 From the root of the project, run the following command:
 ```bash
-./install/bin/pimento
+./install/bin/pimento --help
 ```
+
+## Known Issues
+- Currently, precedence climbing for order of operations is not working quite right.
+- If building with Clang >= 14, you need valgrind >= 3.20 in order to run the memcheck unit tests.
+    - https://bugs.kde.org/show_bug.cgi?id=452758
 
 # Grammar
 ## Subject to change

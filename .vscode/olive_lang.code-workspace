@@ -13,8 +13,7 @@
 		"cmake.configureOnOpen": true,
 		"cmake.parallelJobs": 24,
 		"cmake.configureArgs": [
-			"-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-			"-DBUILD_TESTING=ON",
+			"-DBUILD_TESTING:BOOL=TRUE",
 			// "-DCMAKE_VERBOSE_MAKEFILE=ON"
 		],
 		"[c]": {
