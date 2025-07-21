@@ -199,7 +199,7 @@ private:
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
         node::BinExprPowerNode *bin_expr = new node::BinExprPowerNode{
-            .left = lhs, .right = parse_expression()};
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -215,8 +215,8 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprModNode *bin_expr =
-            new node::BinExprModNode{.left = lhs, .right = parse_expression()};
+        node::BinExprModNode *bin_expr = new node::BinExprModNode{
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -232,8 +232,8 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprMulNode *bin_expr =
-            new node::BinExprMulNode{.left = lhs, .right = parse_expression()};
+        node::BinExprMulNode *bin_expr = new node::BinExprMulNode{
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -249,8 +249,8 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprDivNode *bin_expr =
-            new node::BinExprDivNode{.left = lhs, .right = parse_expression()};
+        node::BinExprDivNode *bin_expr = new node::BinExprDivNode{
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -266,8 +266,8 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprPlusNode *bin_expr =
-            new node::BinExprPlusNode{.left = lhs, .right = parse_expression()};
+        node::BinExprPlusNode *bin_expr = new node::BinExprPlusNode{
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -284,7 +284,7 @@ private:
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
         node::BinExprMinusNode *bin_expr = new node::BinExprMinusNode{
-            .left = lhs, .right = parse_expression()};
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -301,7 +301,7 @@ private:
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
         node::BinExprLessThanNode *bin_expr = new node::BinExprLessThanNode{
-            .left = lhs, .right = parse_expression()};
+            .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
@@ -318,8 +318,8 @@ private:
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
         node::BinExprGreaterThanNode *bin_expr =
-            new node::BinExprGreaterThanNode{.left = lhs,
-                                             .right = parse_expression()};
+            new node::BinExprGreaterThanNode{
+                .left = lhs, .right = parse_expression(next_prec)};
         expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }

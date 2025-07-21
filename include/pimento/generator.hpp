@@ -37,16 +37,13 @@ private:
       Generator &gen;
 
       void operator()(const ast::node::StmtExitNode *const stmt_node) const {
-        gen.m_output << "    ;; exit\n";
         gen.gen_expression(stmt_node->expression);
         gen.m_output << "    mov rax, 60\n";
         gen.pop("rdi");
         gen.m_output << "    syscall\n";
-        gen.m_output << "    ;; /exit\n";
       }
 
       void operator()(const ast::node::StmtLetNode *const stmt_node) const {
-        gen.m_output << "    ;; let\n";
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match{false};
@@ -59,13 +56,13 @@ private:
                 void operator()(tokenization::IdentProperties properties) {
                   match = properties.identifier == name;
                 }
-                void operator()(tokenization::BinOpProperties properties) {
+                void operator()(tokenization::BinOpProperties) {
                   match = false;
                 }
-                void operator()(tokenization::IntLitProperties properties) {
+                void operator()(tokenization::IntLitProperties) {
                   match = false;
                 }
-                void operator()(std::monostate properties) { match = false; }
+                void operator()(std::monostate) { match = false; }
               };
 
               std::visit(TokenVisitor{.match = match, .name = var.name},
@@ -82,9 +79,9 @@ private:
             void operator()(tokenization::IdentProperties properties) {
               oss << properties.identifier;
             }
-            void operator()(tokenization::BinOpProperties properties) {}
-            void operator()(tokenization::IntLitProperties properties) {}
-            void operator()(std::monostate properties) {}
+            void operator()(tokenization::BinOpProperties) {}
+            void operator()(tokenization::IntLitProperties) {}
+            void operator()(std::monostate) {}
           };
 
           std::visit(TokenVisitor(oss), stmt_node->identifier.properties);
@@ -102,20 +99,18 @@ private:
           void operator()(tokenization::IdentProperties properties) {
             m_vars.emplace_back(properties.identifier, stack_size);
           }
-          void operator()(tokenization::BinOpProperties properties) {}
-          void operator()(tokenization::IntLitProperties properties) {}
-          void operator()(std::monostate properties) {}
+          void operator()(tokenization::BinOpProperties) {}
+          void operator()(tokenization::IntLitProperties) {}
+          void operator()(std::monostate) {}
         };
 
         std::visit(TokenVisitor(gen.m_vars, gen.m_stack_size),
                    stmt_node->identifier.properties);
 
         gen.gen_expression(stmt_node->expression);
-        gen.m_output << "    ;; /let\n";
       }
 
       void operator()(const ast::node::StmtAssignNode *const stmt_node) const {
-        gen.m_output << "    ;; assign\n";
         gen.gen_expression(stmt_node->expression);
 
         const auto it = std::ranges::find_if(
@@ -130,13 +125,13 @@ private:
                 void operator()(tokenization::IdentProperties properties) {
                   match = properties.identifier == name;
                 }
-                void operator()(tokenization::BinOpProperties properties) {
+                void operator()(tokenization::BinOpProperties) {
                   match = false;
                 }
-                void operator()(tokenization::IntLitProperties properties) {
+                void operator()(tokenization::IntLitProperties) {
                   match = false;
                 }
-                void operator()(std::monostate properties) { match = false; }
+                void operator()(std::monostate) { match = false; }
               };
 
               std::visit(TokenVisitor{.match = match, .name = var.name},
@@ -153,9 +148,9 @@ private:
             void operator()(tokenization::IdentProperties properties) {
               oss << properties.identifier;
             }
-            void operator()(tokenization::BinOpProperties properties) {}
-            void operator()(tokenization::IntLitProperties properties) {}
-            void operator()(std::monostate properties) {}
+            void operator()(tokenization::BinOpProperties) {}
+            void operator()(tokenization::IntLitProperties) {}
+            void operator()(std::monostate) {}
           };
 
           std::visit(TokenVisitor(oss), stmt_node->identifier.properties);
@@ -170,8 +165,6 @@ private:
         gen.m_output << "    mov [rsp + "
                      << (gen.m_stack_size - it->stack_loc - 1) * 8
                      << "], rax\n";
-
-        gen.m_output << "    ;; /assign\n";
       }
 
       void operator()(const ast::node::ScopeNode *const stmt_node) const {
@@ -181,7 +174,6 @@ private:
       }
 
       void operator()(const ast::node::StmtIfNode *const stmt_node) const {
-        gen.m_output << "    ;; if\n";
 
         gen.gen_expression(stmt_node->expression);
         gen.pop("rax");
@@ -200,7 +192,6 @@ private:
         } else {
           gen.m_output << label << ":\n";
         }
-        gen.m_output << "    ;; /if\n";
       }
     };
 
@@ -213,15 +204,11 @@ private:
       Generator &gen;
 
       void operator()(const ast::node::TermNode *const term) const {
-        gen.m_output << "    ;; term\n";
         gen.gen_term(term);
-        gen.m_output << "    ;; /term\n";
       }
 
       void operator()(const ast::node::BinExprNode *const bin_expr) const {
-        gen.m_output << "    ;; binexpr\n";
         gen.gen_bin_expr(bin_expr);
-        gen.m_output << "    ;; /binexpr\n";
       }
     };
 
@@ -231,11 +218,9 @@ private:
 
   void gen_scope(const ast::node::ScopeNode *const scope) noexcept {
     for (const auto stmt : scope->statements) {
-      m_output << "    ;; scope\n";
       begin_scope();
       gen_statement(stmt);
       end_scope();
-      m_output << "    ;; /scope\n";
     }
   }
 
@@ -247,7 +232,6 @@ private:
 
       void
       operator()(const ast::node::IfPredElifNode *const ifpred_elif) const {
-        gen.m_output << "    ;; elif\n";
 
         gen.gen_expression(ifpred_elif->expression);
         gen.pop("rax");
@@ -258,7 +242,6 @@ private:
         gen.m_output << "    jz " << label << "\n";
         gen.gen_scope(ifpred_elif->scope);
         gen.m_output << "    jmp " << end_label << "\n";
-        gen.m_output << "    ;; /elif\n";
         gen.m_output << label << ":\n";
         if (ifpred_elif->ifpred.has_value()) {
           gen.gen_ifpred(ifpred_elif->ifpred.value(), end_label);
@@ -267,9 +250,7 @@ private:
 
       void
       operator()(const ast::node::IfPredElseNode *const ifpred_else) const {
-        gen.m_output << "    ;; else\n";
         gen.gen_scope(ifpred_else->scope);
-        gen.m_output << "    ;; /else\n";
       }
     };
 
@@ -282,25 +263,22 @@ private:
       Generator &gen;
 
       void operator()(const ast::node::TermIntLitNode *const int_lit) const {
-        gen.m_output << "    ;; int_lit\n";
         // TODO(lthomas): Probably a cleaner way to do this... Refactor later
         struct TokenVisitor {
           Generator &gen;
-          void operator()(tokenization::IdentProperties properties) {}
-          void operator()(tokenization::BinOpProperties properties) {}
+          void operator()(tokenization::IdentProperties) {}
+          void operator()(tokenization::BinOpProperties) {}
           void operator()(tokenization::IntLitProperties properties) {
             gen.m_output << "    mov rax, " << properties.value << "\n";
             gen.push("rax");
           }
-          void operator()(std::monostate properties) {}
+          void operator()(std::monostate) {}
         };
 
         std::visit(TokenVisitor(gen), int_lit->int_lit_token.properties);
-        gen.m_output << "    ;; /int_lit\n";
       }
 
       void operator()(const ast::node::TermIdentNode *const ident) const {
-        gen.m_output << "    ;; ident\n";
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match = false;
@@ -313,13 +291,13 @@ private:
                 void operator()(tokenization::IdentProperties properties) {
                   match = properties.identifier == name;
                 }
-                void operator()(tokenization::BinOpProperties properties) {
+                void operator()(tokenization::BinOpProperties) {
                   match = false;
                 }
-                void operator()(tokenization::IntLitProperties properties) {
+                void operator()(tokenization::IntLitProperties) {
                   match = false;
                 }
-                void operator()(std::monostate properties) { match = false; }
+                void operator()(std::monostate) { match = false; }
               };
 
               std::visit(TokenVisitor{.match = match, .name = var.name},
@@ -336,9 +314,9 @@ private:
             void operator()(tokenization::IdentProperties properties) {
               oss << properties.identifier;
             }
-            void operator()(tokenization::BinOpProperties properties) {}
-            void operator()(tokenization::IntLitProperties properties) {}
-            void operator()(std::monostate properties) {}
+            void operator()(tokenization::BinOpProperties) {}
+            void operator()(tokenization::IntLitProperties) {}
+            void operator()(std::monostate) {}
           };
 
           std::visit(TokenVisitor(oss), ident->identifier_token.properties);
@@ -353,13 +331,10 @@ private:
         offset << "QWORD [rsp + " << (gen.m_stack_size - it->stack_loc - 1) * 8
                << "]";
         gen.push(offset.str());
-        gen.m_output << "    ;; /ident\n";
       }
 
       void operator()(const ast::node::TermExprNode *const expr) const {
-        gen.m_output << "    ;; expr\n";
         gen.gen_expression(expr->expression);
-        gen.m_output << "    ;; /expr\n";
       }
     };
 
@@ -372,7 +347,6 @@ private:
       Generator &gen;
 
       void operator()(const ast::node::BinExprPowerNode *const node) const {
-        gen.m_output << "    ;; power\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
 
@@ -393,66 +367,54 @@ private:
         gen.m_output << "    mov rax, 1\n";
         gen.m_output << end_label << ":\n";
         gen.push("rax");
-        gen.m_output << "    ;; /power\n";
       }
 
       void operator()(const ast::node::BinExprModNode *const node) const {
-        gen.m_output << "    ;; mod\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    div rbx\n";
         gen.push("rdx");
-        gen.m_output << "    ;; /mod\n";
       }
 
       void operator()(const ast::node::BinExprMulNode *const node) const {
-        gen.m_output << "    ;; multiply\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    mul rbx\n";
         gen.push("rax");
-        gen.m_output << "    ;; /multiply\n";
       }
 
       void operator()(const ast::node::BinExprDivNode *const node) const {
-        gen.m_output << "    ;; divide\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    div rbx\n";
         gen.push("rax");
-        gen.m_output << "    ;; /divide\n";
       }
 
       void operator()(const ast::node::BinExprPlusNode *const node) const {
-        gen.m_output << "    ;; add\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    add rax, rbx\n";
         gen.push("rax");
-        gen.m_output << "    ;; /add\n";
       }
 
       void operator()(const ast::node::BinExprMinusNode *const node) const {
-        gen.m_output << "    ;; subtract\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
         gen.pop("rax");
         gen.pop("rbx");
         gen.m_output << "    sub rax, rbx\n";
         gen.push("rax");
-        gen.m_output << "    ;; /subtract\n";
       }
 
       void operator()(const ast::node::BinExprLessThanNode *const node) const {
-        gen.m_output << "    ;; less than\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
 
@@ -469,12 +431,10 @@ private:
         gen.m_output << "    mov rax, 1\n";
         gen.m_output << end_label << ":\n";
         gen.push("rax");
-        gen.m_output << "    ;; /less than\n";
       }
 
       void
       operator()(const ast::node::BinExprGreaterThanNode *const node) const {
-        gen.m_output << "    ;; greater than\n";
         gen.gen_expression(node->right);
         gen.gen_expression(node->left);
 
@@ -491,7 +451,6 @@ private:
         gen.m_output << "    mov rax, 1\n";
         gen.m_output << end_label << ":\n";
         gen.push("rax");
-        gen.m_output << "    ;; /greater than\n";
       }
     };
 
