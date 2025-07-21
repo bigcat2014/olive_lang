@@ -17,22 +17,22 @@ namespace pimento::utils {
 
 //! @brief Gets the global logger.
 //! @return spdlog::logger& Global logger.
-spdlog::logger& getLogger() {
+spdlog::logger& get_logger() {
   static auto logger = spdlog::stderr_color_mt("pimento");
   return *logger;
 }
 
 //! @brief Configures the logger.
 //! @param level The log level to configure the logger with.
-void configureLogger(spdlog::level::level_enum level) {
-  getLogger().set_level(level);
+void configure_logger(spdlog::level::level_enum level) {
+  get_logger().set_level(level);
 }
 
 //! @brief Expands `~` and environment variables in input path.
 //! @param inputPath The file path in which to expand the variables.
 //! @return std::filesystem::path The file path with variables expanded.
-std::filesystem::path expandVars(const std::string& inputPath) {
-  auto logger = getLogger();
+std::filesystem::path expand_vars(const std::string& inputPath) {
+  auto& logger = get_logger();
 
   std::string path = inputPath;
 
@@ -88,11 +88,11 @@ std::filesystem::path expandVars(const std::string& inputPath) {
 //! `.oil` extension.
 //! @param inputPath The file path to sanitize.
 //! @return std::optional<std::filesystem::path> The sanitized path.
-std::optional<std::filesystem::path> sanitizePath(
+std::optional<std::filesystem::path> sanitize_path(
     const std::string& inputPath) {
-  auto logger = getLogger();
+  auto& logger = get_logger();
 
-  std::filesystem::path resolvedPath = expandVars(inputPath);
+  std::filesystem::path resolvedPath = expand_vars(inputPath);
   try {
     resolvedPath = std::filesystem::canonical(resolvedPath);
 

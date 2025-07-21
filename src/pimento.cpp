@@ -42,19 +42,19 @@ int main(int argc, char* argv[]) {
 
   // Set log level based on flags
   if (program.get<bool>("--debug")) {
-    pimento::utils::configureLogger(spdlog::level::debug);
+    pimento::utils::configure_logger(spdlog::level::debug);
   } else if (program.get<bool>("--verbose")) {
-    pimento::utils::configureLogger(spdlog::level::info);
+    pimento::utils::configure_logger(spdlog::level::info);
   } else {
-    pimento::utils::configureLogger(spdlog::level::warn);
+    pimento::utils::configure_logger(spdlog::level::warn);
   }
 
-  auto logger = pimento::utils::getLogger();
+  auto& logger = pimento::utils::get_logger();
 
   std::string fileStr = program.get<std::string>("file");
   logger.debug("Input file path: {}", fileStr);
 
-  auto resolvedPath = pimento::utils::sanitizePath(fileStr);
+  auto resolvedPath = pimento::utils::sanitize_path(fileStr);
   if (!resolvedPath.has_value()) {
     return EXIT_FAILURE;
   }
