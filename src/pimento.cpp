@@ -16,11 +16,48 @@ spdlog::logger& getLogger() {
   return *logger;
 }
 
+void configureLogger(spdlog::level::level_enum level) {
+  getLogger().set_level(level);
+}
+
+std::filesystem::path expandUserHome(const std::string& path) {
+  auto logger = getLogger();
+
+  if (!path.empty() && path[0] == '~') {
+#ifdef _WIN32
+    const char* home = std::getenv("USERPROFILE");
+#else
+    const char* home = std::getenv("HOME");
+#endif
+    if (!home) {
+      throw std::runtime_error("Unable to determine home directory.");
+    }
+
+    std::filesystem::path expanded = std::filesystem::path(home);
+    logger.debug("Expanded '~' to home: {}", expanded.string());
+
+    if (path == "~") {
+      return expanded;
+    } else if (path[1] == '/') {
+      std::filesystem::path subPath = path.substr(2);  // strip "~/" prefix
+      expanded = expanded / subPath;
+      logger.debug("Expanded entire path to: {}", expanded.string());
+      return expanded;
+    } else {
+      throw std::runtime_error(
+          "Unsupported ~ expansion (e.g. ~username is not supported).");
+    }
+  }
+
+  return std::filesystem::path(path);
+}
+
 std::optional<std::filesystem::path> sanitizePath(const std::string& path) {
   auto logger = getLogger();
-  std::filesystem::path resolvedPath;
+
+  std::filesystem::path resolvedPath = expandUserHome(path);
   try {
-    resolvedPath = std::filesystem::canonical(path);
+    resolvedPath = std::filesystem::canonical(resolvedPath);
 
     if (!std::filesystem::exists(resolvedPath)) {
       logger.error("File does not exist: {}", resolvedPath.string());
@@ -70,18 +107,20 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  auto logger = getLogger();
   // Set log level based on flags
   if (program.get<bool>("--debug")) {
-    logger.set_level(spdlog::level::debug);
+    configureLogger(spdlog::level::debug);
   } else if (program.get<bool>("--verbose")) {
-    logger.set_level(spdlog::level::info);
+    configureLogger(spdlog::level::info);
   } else {
-    logger.set_level(spdlog::level::warn);
+    configureLogger(spdlog::level::warn);
   }
+
+  auto logger = getLogger();
 
   std::string fileStr = program.get<std::string>("file");
   logger.debug("Input file path: {}", fileStr);
+
   auto resolvedPath = sanitizePath(fileStr);
   if (!resolvedPath.has_value()) {
     return EXIT_FAILURE;
