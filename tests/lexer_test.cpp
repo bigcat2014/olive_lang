@@ -303,6 +303,18 @@ TEST(Lexer, TT_SEMI) {
       std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
+TEST(Lexer, TT_WHILE) {
+  const std::shared_ptr<std::istringstream> iss =
+      std::make_shared<std::istringstream>("while");
+  pimento::tokenization::Lexer lexer(iss);
+
+  ASSERT_FALSE(lexer.tokens().empty());
+  EXPECT_EQ(lexer.tokens()[0].token_type,
+            pimento::tokenization::TokenType::TT_WHILE);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
+}
+
 TEST(Lexer, TT_INT_LITERAL) {
   const std::shared_ptr<std::istringstream> iss =
       std::make_shared<std::istringstream>("123456");

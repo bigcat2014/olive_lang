@@ -1,8 +1,8 @@
-let x = 255;
+let x = 16;
 let z = 0;
 
 while x {
-    z = z + 1;
+    z = z + 3;
     x = x - 1;
 }
 

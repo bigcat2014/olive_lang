@@ -35,14 +35,17 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.74.0 REQUIRED)
 
-
 add_executable(${PROJECT_NAME}
-    src/pimento.cpp)
+    src/generator.cpp
+    src/lexer.cpp
+    src/parser.cpp
+    src/pimento.cpp
+    src/utils.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog_header_only ${Boost_LIBRARIES} gtest)
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog_header_only ${Boost_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
 
@@ -60,8 +63,9 @@ if (BUILD_TESTING)
         $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-
     add_executable(lexer_test
+        src/lexer.cpp
+        src/utils.cpp
         tests/lexer_test.cpp)
     target_include_directories(lexer_test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
