@@ -149,14 +149,11 @@ private:
           std::make_shared<node::StmtAssignNode>(current_token, expression));
       break;
     }
-    // Parse format if ([Expr]) [Scope] [IfPred]
+    // Parse format if [Expr] [Scope] [IfPred]
     case tokenization::TokenType::TT_IF: {
       try_consume(tokenization::TokenType::TT_IF);
-      // try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
       std::shared_ptr<node::ExprNode> expression = parse_expression();
-
-      // try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
 
       std::shared_ptr<node::ScopeNode> scope = parse_scope();
 
@@ -164,6 +161,19 @@ private:
 
       stmt = std::make_shared<node::StmtNode>(
           std::make_shared<node::StmtIfNode>(expression, scope, ifpred));
+
+      break;
+    }
+    // Parse format while [Expr] [Scope]
+    case tokenization::TokenType::TT_WHILE: {
+      try_consume(tokenization::TokenType::TT_WHILE);
+
+      std::shared_ptr<node::ExprNode> expression = parse_expression();
+
+      std::shared_ptr<node::ScopeNode> scope = parse_scope();
+
+      stmt = std::make_shared<node::StmtNode>(
+          std::make_shared<node::StmtWhileNode>(expression, scope));
 
       break;
     }

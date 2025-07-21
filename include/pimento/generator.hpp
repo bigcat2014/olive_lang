@@ -127,8 +127,6 @@ private:
       }
 
       void operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt) const {
-        gen.gen_expression(stmt->expression);
-
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match{false};
@@ -211,6 +209,21 @@ private:
         } else {
           *gen.p_output << label << ":\n";
         }
+      }
+
+      void operator()(std::shared_ptr<ast::node::StmtWhileNode> stmt) const {
+
+        const std::string loop_label = gen.create_label();
+        const std::string end_label = gen.create_label();
+
+        *gen.p_output << loop_label << ":\n";
+        gen.gen_expression(stmt->expression);
+        gen.pop("rax");
+        *gen.p_output << "    test rax, rax\n";
+        *gen.p_output << "    jz " << end_label << "\n";
+        gen.gen_scope(stmt->scope);
+        *gen.p_output << "    jmp " << loop_label << "\n";
+        *gen.p_output << end_label << ":\n";
       }
     };
 

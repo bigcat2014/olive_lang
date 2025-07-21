@@ -1,11 +1,9 @@
-let x = 2;
-let y = 2;
-let z = x + 3 ^^ 2 ^^ 2;
+let x = 255;
+let z = 0;
 
-if x > y {
-    exit(1);
-} elif x < y {
-    exit(2);
+while x {
+    z = z + 1;
+    x = x - 1;
 }
 
 exit(z);

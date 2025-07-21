@@ -273,11 +273,26 @@ struct StmtIfNode {
       : expression(expression), scope(scope), ifpred(ifpred) {}
 
   //! @brief Constructor for the Statement If AST node without a chained If
-  //! Predicate. If Predicate.
+  //! Predicate.
   //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
   //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope)
+      : expression(expression), scope(scope) {}
+};
+
+//! @brief The Statement While AST node.
+struct StmtWhileNode {
+  //! @brief The expression for this node.
+  std::shared_ptr<ExprNode> expression;
+  //! @brief The scope of this node.
+  std::shared_ptr<ScopeNode> scope;
+
+  //! @brief Constructor for the Statement While AST node.
+  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
+  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  StmtWhileNode(std::shared_ptr<ExprNode> expression,
+                std::shared_ptr<ScopeNode> scope)
       : expression(expression), scope(scope) {}
 };
 
@@ -344,7 +359,7 @@ struct StmtNode {
   using StmtVariant =
       std::variant<std::shared_ptr<StmtExitNode>, std::shared_ptr<StmtLetNode>,
                    std::shared_ptr<StmtAssignNode>, std::shared_ptr<StmtIfNode>,
-                   std::shared_ptr<ScopeNode>>;
+                   std::shared_ptr<ScopeNode>, std::shared_ptr<StmtWhileNode>>;
 
   //! @brief The variant of the Statement in this node.
   StmtVariant node;

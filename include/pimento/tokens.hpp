@@ -45,6 +45,7 @@ enum class TokenType {
   TT_IDENTIFIER,
   TT_INT_LITERAL,
   TT_SEMI,
+  TT_WHILE,
   NUM_TOKENS
 };
 
@@ -201,6 +202,7 @@ private:
         {TokenType::TT_IDENTIFIER,    "TT_IDENTIFIER"},
         {TokenType::TT_INT_LITERAL,   "TT_INT_LITERAL"},
         {TokenType::TT_SEMI,          "TT_SEMI"},
+        {TokenType::TT_WHILE,         "TT_WHILE"},
     };
     // clang-format on
 
@@ -212,25 +214,26 @@ private:
   [[nodiscard]] static TokenBimap get_token_bimap() noexcept {
     // clang-format off
     static const TokenBimap token_lookup =
-        make_bimap<std::string, TokenType>({{"else", TokenType::TT_ELSE},
-                                            {"exit", TokenType::TT_EXIT},
-                                            {"if",   TokenType::TT_IF},
-                                            {"elif", TokenType::TT_ELIF},
-                                            {"let",  TokenType::TT_LET},
-                                            {"{",    TokenType::TT_LEFT_CURLY},
-                                            {"(",    TokenType::TT_LEFT_PAREN},
-                                            {"}",    TokenType::TT_RIGHT_CURLY},
-                                            {")",    TokenType::TT_RIGHT_PAREN},
-                                            {"^^",   TokenType::TT_DOUBLE_CARET},
-                                            {"/",    TokenType::TT_FORWARD_SLASH},
-                                            {"-",    TokenType::TT_MINUS},
-                                            {"%",    TokenType::TT_PERCENT},
-                                            {"+",    TokenType::TT_PLUS},
-                                            {"*",    TokenType::TT_STAR},
-                                            {"<",    TokenType::TT_LT},
-                                            {">",    TokenType::TT_GT},
-                                            {"=",    TokenType::TT_EQUAL},
-                                            {";",    TokenType::TT_SEMI},
+        make_bimap<std::string, TokenType>({{"else",  TokenType::TT_ELSE},
+                                            {"exit",  TokenType::TT_EXIT},
+                                            {"if",    TokenType::TT_IF},
+                                            {"elif",  TokenType::TT_ELIF},
+                                            {"let",   TokenType::TT_LET},
+                                            {"{",     TokenType::TT_LEFT_CURLY},
+                                            {"(",     TokenType::TT_LEFT_PAREN},
+                                            {"}",     TokenType::TT_RIGHT_CURLY},
+                                            {")",     TokenType::TT_RIGHT_PAREN},
+                                            {"^^",    TokenType::TT_DOUBLE_CARET},
+                                            {"/",     TokenType::TT_FORWARD_SLASH},
+                                            {"-",     TokenType::TT_MINUS},
+                                            {"%",     TokenType::TT_PERCENT},
+                                            {"+",     TokenType::TT_PLUS},
+                                            {"*",     TokenType::TT_STAR},
+                                            {"<",     TokenType::TT_LT},
+                                            {">",     TokenType::TT_GT},
+                                            {"=",     TokenType::TT_EQUAL},
+                                            {";",     TokenType::TT_SEMI},
+                                            {"while", TokenType::TT_WHILE},
           });
     // clang-format on
 
