@@ -145,11 +145,11 @@ private:
     // Parse format if ([Expr]) [Scope] [IfPred]
     case tokenization::TokenType::TT_IF: {
       try_consume(tokenization::TokenType::TT_IF);
-      try_consume(tokenization::TokenType::TT_LEFT_PAREN);
+      // try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
       node::ExprNode *expression = parse_expression();
 
-      try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
+      // try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
 
       node::ScopeNode *scope = parse_scope();
 

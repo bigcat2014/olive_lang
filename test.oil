@@ -1,24 +1,12 @@
 let x = 5;
 let y = x + 2;
 let z = x * y;
-exit(z);
 
-else
-exit
-if
-elif
-let
-{
-(
+if x {
+    exit(x);
+} elif y {
+    exit(y);
+} else {
+    exit(z);
 }
-)
-^^
-/
--
-%
-+
-*
-=
-ident
-123456
-;
+exit(z-1);
