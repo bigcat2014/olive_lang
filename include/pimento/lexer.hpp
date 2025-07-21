@@ -16,16 +16,16 @@
 namespace pimento::tokenization {
 
 class Lexer {
- public:
+public:
   //! @brief Constructor for the Lexer
   //! @param path const std::filesystem::path& The path to the file to tokenize.
-  Lexer(const std::filesystem::path& path) : m_path(path) {
+  Lexer(const std::filesystem::path &path) : m_path(path) {
     m_tokens.reserve(BUFFER_SIZE);
   }
 
   //! @brief Tokenize the input file.
   void tokenize() {
-    auto& logger = pimento::utils::get_logger();
+    auto &logger = utils::get_logger();
     std::fstream file(m_path, std::ios::in);
     if (!file) {
       throw std::runtime_error("cannot open " + m_path.string());
@@ -40,7 +40,7 @@ class Lexer {
 
     while (file) {
       file.read(file_buffer.data(), file_buffer.size());
-      std::streamsize n = file.gcount();
+      size_t n = static_cast<size_t>(file.gcount());
       if (n <= 0) {
         break;
       }
@@ -64,29 +64,34 @@ class Lexer {
         token_buffer.push_back(file_buffer[i]);
 
         // Attempt to parse token from token buffer
-        const char next = peek(i, file_buffer.data(), n);
+        const char next = peek(i, file_buffer.data(), n, 1);
         bool token_added = try_parse_token(token_buffer, next);
 
         if (!m_tokens.empty() && token_added) {
           Token token = m_tokens.back();
           try {
-            logger.debug("Token: `{}`; Value: `{}`",
+            logger.trace("Got token `{}` with value `{}`",
                          token_str.at(token.token_type),
-                         token.value.has_value() ? token.value.value() : "None");
-          } catch (std::out_of_range) {
-            logger.debug("Unknown token");
+                         token.value.has_value() ? token.value.value()
+                                                 : "None");
+          } catch (const std::out_of_range &) {
+            logger.trace("Invalid token");
           }
         }
       }
 
-      logger.debug("Finished chunk {}", total_chunks++);
+      logger.trace("Finished chunk {}", total_chunks++);
     }
 
     logger.debug("Total chunks read: {}", total_chunks);
     logger.debug("Total bytes read: {}", total);
   }
 
- private:
+  [[nodiscard]] const std::vector<Token> &tokens() const noexcept {
+    return m_tokens;
+  }
+
+private:
   //! @brief Peek at a character at an offset from the current character in the
   //! buffer.
   //!
@@ -100,9 +105,16 @@ class Lexer {
   //! @param lookahead size_t Optional lookahead distance to peek.
   //! @return char The character at `lookahead` offset from the current index or
   //! ` ` if attempting to peek out of bounds.
-  inline char peek(size_t current_index, const char* const buffer, size_t size,
-                   size_t lookahead = 1) const noexcept {
-    return current_index + lookahead > size ? ' ' : buffer[current_index + 1];
+  [[nodiscard]] inline char peek(size_t current_index, const char *const buffer,
+                                 size_t size,
+                                 size_t lookahead = 0) const noexcept {
+    if (current_index + lookahead < size) {
+      return buffer[current_index + lookahead];
+    }
+    return '"';
+    // return current_index + lookahead > size ? ' '
+    //                                         : buffer[current_index +
+    //                                         lookahead];
   }
 
   //! @brief Attmpt to parse a token from the buffer.
@@ -110,7 +122,7 @@ class Lexer {
   //! a token.
   //! @param next const char The next character in the buffer.
   //! @return bool Whether or not we successfully parsed a full token.
-  bool try_parse_token(std::string& token_buffer, const char next) noexcept {
+  bool try_parse_token(std::string &token_buffer, const char next) noexcept {
     if (token_buffer.empty()) {
       return false;
     }
@@ -120,7 +132,7 @@ class Lexer {
       m_tokens.emplace_back(token_type);
       token_buffer.clear();
       return true;
-    } catch (std::out_of_range) {
+    } catch (const std::out_of_range &) {
       // Int literal special case
       if (std::isdigit(token_buffer.back())) {
         if (!std::isdigit(next)) {
@@ -150,4 +162,4 @@ class Lexer {
   std::vector<Token> m_tokens;
 };
 
-}  // namespace pimento::tokenization
+} // namespace pimento::tokenization

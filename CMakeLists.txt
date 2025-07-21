@@ -37,6 +37,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog)
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror -Wdouble-promotion -Wconversion")
 
 install(
     DIRECTORY include/

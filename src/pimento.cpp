@@ -7,6 +7,7 @@
 #include <iostream>
 #include <optional>
 #include <pimento/lexer.hpp>
+#include <pimento/parser.hpp>
 #include <pimento/utils.hpp>
 #include <string>
 
@@ -14,12 +15,18 @@
 #define PROJECT_VERSION "unknown"
 #endif
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   argparse::ArgumentParser program("pimento", PROJECT_VERSION);
 
   program.add_argument("file")
       .help("Path to the .oil file to compile")
       .required();
+
+  program.add_argument("--trace")
+      .default_value(false)
+      .implicit_value(true)
+      .nargs(0)
+      .help("Enable trace logging. WARNING: This will spam output!");
 
   program.add_argument("--debug")
       .default_value(false)
@@ -35,14 +42,16 @@ int main(int argc, char* argv[]) {
 
   try {
     program.parse_args(argc, argv);
-  } catch (const std::runtime_error& err) {
+  } catch (const std::runtime_error &err) {
     std::cerr << "Argument parsing error: " << err.what() << '\n';
     std::cerr << program;
     return EXIT_FAILURE;
   }
 
   // Set log level based on flags
-  if (program.get<bool>("--debug")) {
+  if (program.get<bool>("--trace")) {
+    pimento::utils::configure_logger(spdlog::level::trace);
+  } else if (program.get<bool>("--debug")) {
     pimento::utils::configure_logger(spdlog::level::debug);
   } else if (program.get<bool>("--verbose")) {
     pimento::utils::configure_logger(spdlog::level::info);
@@ -50,7 +59,7 @@ int main(int argc, char* argv[]) {
     pimento::utils::configure_logger(spdlog::level::warn);
   }
 
-  auto& logger = pimento::utils::get_logger();
+  auto &logger = pimento::utils::get_logger();
 
   std::string fileStr = program.get<std::string>("file");
   logger.debug("Input file path: {}", fileStr);
@@ -64,6 +73,9 @@ int main(int argc, char* argv[]) {
 
   pimento::tokenization::Lexer lexer(resolvedPath.value());
   lexer.tokenize();
+
+  pimento::ast::Parser parser(lexer.tokens());
+  parser.parse();
 
   return EXIT_SUCCESS;
 }
