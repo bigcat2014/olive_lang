@@ -23,13 +23,15 @@ spdlog::logger &get_logger() {
 }
 
 //! @brief Configures the logger.
-//! @param level The log level to configure the logger with.
+//! @param level spdlog::level::level_enum The log level to configure the logger
+//! with.
 void configure_logger(spdlog::level::level_enum level) {
   get_logger().set_level(level);
 }
 
 //! @brief Expands `~` and environment variables in input path.
-//! @param inputPath The file path in which to expand the variables.
+//! @param input_path const std::string& The file path in which to expand the
+//! variables.
 //! @return std::filesystem::path The file path with variables expanded.
 std::filesystem::path expand_vars(const std::string &input_path) {
   auto &logger = get_logger();
@@ -86,7 +88,7 @@ std::filesystem::path expand_vars(const std::string &input_path) {
 //! normalizing the path, and ensuring it is a file. Additionally checks the
 //! file extension and warns the user if the extension is not the expected
 //! `.oil` extension.
-//! @param inputPath The file path to sanitize.
+//! @param input_path const std::string& The file path to sanitize.
 //! @return std::optional<std::filesystem::path> The sanitized path.
 std::optional<std::filesystem::path>
 sanitize_path(const std::string &input_path) {

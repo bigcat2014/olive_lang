@@ -1,5 +1,5 @@
 //! @file parser.hpp
-//! @brief Pimento parser
+//! @brief Pimento parser.
 //! @author Logan Thomas
 
 #pragma once
@@ -20,12 +20,15 @@ namespace pimento::ast {
 class Parser {
 public:
   //! @brief Construct a new Parser object.
-  //! @param tokens std::vector<tokenization::Token> The tokens to parse.
+  //! @param istream //! @param stream std::shared_ptr<std::istream> The stream
+  //! of characters to tokenize and parse parse.
   inline explicit Parser(std::shared_ptr<std::istream> istream)
       : m_lexer(istream) {
     parse();
   }
 
+  //! @brief Getter for the top level program AST node.
+  //! @return const node::ProgNode& The top level program AST node.
   [[nodiscard]] const node::ProgNode &get_program() const noexcept {
     return m_prog;
   }
@@ -40,10 +43,6 @@ private:
   }
 
   //! @brief Peek at a token at an offset from the current token in the buffer.
-  //! @param current_index size_t The index of the current token in the
-  //! buffer.
-  //! @param tokens std::vector<tokenization::Token>& The buffer from which to
-  //! get the token.
   //! @param lookahead size_t Optional lookahead distance to peek.
   //! @return std::optional<tokenization::Token> The token at `lookahead` offset
   //! from the current index or {} if attempting to peek out of bounds.
@@ -196,15 +195,16 @@ private:
       switch (current_token.token_type) {
       case tokenization::TokenType::TT_DOUBLE_CARET: {
         try_consume(tokenization::TokenType::TT_DOUBLE_CARET);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -220,15 +220,16 @@ private:
       }
       case tokenization::TokenType::TT_PERCENT: {
         try_consume(tokenization::TokenType::TT_PERCENT);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -244,15 +245,16 @@ private:
       }
       case tokenization::TokenType::TT_STAR: {
         try_consume(tokenization::TokenType::TT_STAR);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -268,15 +270,16 @@ private:
       }
       case tokenization::TokenType::TT_FORWARD_SLASH: {
         try_consume(tokenization::TokenType::TT_FORWARD_SLASH);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -292,15 +295,16 @@ private:
       }
       case tokenization::TokenType::TT_PLUS: {
         try_consume(tokenization::TokenType::TT_PLUS);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -316,15 +320,16 @@ private:
       }
       case tokenization::TokenType::TT_MINUS: {
         try_consume(tokenization::TokenType::TT_MINUS);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -340,15 +345,16 @@ private:
       }
       case tokenization::TokenType::TT_LT: {
         try_consume(tokenization::TokenType::TT_LT);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 
@@ -364,15 +370,16 @@ private:
       }
       case tokenization::TokenType::TT_GT: {
         try_consume(tokenization::TokenType::TT_GT);
-        std::pair<uint8_t, tokenization::Associativity> properties =
-            tokenization::TokenTypeUtil::get_bin_expr_properties(
+        std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
+            properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
                 current_token.token_type);
 
         if (properties.first < min_precedence) {
           expr = std::make_shared<node::ExprNode>(term_lhs);
         } else {
           uint8_t next_prec =
-              properties.second == tokenization::Associativity::LEFT
+              properties.second ==
+                      tokenization::BinOpProperties::Associativity::LEFT
                   ? properties.first + 1
                   : properties.first;
 

@@ -1,5 +1,5 @@
 //! @file generator.hpp
-//! @brief Pimento ASM generator
+//! @brief Pimento Assembly generator.
 //! @author Logan Thomas
 
 #pragma once
@@ -20,10 +20,15 @@ namespace pimento::generation {
 
 class Generator {
 public:
+  //! @brief Constructor for the Generator.
+  //! @param istream std::shared_ptr<std::istream> Input stream of characters to
+  //! lex, parse, and generate.
+  //! @param ostream std::shared_ptr<std::ostream> Output stream to generate to.
   explicit Generator(std::shared_ptr<std::istream> istream,
                      std::shared_ptr<std::ostream> ostream)
       : m_parser(istream), p_output(ostream) {}
 
+  //! @brief Lex, parse, and generate output.
   void generate() noexcept {
     *p_output << "global _start\n_start:\n";
 
@@ -34,19 +39,21 @@ public:
   }
 
 private:
-  void gen_statement(std::shared_ptr<ast::node::StmtNode> stmt) noexcept {
+  //! @brief Generate assembly for a Statement.
+  //! @param node std::shared_ptr<ast::node::StmtNode> Input statement node for
+  //! which to generate assembly.
+  void gen_statement(std::shared_ptr<ast::node::StmtNode> node) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void
-      operator()(std::shared_ptr<ast::node::StmtExitNode> stmt_node) const {
-        gen.gen_expression(stmt_node->expression);
+      void operator()(std::shared_ptr<ast::node::StmtExitNode> stmt) const {
+        gen.gen_expression(stmt->expression);
         *gen.p_output << "    mov rax, 60\n";
         gen.pop("rdi");
         *gen.p_output << "    syscall\n";
       }
 
-      void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt_node) const {
+      void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt) const {
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match{false};
@@ -69,7 +76,7 @@ private:
               };
 
               std::visit(TokenVisitor{.match = match, .name = var.name},
-                         stmt_node->identifier.properties);
+                         stmt->identifier.properties);
               return match;
             });
 
@@ -90,7 +97,7 @@ private:
             void operator()(std::monostate) {}
           };
 
-          std::visit(TokenVisitor(oss), stmt_node->identifier.properties);
+          std::visit(TokenVisitor(oss), stmt->identifier.properties);
 
           auto &logger = utils::get_logger();
           logger.error(oss.str());
@@ -114,14 +121,13 @@ private:
         };
 
         std::visit(TokenVisitor(gen.m_vars, gen.m_stack_size),
-                   stmt_node->identifier.properties);
+                   stmt->identifier.properties);
 
-        gen.gen_expression(stmt_node->expression);
+        gen.gen_expression(stmt->expression);
       }
 
-      void
-      operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt_node) const {
-        gen.gen_expression(stmt_node->expression);
+      void operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt) const {
+        gen.gen_expression(stmt->expression);
 
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
@@ -145,7 +151,7 @@ private:
               };
 
               std::visit(TokenVisitor{.match = match, .name = var.name},
-                         stmt_node->identifier.properties);
+                         stmt->identifier.properties);
               return match;
             });
 
@@ -166,41 +172,41 @@ private:
             void operator()(std::monostate) {}
           };
 
-          std::visit(TokenVisitor(oss), stmt_node->identifier.properties);
+          std::visit(TokenVisitor(oss), stmt->identifier.properties);
 
           auto &logger = utils::get_logger();
           logger.error(oss.str());
           exit(EXIT_FAILURE);
         }
 
-        gen.gen_expression(stmt_node->expression);
+        gen.gen_expression(stmt->expression);
         gen.pop("rax");
         *gen.p_output << "    mov [rsp + "
                       << (gen.m_stack_size - it->stack_loc - 1) * 8
                       << "], rax\n";
       }
 
-      void operator()(std::shared_ptr<ast::node::ScopeNode> stmt_node) const {
+      void operator()(std::shared_ptr<ast::node::ScopeNode> stmt) const {
         *gen.p_output << "    ;; scope\n";
-        gen.gen_scope(stmt_node);
+        gen.gen_scope(stmt);
         *gen.p_output << "    ;; /scope\n";
       }
 
-      void operator()(std::shared_ptr<ast::node::StmtIfNode> stmt_node) const {
+      void operator()(std::shared_ptr<ast::node::StmtIfNode> stmt) const {
 
-        gen.gen_expression(stmt_node->expression);
+        gen.gen_expression(stmt->expression);
         gen.pop("rax");
         const std::string label = gen.create_label();
         *gen.p_output << "    test rax, rax\n";
         // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
         // true
         *gen.p_output << "    jz " << label << "\n";
-        gen.gen_scope(stmt_node->scope);
-        if (stmt_node->ifpred.has_value()) {
+        gen.gen_scope(stmt->scope);
+        if (stmt->ifpred.has_value()) {
           const std::string end_label = gen.create_label();
           *gen.p_output << "    jmp " << end_label << "\n";
           *gen.p_output << label << ":\n";
-          gen.gen_ifpred(stmt_node->ifpred.value(), end_label);
+          gen.gen_ifpred(stmt->ifpred.value(), end_label);
           *gen.p_output << end_label << ":\n";
         } else {
           *gen.p_output << label << ":\n";
@@ -208,75 +214,81 @@ private:
       }
     };
 
-    Visitor visitor{.gen = *this};
-    std::visit(visitor, stmt->node);
+    std::visit(Visitor{.gen = *this}, node->node);
   }
 
-  void gen_expression(std::shared_ptr<ast::node::ExprNode> expr) noexcept {
+  //! @brief Generate assembly for an Expression.
+  //! @param node std::shared_ptr<ast::node::ExprNode> Input expression node for
+  //! which to generate assembly.
+  void gen_expression(std::shared_ptr<ast::node::ExprNode> node) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void operator()(std::shared_ptr<ast::node::TermNode> term) const {
-        gen.gen_term(term);
+      void operator()(std::shared_ptr<ast::node::TermNode> expr) const {
+        gen.gen_term(expr);
       }
 
-      void operator()(std::shared_ptr<ast::node::BinExprNode> bin_expr) const {
-        gen.gen_bin_expr(bin_expr);
+      void operator()(std::shared_ptr<ast::node::BinExprNode> expr) const {
+        gen.gen_bin_expr(expr);
       }
     };
 
-    Visitor visitor{.gen = *this};
-    std::visit(visitor, expr->node);
+    std::visit(Visitor{.gen = *this}, node->node);
   }
 
-  void gen_scope(std::shared_ptr<ast::node::ScopeNode> scope) noexcept {
-    for (const auto &stmt : scope->statements) {
+  //! @brief Generate assembly for a Scope.
+  //! @param node std::shared_ptr<ast::node::Scope> Input scope node for which
+  //! to generate assembly.
+  void gen_scope(std::shared_ptr<ast::node::ScopeNode> node) noexcept {
+    for (const auto &stmt : node->statements) {
       begin_scope();
       gen_statement(stmt);
       end_scope();
     }
   }
 
-  void gen_ifpred(std::shared_ptr<ast::node::IfPredNode> ifpred,
+  //! @brief Generate assembly for an If Predicate.
+  //! @param node std::shared_ptr<ast::node::IfPredNode> Input if predicate node
+  //! for which to generate assembly.
+  void gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
                   const std::string &end_label) noexcept {
     struct Visitor {
       Generator &gen;
       const std::string &end_label;
 
-      void
-      operator()(std::shared_ptr<ast::node::IfPredElifNode> ifpred_elif) const {
+      void operator()(std::shared_ptr<ast::node::IfPredElifNode> ifpred) const {
 
-        gen.gen_expression(ifpred_elif->expression);
+        gen.gen_expression(ifpred->expression);
         gen.pop("rax");
         const std::string label = gen.create_label();
         *gen.p_output << "    test rax, rax\n";
         // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
         // true
         *gen.p_output << "    jz " << label << "\n";
-        gen.gen_scope(ifpred_elif->scope);
+        gen.gen_scope(ifpred->scope);
         *gen.p_output << "    jmp " << end_label << "\n";
         *gen.p_output << label << ":\n";
-        if (ifpred_elif->ifpred.has_value()) {
-          gen.gen_ifpred(ifpred_elif->ifpred.value(), end_label);
+        if (ifpred->ifpred.has_value()) {
+          gen.gen_ifpred(ifpred->ifpred.value(), end_label);
         }
       }
 
-      void
-      operator()(std::shared_ptr<ast::node::IfPredElseNode> ifpred_else) const {
-        gen.gen_scope(ifpred_else->scope);
+      void operator()(std::shared_ptr<ast::node::IfPredElseNode> ifpred) const {
+        gen.gen_scope(ifpred->scope);
       }
     };
 
-    Visitor visitor{.gen = *this, .end_label = end_label};
-    std::visit(visitor, ifpred->node);
+    std::visit(Visitor{.gen = *this, .end_label = end_label}, node->node);
   }
 
-  void gen_term(std::shared_ptr<ast::node::TermNode> term) noexcept {
+  //! @brief Generate assembly for a Term.
+  //! @param node std::shared_ptr<ast::node::TermNode> Input term node for
+  //! which to generate assembly.
+  void gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void
-      operator()(std::shared_ptr<ast::node::TermIntLitNode> int_lit) const {
+      void operator()(std::shared_ptr<ast::node::TermIntLitNode> term) const {
         // TODO(lthomas): Probably a cleaner way to do this... Refactor later
         struct TokenVisitor {
           Generator &gen;
@@ -292,10 +304,10 @@ private:
           void operator()(std::monostate) {}
         };
 
-        std::visit(TokenVisitor(gen), int_lit->int_lit_token.properties);
+        std::visit(TokenVisitor(gen), term->int_lit_token.properties);
       }
 
-      void operator()(std::shared_ptr<ast::node::TermIdentNode> ident) const {
+      void operator()(std::shared_ptr<ast::node::TermIdentNode> term) const {
         const auto it = std::ranges::find_if(
             std::as_const(gen.m_vars), [&](const Var &var) {
               bool match = false;
@@ -318,7 +330,7 @@ private:
               };
 
               std::visit(TokenVisitor{.match = match, .name = var.name},
-                         ident->identifier_token.properties);
+                         term->identifier_token.properties);
               return match;
             });
 
@@ -339,7 +351,7 @@ private:
             void operator()(std::monostate) {}
           };
 
-          std::visit(TokenVisitor(oss), ident->identifier_token.properties);
+          std::visit(TokenVisitor(oss), term->identifier_token.properties);
 
           auto &logger = utils::get_logger();
           logger.error(oss.str());
@@ -353,22 +365,25 @@ private:
         gen.push(offset.str());
       }
 
-      void operator()(std::shared_ptr<ast::node::TermExprNode> expr) const {
-        gen.gen_expression(expr->expression);
+      void operator()(std::shared_ptr<ast::node::TermExprNode> term) const {
+        gen.gen_expression(term->expression);
       }
     };
 
-    Visitor visitor{.gen = *this};
-    std::visit(visitor, term->node);
+    std::visit(Visitor{.gen = *this}, node->node);
   }
 
-  void gen_bin_expr(std::shared_ptr<ast::node::BinExprNode> bin_expr) noexcept {
+  //! @brief Generate assembly for a Binary Expression.
+  //! @param node std::shared_ptr<ast::node::BinExprNode> Input binary
+  //! expression node for which to generate assembly.
+  void gen_bin_expr(std::shared_ptr<ast::node::BinExprNode> node) noexcept {
     struct Visitor {
       Generator &gen;
 
-      void operator()(std::shared_ptr<ast::node::BinExprPowerNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void
+      operator()(std::shared_ptr<ast::node::BinExprPowerNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
 
         std::string loop_label = gen.create_label();
         std::string neg_label = gen.create_label();
@@ -389,55 +404,60 @@ private:
         gen.push("rax");
       }
 
-      void operator()(std::shared_ptr<ast::node::BinExprModNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void
+      operator()(std::shared_ptr<ast::node::BinExprModNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
         gen.pop("rax");
         gen.pop("rbx");
         *gen.p_output << "    div rbx\n";
         gen.push("rdx");
       }
 
-      void operator()(std::shared_ptr<ast::node::BinExprMulNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void
+      operator()(std::shared_ptr<ast::node::BinExprMulNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
         gen.pop("rax");
         gen.pop("rbx");
         *gen.p_output << "    mul rbx\n";
         gen.push("rax");
       }
 
-      void operator()(std::shared_ptr<ast::node::BinExprDivNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void
+      operator()(std::shared_ptr<ast::node::BinExprDivNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
         gen.pop("rax");
         gen.pop("rbx");
         *gen.p_output << "    div rbx\n";
         gen.push("rax");
       }
 
-      void operator()(std::shared_ptr<ast::node::BinExprPlusNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void
+      operator()(std::shared_ptr<ast::node::BinExprPlusNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
         gen.pop("rax");
         gen.pop("rbx");
         *gen.p_output << "    add rax, rbx\n";
         gen.push("rax");
       }
 
-      void operator()(std::shared_ptr<ast::node::BinExprMinusNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void
+      operator()(std::shared_ptr<ast::node::BinExprMinusNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
         gen.pop("rax");
         gen.pop("rbx");
         *gen.p_output << "    sub rax, rbx\n";
         gen.push("rax");
       }
 
-      void
-      operator()(std::shared_ptr<ast::node::BinExprLessThanNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+      void operator()(
+          std::shared_ptr<ast::node::BinExprLessThanNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
 
         std::string label = gen.create_label();
         std::string end_label = gen.create_label();
@@ -455,9 +475,9 @@ private:
       }
 
       void operator()(
-          std::shared_ptr<ast::node::BinExprGreaterThanNode> node) const {
-        gen.gen_expression(node->right);
-        gen.gen_expression(node->left);
+          std::shared_ptr<ast::node::BinExprGreaterThanNode> bin_expr) const {
+        gen.gen_expression(bin_expr->right);
+        gen.gen_expression(bin_expr->left);
 
         std::string label = gen.create_label();
         std::string end_label = gen.create_label();
@@ -475,22 +495,29 @@ private:
       }
     };
 
-    Visitor visitor{.gen = *this};
-    std::visit(visitor, bin_expr->node);
+    std::visit(Visitor{.gen = *this}, node->node);
   }
 
+  //! @brief Helper function to push a value in a registry onto the stack.
+  //! @param reg const std::string& The registry to push onto the stack.
   void push(const std::string &reg) noexcept {
     *p_output << "    push " << reg << "\n";
     m_stack_size++;
   }
 
+  //! @brief Helper function to pop a value from the stack into a registry.
+  //! @param reg const std::string& The registry to pop the value into.
   void pop(const std::string &reg) noexcept {
     *p_output << "    pop " << reg << "\n";
     m_stack_size--;
   }
 
+  //! @brief Helper function to manage variables in the stack when entering a
+  //! scope.
   void begin_scope() { m_scopes.push_back(m_vars.size()); }
 
+  //! @brief Helper function to manage variables in the stack when exiting a
+  //! scope.
   void end_scope() noexcept {
     const size_t pop_count = m_vars.size() - m_scopes.back();
     if (pop_count != 0) {
@@ -503,31 +530,43 @@ private:
     m_scopes.pop_back();
   }
 
+  //! @brief Helper function to create unique assembly labels.
+  //! @return std::string The new label
   std::string create_label() noexcept {
-    static size_t s_label_count{0};
+    static size_t label_count{0};
 
     std::ostringstream oss;
-    oss << "label" << std::to_string(s_label_count++);
+    oss << "label" << std::to_string(label_count++);
     return oss.str();
   }
 
 private:
+  //! @brief Helper struct for maintaining variables on the stack.
   struct Var {
+    //! @brief The identifier of the variable.
     std::string name;
+    //! @brief The location in the stack of this variable.
     size_t stack_loc;
 
+    //! @brief Constructor for the Var.
+    //! @param name const std::string& Identifier of the variable.
+    //! @param stack_loc size_t Stack location of the variable
     Var(const std::string &name, size_t stack_loc)
         : name(name), stack_loc(stack_loc) {}
   };
 
-  // helpers for visitors
   template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 
+private:
+  //! @brief Parser object for parsing tokens into AST.
   ast::Parser m_parser;
+  //! @brief Output stream.
   std::shared_ptr<std::ostream> p_output;
-
+  //! @brief The current stack size.
   size_t m_stack_size{0};
+  //! @brief Current variables in use.
   std::vector<Var> m_vars{};
+  //! @brief Current scopes in use.
   std::vector<size_t> m_scopes{};
 };
 

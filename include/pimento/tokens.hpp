@@ -1,5 +1,5 @@
 //! @file tokens.hpp
-//! @brief Pimento Tokens
+//! @brief Pimento Tokens.
 //! @author Logan Thomas
 
 #pragma once
@@ -16,7 +16,7 @@ namespace pimento::tokenization {
 // TODO(lthomas): This tokenization method breaks down when there are tokens
 // that are just double versions of another token; i.e. `==` and `=`. May need
 // to parse these as their single version and handle doubles in the parser.
-//! @brief The supported token types.
+//! @brief Supported token types.
 enum class TokenType {
   BEGIN = 0,
   // Keywords
@@ -48,17 +48,21 @@ enum class TokenType {
   NUM_TOKENS
 };
 
-enum class Associativity { LEFT = 0, RIGHT };
-
+//! @brief Properties of a Binary Operator token.
 struct BinOpProperties {
+  //! @brief Associativity of binary operators.
+  enum class Associativity { LEFT = 0, RIGHT };
+
   uint8_t precedence;
   Associativity associativity;
 };
 
+//! @brief Properties of an Int Literal token.
 struct IntLitProperties {
   uint64_t value;
 };
 
+//! @brief Properties of an Idenfier token.
 struct IdentProperties {
   std::string identifier;
 };
@@ -91,9 +95,10 @@ public:
     }
   }
 
-  //! @brief Get the token string that is parsed in order to get a particular
-  //! token type.
-  //! @param token_type TokenType The token type for which to return the string.
+  //! @brief Get the token string that needs to be parsed in order to get a
+  //! particular token type.
+  //! @param token_type TokenType The token type for which to return the string
+  //! representation.
   //! @return std::string The string representation of the token for parsing.
   [[nodiscard]] static inline std::string get_token_str(TokenType token_type) {
     try {
@@ -103,8 +108,12 @@ public:
     }
   }
 
+  //! @brief Get the human-readable string representing the associativity.
+  //! @param assoc BinOpProperties::Associativity The Associativity for which to
+  //! return the string.
+  //! @return std::string The human-readable string representation of the token.
   [[nodiscard]] static inline std::string
-  get_associativity_str(Associativity assoc) {
+  get_associativity_str(BinOpProperties::Associativity assoc) {
     try {
       return get_associativity_str_map().at(assoc);
     } catch (const std::out_of_range &) {
@@ -117,13 +126,18 @@ public:
   //! @return TokenType The token type associated with the provided token
   //! string.
   [[nodiscard]] static inline TokenType get_token_type(std::string token) {
-    // Bubble up exception
+    // Bubble up exceptions
     return get_token_bimap().left.at(token);
   }
 
-  [[nodiscard]] static inline std::pair<uint8_t, Associativity>
+  //! @brief Get the binary operator properties of a particular token type.
+  //! @param token The token type for which to get the binary operator
+  //! properties.
+  //! @return std::pair<uint8_t, BinOpProperties::Associativity> The precedence
+  //! and associativity of the specified binary operator.
+  [[nodiscard]] static inline std::pair<uint8_t, BinOpProperties::Associativity>
   get_bin_expr_properties(TokenType token) {
-    // Bubble up exception
+    // Bubble up exceptions
     return get_bin_expr_properties_map().at(token);
   }
 
@@ -131,8 +145,8 @@ private:
   //! @brief Create a boost::bimap from an initializer list.
   //! @tparam L The type of the left side of the boost::bimap to initialize.
   //! @tparam R The type of the right side of the boost::bimap to initialize.
-  //! @param list The initializer list from which to initialize the
-  //! boost::bimap.
+  //! @param list std::initializer_list<typename boost::bimap<L, R>::value_type>
+  //! The initializer list from which to initialize the boost::bimap.
   //! @return boost::bimap<L, R> The boost::bimap initialized with the provided
   //! initializer list.
   template <typename L, typename R>
@@ -142,25 +156,27 @@ private:
   }
 
 private:
-  using AssociativityMap = std::unordered_map<Associativity, std::string>;
+  using AssociativityMap =
+      std::unordered_map<BinOpProperties::Associativity, std::string>;
   using TokenStrMap = std::unordered_map<TokenType, std::string>;
   using TokenBimap = boost::bimap<std::string, TokenType>;
   using BinExprMap =
-      std::unordered_map<TokenType, std::pair<uint8_t, Associativity>>;
+      std::unordered_map<TokenType,
+                         std::pair<uint8_t, BinOpProperties::Associativity>>;
 
-  //! @brief Map from token types to printable strings.
+  //! @brief Get the map from associtivity types to human-readable strings.
   [[nodiscard]] static AssociativityMap get_associativity_str_map() noexcept {
     // clang-format off
     static const AssociativityMap associativity_str{
-        {Associativity::LEFT,  "LEFT"},
-        {Associativity::RIGHT, "RIGHT"}
+        {BinOpProperties::Associativity::LEFT,  "LEFT"},
+        {BinOpProperties::Associativity::RIGHT, "RIGHT"}
     };
     // clang-format on
 
     return associativity_str;
   }
 
-  //! @brief Map from token types to printable strings.
+  //! @brief Get the map from token types to human-readable strings.
   [[nodiscard]] static TokenStrMap get_token_str_map() noexcept {
     // clang-format off
     static const TokenStrMap token_str{
@@ -191,7 +207,8 @@ private:
     return token_str;
   }
 
-  //! @brief Bidirectional map between token strings and token types
+  //! @brief Get the bidirectional map between token string representations and
+  //! token types
   [[nodiscard]] static TokenBimap get_token_bimap() noexcept {
     // clang-format off
     static const TokenBimap token_lookup =
@@ -220,19 +237,20 @@ private:
     return token_lookup;
   }
 
-  //! @brief Map from token types to printable strings.
+  //! @brief Get the map from Binary Operator tokens to their respective
+  //! properties.
   [[nodiscard]] static BinExprMap get_bin_expr_properties_map() noexcept {
     // clang-format off
     static const BinExprMap
         bin_expr_properties{
-            {TokenType::TT_DOUBLE_CARET,  {3, Associativity::RIGHT}},
-            {TokenType::TT_STAR,          {2, Associativity::LEFT}},
-            {TokenType::TT_FORWARD_SLASH, {2, Associativity::LEFT}},
-            {TokenType::TT_PERCENT,       {2, Associativity::LEFT}},
-            {TokenType::TT_PLUS,          {1, Associativity::LEFT}},
-            {TokenType::TT_MINUS,         {1, Associativity::LEFT}},
-            {TokenType::TT_LT,            {0, Associativity::LEFT}},
-            {TokenType::TT_GT,            {0, Associativity::LEFT}},
+            {TokenType::TT_DOUBLE_CARET,  {3, BinOpProperties::Associativity::RIGHT}},
+            {TokenType::TT_STAR,          {2, BinOpProperties::Associativity::LEFT}},
+            {TokenType::TT_FORWARD_SLASH, {2, BinOpProperties::Associativity::LEFT}},
+            {TokenType::TT_PERCENT,       {2, BinOpProperties::Associativity::LEFT}},
+            {TokenType::TT_PLUS,          {1, BinOpProperties::Associativity::LEFT}},
+            {TokenType::TT_MINUS,         {1, BinOpProperties::Associativity::LEFT}},
+            {TokenType::TT_LT,            {0, BinOpProperties::Associativity::LEFT}},
+            {TokenType::TT_GT,            {0, BinOpProperties::Associativity::LEFT}},
         };
     // clang-format on
 
@@ -240,12 +258,18 @@ private:
   }
 };
 
+// TODO(lthomas): Potentially use template specialization for static functions
+// here?
+//! @brief Factory class for creating tokens.
 class TokenFactory {
 public:
+  //! @brief Create a token.
+  //! @param token_type The token type the created token should be.
+  //! @return Token The created token.
   [[nodiscard]] static inline Token
   create_token(TokenType token_type) noexcept {
     try {
-      std::pair<uint8_t, Associativity> bin_op_properties =
+      std::pair<uint8_t, BinOpProperties::Associativity> bin_op_properties =
           TokenTypeUtil::get_bin_expr_properties(token_type);
       // Token is a binary operator, should include binary operator properties
       return Token{.token_type = token_type,
@@ -258,12 +282,21 @@ public:
     }
   }
 
+  //! @brief Create a token.
+  //! @param token_type TokenType The token type the created token should be.
+  //! @param value uint64_t The value to store in the Int Literal token.
+  //! @return Token The created token.
   [[nodiscard]] static inline Token create_token(TokenType token_type,
                                                  uint64_t value) noexcept {
     return Token{.token_type = token_type,
                  .properties = IntLitProperties{.value = value}};
   }
 
+  //! @brief Create a token.
+  //! @param token_type TokenType The token type the created token should be.
+  //! @param identifier std::string The identifier to store in the Identifier
+  //! token.
+  //! @return Token The created token.
   [[nodiscard]] static inline Token
   create_token(TokenType token_type, std::string identifier) noexcept {
     return Token{.token_type = token_type,

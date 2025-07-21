@@ -1,5 +1,5 @@
-//! @file parser.hpp
-//! @brief Pimento parser
+//! @file ast.hpp
+//! @brief Pimento AST.
 //! @author Logan Thomas
 
 #pragma once
@@ -15,158 +15,287 @@ struct ExprNode;
 struct IfPredNode;
 struct ScopeNode;
 
+//! @brief The Term Expression AST node.
 struct TermExprNode {
+  //! @brief The expression of this node.
   std::shared_ptr<ExprNode> expression;
 
+  //! @brief Constructor for the Term Expression AST node.
+  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
   TermExprNode(std::shared_ptr<ExprNode> expression) : expression(expression) {}
 };
 
+//! @brief The Term Identifier AST node.
 struct TermIdentNode {
+  //! @brief The identifier token.
   tokenization::Token identifier_token;
 
+  //! @brief Constructor for the Term Identifier AST node.
+  //! @param token tokenization::Token The identifier token.
   TermIdentNode(tokenization::Token token) : identifier_token(token) {}
 };
 
+//! @brief The Term Int Literal AST node.
 struct TermIntLitNode {
+  //! @brief The int literal token.
   tokenization::Token int_lit_token;
 
+  //! @brief Constructor for the Term Int Literal AST node.
+  //! @param token tokenization::Token The int literal token.
   TermIntLitNode(tokenization::Token token) : int_lit_token(token) {}
 };
 
+//! @brief The Binary Expression Less Than Comparison AST node.
 struct BinExprLessThanNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Less Than Comparison AST
+  //! node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprLessThanNode(std::shared_ptr<ExprNode> left,
                       std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Greater Than Comparison AST node.
 struct BinExprGreaterThanNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Greater Than Comparison AST
+  //! node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprGreaterThanNode(std::shared_ptr<ExprNode> left,
                          std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Subtraction AST node.
 struct BinExprMinusNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Subtraction AST node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprMinusNode(std::shared_ptr<ExprNode> left,
                    std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Addition AST node.
 struct BinExprPlusNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Addition AST node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprPlusNode(std::shared_ptr<ExprNode> left,
                   std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Division AST node.
 struct BinExprDivNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Division AST node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprDivNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Multiplication AST node.
 struct BinExprMulNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Multiplication AST node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprMulNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Modulus AST node.
 struct BinExprModNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Modulus AST node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprModNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The Binary Expression Exponentiation AST node.
 struct BinExprPowerNode {
+  //! @brief The operator's left-side expression.
   std::shared_ptr<ExprNode> left;
+  //! @brief The operator's right-side expression.
   std::shared_ptr<ExprNode> right;
 
+  //! @brief Constructor for the Binary Expression Exponentiation AST node.
+  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
+  //! @param right std::shared_ptr<ExprNode> The operator's right-side
+  //! expression.
   BinExprPowerNode(std::shared_ptr<ExprNode> left,
                    std::shared_ptr<ExprNode> right)
       : left(left), right(right) {}
 };
 
+//! @brief The If Predicate Else AST node.
 struct IfPredElseNode {
+  //! @brief The scope of this node.
   std::shared_ptr<ScopeNode> scope;
 
+  //! @brief Constructor for the If Predicate Else AST node.
+  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
   IfPredElseNode(std::shared_ptr<ScopeNode> scope) : scope(scope) {}
 };
 
+//! @brief The If Predicate Else If AST node.
 struct IfPredElifNode {
+  //! @brief The expression for this node.
   std::shared_ptr<ExprNode> expression;
+  //! @brief The scope of this node.
   std::shared_ptr<ScopeNode> scope;
+  //! @brief Optional additional If Predicate of this node.
   std::optional<std::shared_ptr<IfPredNode>> ifpred;
 
+  //! @brief Constructor for the If Predicate Else If AST node.
+  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
+  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  //! @param ifpred std::optional<std::shared_ptr<IfPredNode>> The optional If
+  //! Predicate of this node.
   IfPredElifNode(std::shared_ptr<ExprNode> expression,
                  std::shared_ptr<ScopeNode> scope,
                  std::optional<std::shared_ptr<IfPredNode>> ifpred)
       : expression(expression), scope(scope), ifpred(ifpred) {}
+
+  //! @brief Constructor for the If Predicate Else If AST node without a chained
+  //! If Predicate.
+  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
+  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  IfPredElifNode(std::shared_ptr<ExprNode> expression,
+                 std::shared_ptr<ScopeNode> scope)
+      : expression(expression), scope(scope) {}
 };
 
+//! @brief The Statement Exit AST node.
 struct StmtExitNode {
+  //! @brief The expression of this node.
   std::shared_ptr<ExprNode> expression;
 
+  //! @brief Constructor for the Statement Exit AST node.
+  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
   StmtExitNode(std::shared_ptr<ExprNode> expression) : expression(expression) {}
 };
 
+//! @brief The Statement Let AST node.
 struct StmtLetNode {
+  //! @brief The identifier token.
   tokenization::Token identifier;
+  //! @brief The expression of this node.
   std::shared_ptr<ExprNode> expression;
 
+  //! @brief Constructor for the Statement Let AST node.
+  //! @param identifier tokenization::Token The identifier token.
+  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
   StmtLetNode(tokenization::Token identifier,
               std::shared_ptr<ExprNode> expression)
       : identifier(identifier), expression(expression) {}
 };
 
+//! @brief The Statement Assignment AST node.
 struct StmtAssignNode {
+  //! @brief The identifier of token.
   tokenization::Token identifier;
+  //! @brief The expression of this node.
   std::shared_ptr<ExprNode> expression;
 
+  //! @brief Constructor for the Statement Assignment AST node.
+  //! @param identifier tokenization::Token The identifier token.
+  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
   StmtAssignNode(tokenization::Token identifier,
                  std::shared_ptr<ExprNode> expression)
       : identifier(identifier), expression(expression) {}
 };
 
+//! @brief The Statement If AST node.
 struct StmtIfNode {
+  //! @brief The expression for this node.
   std::shared_ptr<ExprNode> expression;
+  //! @brief The scope of this node.
   std::shared_ptr<ScopeNode> scope;
+  //! @brief Optional additional If Predicate of this node.
   std::optional<std::shared_ptr<IfPredNode>> ifpred;
 
+  //! @brief Constructor for the Statement If AST node.
+  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
+  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  //! @param ifpred std::optional<std::shared_ptr<IfPredNode>> The optional If
+  //! Predicate of this node.
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope,
              std::optional<std::shared_ptr<IfPredNode>> ifpred)
       : expression(expression), scope(scope), ifpred(ifpred) {}
+
+  //! @brief Constructor for the Statement If AST node without a chained If
+  //! Predicate. If Predicate.
+  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
+  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  StmtIfNode(std::shared_ptr<ExprNode> expression,
+             std::shared_ptr<ScopeNode> scope)
+      : expression(expression), scope(scope) {}
 };
 
+//! @brief The Term AST node.
 struct TermNode {
   using TermVariant = std::variant<std::shared_ptr<TermIntLitNode>,
                                    std::shared_ptr<TermIdentNode>,
                                    std::shared_ptr<TermExprNode>>;
 
+  //! @brief The variant of the Term in this node.
   TermVariant node;
 
+  //! @brief Constructor for the Term AST node.
+  //! @param node TermVariant The variant of the Term in this node.
   TermNode(TermVariant node) : node(node) {}
 };
 
+//! @brief The Binary Expression AST node.
 struct BinExprNode {
   using BinExprVariant = std::variant<
       std::shared_ptr<BinExprPowerNode>, std::shared_ptr<BinExprModNode>,
@@ -175,45 +304,65 @@ struct BinExprNode {
       std::shared_ptr<BinExprLessThanNode>,
       std::shared_ptr<BinExprGreaterThanNode>>;
 
+  //! @brief The variant of the Binary Expression in this node.
   BinExprVariant node;
 
+  //! @brief Constructor for the Binary Expression AST node.
+  //! @param node BinExprVariant The variant of the Binary Expression in this
+  //! node.
   BinExprNode(BinExprVariant node) : node(node) {}
 };
 
+//! @brief The Expression AST node.
 struct ExprNode {
   using ExprVariant =
       std::variant<std::shared_ptr<TermNode>, std::shared_ptr<BinExprNode>>;
 
+  //! @brief The variant of the Expression in this node.
   ExprVariant node;
 
+  //! @brief Constructor for the Expression AST node.
+  //! @param node ExprVariant The variant of the Expression in this node.
   ExprNode(ExprVariant node) : node(node) {}
 };
 
+//! @brief The If Predicate AST node.
 struct IfPredNode {
   using IfPredVariant = std::variant<std::shared_ptr<IfPredElifNode>,
                                      std::shared_ptr<IfPredElseNode>>;
 
+  //! @brief The variant of the If Predicate in this node.
   IfPredVariant node;
 
+  //! @brief Constructor for the If Predicate AST node.
+  //! @param node IfPredVariant The variant of the If Predicate in this node.
   IfPredNode(IfPredVariant node) : node(node) {}
 };
 
+//! @brief The Statement AST node.
 struct StmtNode {
   using StmtVariant =
       std::variant<std::shared_ptr<StmtExitNode>, std::shared_ptr<StmtLetNode>,
                    std::shared_ptr<StmtAssignNode>, std::shared_ptr<StmtIfNode>,
                    std::shared_ptr<ScopeNode>>;
 
+  //! @brief The variant of the Statement in this node.
   StmtVariant node;
 
+  //! @brief Constructor for the Statement AST node.
+  //! @param node StmtVariant The variant of the Statement in this node.
   StmtNode(StmtVariant node) : node(node) {}
 };
 
+//! @brief The Scope AST node.
 struct ScopeNode {
+  //! @brief Vector of Statements contained in this scope.
   std::vector<std::shared_ptr<StmtNode>> statements;
 };
 
+//! @brief The Program AST node.
 struct ProgNode {
+  //! @brief Vector of Statements in this program.
   std::vector<std::shared_ptr<StmtNode>> statements;
 };
 

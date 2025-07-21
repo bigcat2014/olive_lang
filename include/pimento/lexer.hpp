@@ -1,5 +1,5 @@
 //! @file lexer.hpp
-//! @brief Pimento lexer
+//! @brief Pimento lexer.
 //! @author Logan Thomas
 
 #pragma once
@@ -18,18 +18,21 @@ namespace pimento::tokenization {
 class Lexer {
 public:
   //! @brief Constructor for the Lexer
-  //! @param stream std::istream * The stream of characters to tokenize.
+  //! @param istream std::shared_ptr<std::istream> The stream of characters to
+  //! tokenize.
   Lexer(std::shared_ptr<std::istream> istream) : p_stream(istream) {
     m_tokens.reserve(BUFFER_SIZE);
     tokenize();
   }
 
+  //! @brief Getter for the vector of tokens lexed.
+  //! @return const std::vector<Token>& The vector of tokens lexed.
   [[nodiscard]] const std::vector<Token> &tokens() const noexcept {
     return m_tokens;
   }
 
 private:
-  //! @brief Tokenize the input file.
+  //! @brief Tokenize the input stream.
   void tokenize() {
     auto &logger = utils::get_logger();
 
@@ -104,17 +107,16 @@ private:
   //! @param size size_t The length of the buffer.
   //! @param lookahead size_t Optional lookahead distance to peek.
   //! @return char The character at `lookahead` offset from the current index or
-  //! ` ` if attempting to peek out of bounds.
+  //! 0 if attempting to peek out of bounds.
   [[nodiscard]] inline char peek(size_t current_index, const char *const buffer,
                                  size_t size,
                                  size_t lookahead = 0) const noexcept {
     if (current_index + lookahead < size) {
       return buffer[current_index + lookahead];
     }
-    return '"';
-    // return current_index + lookahead > size ? ' '
-    //                                         : buffer[current_index +
-    //                                         lookahead];
+
+    // Return invalid character.
+    return 0;
   }
 
   //! @brief Attmpt to parse a token from the buffer.
@@ -157,7 +159,10 @@ private:
     return false;
   }
 
+  //! @brief Token visitor for logging trace output.
   struct TraceTokenVisitor {
+    //! @brief Output string stream for building a trace string based on the
+    //! token properties.
     std::ostringstream &output;
 
     void operator()(const BinOpProperties &properties) const noexcept {
@@ -178,13 +183,13 @@ private:
   };
 
 private:
-  //! @brief The size in bytes of the chunks to read from the file.
+  //! @brief The size in bytes of the chunks to read from the input stream.
   constexpr static size_t BUFFER_SIZE = 4096;
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
-  //! @brief The path to the file to tokenize.
+  //! @brief The input stream to tokenize.
   std::shared_ptr<std::istream> p_stream;
-  //! @brief The tokens parsed from the file.
+  //! @brief The tokens parsed from the input stream.
   std::vector<Token> m_tokens;
 };
 
