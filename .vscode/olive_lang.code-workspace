@@ -14,7 +14,8 @@
 		"cmake.parallelJobs": 24,
 		"cmake.configureArgs": [
 			"-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-			"-DBUILD_TESTING=ON"
+			"-DBUILD_TESTING=ON",
+			// "-DCMAKE_VERBOSE_MAKEFILE=ON"
 		],
 		"[c]": {
 			"editor.tabSize": 2

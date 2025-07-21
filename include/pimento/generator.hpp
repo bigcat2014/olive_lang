@@ -78,6 +78,9 @@ private:
           // TODO(lthomas): Probably a cleaner way to do this... Refactor later
           struct TokenVisitor {
             std::ostringstream &oss;
+
+            TokenVisitor(std::ostringstream &oss) : oss(oss) {}
+
             void operator()(tokenization::IdentProperties properties) {
               oss << properties.identifier;
             }
@@ -95,11 +98,14 @@ private:
 
         // TODO(lthomas): Probably a cleaner way to do this... Refactor later
         struct TokenVisitor {
-          std::vector<Var> &m_vars;
+          std::vector<Var> &vars;
           size_t stack_size;
 
+          TokenVisitor(std::vector<Var> &vars, size_t stack_size)
+              : vars(vars), stack_size(stack_size) {}
+
           void operator()(tokenization::IdentProperties properties) {
-            m_vars.emplace_back(properties.identifier, stack_size);
+            vars.emplace_back(properties.identifier, stack_size);
           }
           void operator()(tokenization::BinOpProperties) {}
           void operator()(tokenization::IntLitProperties) {}
@@ -148,6 +154,9 @@ private:
           // TODO(lthomas): Probably a cleaner way to do this... Refactor later
           struct TokenVisitor {
             std::ostringstream &oss;
+
+            TokenVisitor(std::ostringstream &oss) : oss(oss) {}
+
             void operator()(tokenization::IdentProperties properties) {
               oss << properties.identifier;
             }
@@ -270,6 +279,9 @@ private:
         // TODO(lthomas): Probably a cleaner way to do this... Refactor later
         struct TokenVisitor {
           Generator &gen;
+
+          TokenVisitor(Generator &gen) : gen(gen) {}
+
           void operator()(tokenization::IdentProperties) {}
           void operator()(tokenization::BinOpProperties) {}
           void operator()(tokenization::IntLitProperties properties) {
@@ -315,6 +327,9 @@ private:
           // TODO(lthomas): Probably a cleaner way to do this... Refactor later
           struct TokenVisitor {
             std::ostringstream &oss;
+
+            TokenVisitor(std::ostringstream &oss) : oss(oss) {}
+
             void operator()(tokenization::IdentProperties properties) {
               oss << properties.identifier;
             }
@@ -499,6 +514,9 @@ private:
   struct Var {
     std::string name;
     size_t stack_loc;
+
+    Var(const std::string &name, size_t stack_loc)
+        : name(name), stack_loc(stack_loc) {}
   };
 
   // helpers for visitors
