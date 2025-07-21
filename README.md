@@ -1,6 +1,7 @@
 # Olive Lang
 ## Prerequisites
 - cmake
+- spdlog
 
 ## CMake Configuration
 ### Debug
@@ -59,3 +60,46 @@ From the root of the project, run the following command:
 ```bash
 ./install/bin/oliveoil
 ```
+
+# Grammar
+## Subject to change
+$$
+\begin{align}
+    [\text{Prog}] &\to [\text{Stmt}]^* \\
+    [\text{Stmt}] &\to
+    \begin{cases}
+        \text{exit}([\text{Expr}]); \\
+        \text{let}\space\text{ident} = [\text{Expr}]; \\
+        \text{ident} = \text{[Expr]}; \\
+        \text{if} ([\text{Expr}])[\text{Scope}]\text{[IfPred]}\\
+        [\text{Scope}]
+    \end{cases} \\
+    \text{[Scope]} &\to \{[\text{Stmt}]^*\} \\
+    \text{[IfPred]} &\to 
+    \begin{cases}
+        \text{elif}(\text{[Expr]})\text{[Scope]}\text{[IfPred]} \\
+        \text{else}\text{[Scope]} \\
+        \epsilon
+    \end{cases} \\
+    [\text{Expr}] &\to
+    \begin{cases}
+        [\text{Term}] \\
+        [\text{BinExpr}]
+    \end{cases} \\
+    [\text{BinExpr}] &\to
+    \begin{cases}
+        [\text{Expr}]\enspace \^{} \enspace \^{} &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{right} \\
+        [\text{Expr}]\enspace               \%   &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
+        [\text{Expr}]\enspace               *    &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
+        [\text{Expr}]\enspace               /    &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
+        [\text{Expr}]\enspace               +    &[\text{Expr}] \quad \text{prec} = 0; \enspace \text{associativity} = \text{left}  \\
+        [\text{Expr}]\enspace               -    &[\text{Expr}] \quad \text{prec} = 0; \enspace \text{associativity} = \text{left}  \\
+    \end{cases} \\ 
+    [\text{Term}] &\to
+    \begin{cases}
+        \text{int\_lit} \\
+        \text{ident} \\
+        ([\text{Expr}])
+    \end{cases}
+\end{align}
+$$
