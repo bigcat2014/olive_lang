@@ -2,7 +2,7 @@ let x = 5;
 let y = x + 2;
 let z = x * y;
 
-if x {
+if x < 2 {
     exit(x);
 } elif y {
     exit(y);

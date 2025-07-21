@@ -28,6 +28,26 @@ struct TermIntLitNode {
   tokenization::Token int_lit_token;
 };
 
+struct BinExprLessThanNode {
+  ExprNode *left;
+  ExprNode *right;
+
+  ~BinExprLessThanNode() {
+    delete left;
+    delete right;
+  }
+};
+
+struct BinExprGreaterThanNode {
+  ExprNode *left;
+  ExprNode *right;
+
+  ~BinExprGreaterThanNode() {
+    delete left;
+    delete right;
+  }
+};
+
 struct BinExprMinusNode {
   ExprNode *left;
   ExprNode *right;
@@ -159,16 +179,22 @@ private:
 
 struct BinExprNode {
   std::variant<BinExprPowerNode *, BinExprModNode *, BinExprMulNode *,
-               BinExprDivNode *, BinExprPlusNode *, BinExprMinusNode *>
+               BinExprDivNode *, BinExprPlusNode *, BinExprMinusNode *,
+               BinExprLessThanNode *, BinExprGreaterThanNode *>
       node;
 
   ~BinExprNode() {
+    // clang-format off
     const auto visitor = overloads{[](BinExprPowerNode *p) { delete p; },
                                    [](BinExprModNode *p) { delete p; },
                                    [](BinExprMulNode *p) { delete p; },
                                    [](BinExprDivNode *p) { delete p; },
                                    [](BinExprPlusNode *p) { delete p; },
-                                   [](BinExprMinusNode *p) { delete p; }};
+                                   [](BinExprMinusNode *p) { delete p; },
+                                   [](BinExprLessThanNode *p) { delete p; },
+                                   [](BinExprGreaterThanNode *p) { delete p; },
+    };
+    // clang-format on
 
     std::visit(visitor, node);
   }

@@ -170,48 +170,61 @@ private:
     struct Visitor {
       Generator &gen;
 
-      void
-      operator()(const ast::node::BinExprPowerNode *const power_node) const {
+      void operator()(const ast::node::BinExprPowerNode *const node) const {
         gen.m_output << "    ;; power\n";
-        gen.gen_expression(power_node->left);
-        gen.gen_expression(power_node->right);
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
         gen.m_output << "    ;; /power\n";
       }
 
-      void operator()(const ast::node::BinExprModNode *const mod_node) const {
+      void operator()(const ast::node::BinExprModNode *const node) const {
         gen.m_output << "    ;; mod\n";
-        gen.gen_expression(mod_node->left);
-        gen.gen_expression(mod_node->right);
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
         gen.m_output << "    ;; /mod\n";
       }
 
-      void operator()(const ast::node::BinExprMulNode *const mul_node) const {
+      void operator()(const ast::node::BinExprMulNode *const node) const {
         gen.m_output << "    ;; multiply\n";
-        gen.gen_expression(mul_node->left);
-        gen.gen_expression(mul_node->right);
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
         gen.m_output << "    ;; /multiply\n";
       }
 
-      void operator()(const ast::node::BinExprDivNode *const div_node) const {
+      void operator()(const ast::node::BinExprDivNode *const node) const {
         gen.m_output << "    ;; divide\n";
-        gen.gen_expression(div_node->left);
-        gen.gen_expression(div_node->right);
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
         gen.m_output << "    ;; /divide\n";
       }
 
-      void operator()(const ast::node::BinExprPlusNode *const plus_node) const {
+      void operator()(const ast::node::BinExprPlusNode *const node) const {
         gen.m_output << "    ;; add\n";
-        gen.gen_expression(plus_node->left);
-        gen.gen_expression(plus_node->right);
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
         gen.m_output << "    ;; /add\n";
       }
 
-      void
-      operator()(const ast::node::BinExprMinusNode *const minus_node) const {
+      void operator()(const ast::node::BinExprMinusNode *const node) const {
         gen.m_output << "    ;; subtract\n";
-        gen.gen_expression(minus_node->left);
-        gen.gen_expression(minus_node->right);
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
         gen.m_output << "    ;; /subtract\n";
+      }
+
+      void operator()(const ast::node::BinExprLessThanNode *const node) const {
+        gen.m_output << "    ;; less than\n";
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
+        gen.m_output << "    ;; /less than\n";
+      }
+
+      void
+      operator()(const ast::node::BinExprGreaterThanNode *const node) const {
+        gen.m_output << "    ;; greater than\n";
+        gen.gen_expression(node->left);
+        gen.gen_expression(node->right);
+        gen.m_output << "    ;; /greater than\n";
       }
     };
 

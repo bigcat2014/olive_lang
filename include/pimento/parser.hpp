@@ -198,9 +198,9 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprPowerNode *bin_expr_power = new node::BinExprPowerNode{
+        node::BinExprPowerNode *bin_expr = new node::BinExprPowerNode{
             .left = lhs, .right = parse_expression()};
-        expr->node = new node::BinExprNode{.node = bin_expr_power};
+        expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
       case tokenization::TokenType::TT_PERCENT: {
@@ -215,9 +215,9 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprModNode *bin_expr_power =
+        node::BinExprModNode *bin_expr =
             new node::BinExprModNode{.left = lhs, .right = parse_expression()};
-        expr->node = new node::BinExprNode{.node = bin_expr_power};
+        expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
       case tokenization::TokenType::TT_STAR: {
@@ -232,9 +232,9 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprMulNode *bin_expr_power =
+        node::BinExprMulNode *bin_expr =
             new node::BinExprMulNode{.left = lhs, .right = parse_expression()};
-        expr->node = new node::BinExprNode{.node = bin_expr_power};
+        expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
       case tokenization::TokenType::TT_FORWARD_SLASH: {
@@ -249,9 +249,9 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprDivNode *bin_expr_power =
+        node::BinExprDivNode *bin_expr =
             new node::BinExprDivNode{.left = lhs, .right = parse_expression()};
-        expr->node = new node::BinExprNode{.node = bin_expr_power};
+        expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
       case tokenization::TokenType::TT_PLUS: {
@@ -266,9 +266,9 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprPlusNode *bin_expr_power =
+        node::BinExprPlusNode *bin_expr =
             new node::BinExprPlusNode{.left = lhs, .right = parse_expression()};
-        expr->node = new node::BinExprNode{.node = bin_expr_power};
+        expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
       case tokenization::TokenType::TT_MINUS: {
@@ -283,9 +283,44 @@ private:
                 : properties.first;
 
         node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
-        node::BinExprMinusNode *bin_expr_power = new node::BinExprMinusNode{
+        node::BinExprMinusNode *bin_expr = new node::BinExprMinusNode{
             .left = lhs, .right = parse_expression()};
-        expr->node = new node::BinExprNode{.node = bin_expr_power};
+        expr->node = new node::BinExprNode{.node = bin_expr};
+        break;
+      }
+      case tokenization::TokenType::TT_LT: {
+        try_consume(tokenization::TokenType::TT_LT);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
+
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
+        node::BinExprLessThanNode *bin_expr = new node::BinExprLessThanNode{
+            .left = lhs, .right = parse_expression()};
+        expr->node = new node::BinExprNode{.node = bin_expr};
+        break;
+      }
+      case tokenization::TokenType::TT_GT: {
+        try_consume(tokenization::TokenType::TT_GT);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
+
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        node::ExprNode *lhs = new node::ExprNode{.node = term_lhs};
+        node::BinExprGreaterThanNode *bin_expr =
+            new node::BinExprGreaterThanNode{.left = lhs,
+                                             .right = parse_expression()};
+        expr->node = new node::BinExprNode{.node = bin_expr};
         break;
       }
       default: {

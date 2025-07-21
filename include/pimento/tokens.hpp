@@ -29,13 +29,15 @@ enum class TokenType {
   TT_LEFT_PAREN,
   TT_RIGHT_CURLY,
   TT_RIGHT_PAREN,
-  // Arithmetic operators
+  // Binary operators
   TT_DOUBLE_CARET,
   TT_FORWARD_SLASH,
   TT_MINUS,
   TT_PERCENT,
   TT_PLUS,
   TT_STAR,
+  TT_LT,
+  TT_GT,
   // Additional operators
   TT_EQUAL,
   // Miscellaneous
@@ -165,10 +167,13 @@ private:
       {TokenType::TT_PERCENT,       "TT_PERCENT"},
       {TokenType::TT_PLUS,          "TT_PLUS"},
       {TokenType::TT_STAR,          "TT_STAR"},
+      {TokenType::TT_LT,            "TT_LT"},
+      {TokenType::TT_GT,            "TT_GT"},
       {TokenType::TT_EQUAL,         "TT_EQUAL"},
       {TokenType::TT_IDENTIFIER,    "TT_IDENTIFIER"},
       {TokenType::TT_INT_LITERAL,   "TT_INT_LITERAL"},
-      {TokenType::TT_SEMI,          "TT_SEMI"}};
+      {TokenType::TT_SEMI,          "TT_SEMI"},
+  };
   // clang-format on
 
   // clang-format off
@@ -189,8 +194,11 @@ private:
                                           {"%",    TokenType::TT_PERCENT},
                                           {"+",    TokenType::TT_PLUS},
                                           {"*",    TokenType::TT_STAR},
+                                          {"<",    TokenType::TT_LT},
+                                          {">",    TokenType::TT_GT},
                                           {"=",    TokenType::TT_EQUAL},
-                                          {";",    TokenType::TT_SEMI}});
+                                          {";",    TokenType::TT_SEMI},
+        });
   // clang-format on
 
   // clang-format off
@@ -198,12 +206,15 @@ private:
   static const inline std::unordered_map<TokenType,
                                          std::pair<uint8_t, Associativity>>
       s_bin_expr_properties{
-          {TokenType::TT_DOUBLE_CARET,  {2, Associativity::RIGHT}},
-          {TokenType::TT_STAR,          {1, Associativity::LEFT}},
-          {TokenType::TT_FORWARD_SLASH, {1, Associativity::LEFT}},
-          {TokenType::TT_PERCENT,       {1, Associativity::LEFT}},
-          {TokenType::TT_PLUS,          {0, Associativity::LEFT}},
-          {TokenType::TT_MINUS,         {0, Associativity::LEFT}}};
+          {TokenType::TT_DOUBLE_CARET,  {3, Associativity::RIGHT}},
+          {TokenType::TT_STAR,          {2, Associativity::LEFT}},
+          {TokenType::TT_FORWARD_SLASH, {2, Associativity::LEFT}},
+          {TokenType::TT_PERCENT,       {2, Associativity::LEFT}},
+          {TokenType::TT_PLUS,          {1, Associativity::LEFT}},
+          {TokenType::TT_MINUS,         {1, Associativity::LEFT}},
+          {TokenType::TT_LT,            {0, Associativity::LEFT}},
+          {TokenType::TT_GT,            {0, Associativity::LEFT}},
+      };
   // clang-format on
 };
 
