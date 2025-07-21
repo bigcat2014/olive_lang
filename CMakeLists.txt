@@ -61,7 +61,7 @@ if (BUILD_TESTING)
         --leak-check=full
         --errors-for-leak-kinds=definite
         --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/test.oil
+        $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
 endif()
