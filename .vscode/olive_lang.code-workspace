@@ -1,0 +1,50 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"cmake.sourceDirectory": [
+			"${workspaceFolder}/olive_lang"
+		],
+		"cmake.buildDirectory": "${sourceDirectory}/build",
+		"cmake.installPrefix": "${sourceDirectory}/install",
+		"cmake.configureOnOpen": true,
+		"cmake.parallelJobs": 24,
+		"cmake.configureArgs": [
+			"-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+		],
+		"[c]": {
+			"editor.tabSize": 2
+		},
+		"[cpp]": {
+			"editor.tabSize": 2
+		},
+		"files.associations": {
+			"*.cmake.in": "cmake"
+		},
+		"editor.tokenColorCustomizations": {
+			"textMateRules": [
+				{
+					"scope": "googletest.failed",
+					"settings": {
+						"foreground": "#f00"
+					}
+				},
+				{
+					"scope": "googletest.passed",
+					"settings": {
+						"foreground": "#0f0"
+					}
+				},
+				{
+					"scope": "googletest.run",
+					"settings": {
+						"foreground": "#0f0"
+					}
+				}
+			]
+		},
+	}
+}

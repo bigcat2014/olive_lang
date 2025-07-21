@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.19)
-project(oliveoil)
+cmake_minimum_required(VERSION 3.22)
+project(pimento)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -10,13 +10,33 @@ set(${PROJECT_NAME}_PATCH_VERSION 0)
 set(${PROJECT_NAME}_VERSION
     ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 
+include(FetchContent)
+
+# Fetch argparse
+FetchContent_Declare(
+  argparse
+  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+  GIT_TAG        v3.2
+)
+FetchContent_MakeAvailable(argparse)
+
+# Fetch spdlog
+FetchContent_Declare(
+  spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog.git
+  GIT_TAG v1.15.3
+)
+FetchContent_MakeAvailable(spdlog)
+
 add_executable(${PROJECT_NAME}
-    src/oliveoil.cpp
+    src/pimento.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog)
+target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
 install(
     DIRECTORY include/
