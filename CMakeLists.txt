@@ -84,7 +84,6 @@ if (BUILD_TESTING)
     enable_testing()
 
     set(${PROJECT_NAME}_TEST_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
-
     add_test(NAME ${PROJECT_NAME}_valgrind_file
         COMMAND valgrind
         --error-exitcode=1
@@ -105,6 +104,26 @@ if (BUILD_TESTING)
         $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --stdout
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
+    # GTest
+    find_package(GTest REQUIRED)
+    add_executable(lexer_test EXCLUDE_FROM_ALL
+        tests/lexer_test.cpp)
+    target_include_directories(lexer_test PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${Boost_INCLUDE_DIRS})
+    target_link_libraries(lexer_test PRIVATE ${PROJECT_NAME}_lexer GTest::gtest_main)
+    gtest_discover_tests(lexer_test)
+
+    add_executable(parser_test EXCLUDE_FROM_ALL
+        tests/parser_test.cpp)
+    target_include_directories(parser_test PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${Boost_INCLUDE_DIRS})
+    target_link_libraries(parser_test PRIVATE ${PROJECT_NAME}_parser GTest::gtest_main)
+    gtest_discover_tests(parser_test)
+
     # Gcovr
     list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
     include(CodeCoverage)
@@ -118,27 +137,23 @@ if (BUILD_TESTING)
         endif() # NOT LLVM_COV_PATH
         list(APPEND GCOVR_ADDITIONAL_ARGS --gcov-executable "${LLVM_COV_PATH} gcov")
     endif()
+    set(Coverage_DEPENDENCIES run_tests)
     setup_target_for_coverage_gcovr_html(NAME coverage)
 
-    # GTest
-    find_package(GTest REQUIRED)
-    add_executable(lexer_test
-        tests/lexer_test.cpp)
-    target_include_directories(lexer_test PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        ${Boost_INCLUDE_DIRS})
-    target_link_libraries(lexer_test PRIVATE ${PROJECT_NAME}_lexer GTest::gtest_main)
-    gtest_discover_tests(lexer_test)
+    # Custom Testing Targets
+    add_custom_target(build_tests
+        DEPENDS lexer_test parser_test)
 
-    add_executable(parser_test
-        tests/parser_test.cpp)
-    target_include_directories(parser_test PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        ${Boost_INCLUDE_DIRS})
-    target_link_libraries(parser_test PRIVATE ${PROJECT_NAME}_parser GTest::gtest_main)
-    gtest_discover_tests(parser_test)
+    find_program(CTEST_PATH ctest)
+    if(NOT CTEST_PATH)
+        message(FATAL_ERROR "ctest not found! Aborting...")
+    endif() # NOT CTEST_PATH
+    add_custom_target(run_tests
+        COMMAND ${CTEST_PATH}
+        --output-on-failure
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DEPENDS build_tests)
+
 endif()
 
 install(

@@ -19,7 +19,7 @@ cmake \
     -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 \
     -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 \
     --no-warn-unused-cli \
-    -G Ninja \
+    -G "Unix Makefiles" \
     -S. -Bbuild
 ```
 
@@ -33,7 +33,7 @@ cmake \
     -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 \
     -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 \
     --no-warn-unused-cli \
-    -G Ninja \
+    -G "Unix Makefiles" \
     -S. -Bbuild
 ```
 

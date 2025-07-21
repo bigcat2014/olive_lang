@@ -14,8 +14,13 @@
 		"cmake.parallelJobs": 24,
 		"cmake.configureArgs": [
 			"-DBUILD_TESTING:BOOL=TRUE",
+			"-DCMAKE_COLOR_DIAGNOSTICS:BOOL=TRUE",
 			// "-DCMAKE_VERBOSE_MAKEFILE=ON"
 		],
+		"cmake.environment": {
+			"CLICOLOR_FORCE": "1",
+		},
+		"cmake.generator": "Unix Makefiles",
 		"[c]": {
 			"editor.tabSize": 2
 		},
