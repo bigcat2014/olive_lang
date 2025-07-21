@@ -20,7 +20,7 @@ class Lexer {
 public:
   //! @brief Constructor for the Lexer
   //! @param stream std::istream * The stream of characters to tokenize.
-  Lexer(std::istream *stream) : m_stream(stream) {
+  Lexer(std::istream *stream) : p_stream(stream) {
     m_tokens.reserve(BUFFER_SIZE);
   }
 
@@ -34,9 +34,9 @@ public:
     std::string token_buffer;
     token_buffer.reserve(MAX_TOKEN_LEN);
 
-    while (*m_stream) {
-      m_stream->read(file_buffer.data(), file_buffer.size());
-      size_t n = static_cast<size_t>(m_stream->gcount());
+    while (*p_stream) {
+      p_stream->read(file_buffer.data(), file_buffer.size());
+      size_t n = static_cast<size_t>(p_stream->gcount());
       if (n <= 0) {
         break;
       }
@@ -184,7 +184,7 @@ private:
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
   //! @brief The path to the file to tokenize.
-  std::unique_ptr<std::istream> m_stream;
+  std::unique_ptr<std::istream> p_stream;
   //! @brief The tokens parsed from the file.
   std::vector<Token> m_tokens;
 };
