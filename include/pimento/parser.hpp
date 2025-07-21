@@ -90,8 +90,8 @@ private:
     return next.value();
   }
 
-  //! @brief Parse a statement into the AST.
-  //! @return std::unique_ptr<node::StmtNode> The Statement node of the AST.
+  //! @brief Parse a Statement into the AST.
+  //! @return std::shared_ptr<node::StmtNode> The Statement node of the AST.
   std::shared_ptr<node::StmtNode> parse_statement() {
     auto &logger = utils::get_logger();
 
@@ -180,8 +180,8 @@ private:
     return stmt;
   }
 
-  //! @brief Parse an expression into the AST.
-  //! @return std::unique_ptr<node::ExprNode> The expression node of the AST.
+  //! @brief Parse an Expression into the AST.
+  //! @return std::shared_ptr<node::ExprNode> The Expression node of the AST.
   std::shared_ptr<node::ExprNode> parse_expression(uint8_t min_precedence = 0) {
     auto &logger = utils::get_logger();
     std::shared_ptr<node::ExprNode> expr;
@@ -405,8 +405,8 @@ private:
     exit(EXIT_FAILURE);
   }
 
-  //! @brief Parse a scope into the AST.
-  //! @return std::unique_ptr<node::ScopeNode> The scope node of the AST.
+  //! @brief Parse a Scope into the AST.
+  //! @return std::shared_ptr<node::ScopeNode> The Scope node of the AST.
   std::shared_ptr<node::ScopeNode> parse_scope() {
     try_consume(tokenization::TokenType::TT_LEFT_CURLY);
 
@@ -427,9 +427,9 @@ private:
     return scope;
   }
 
-  // TODO(lthomas): Fill out this function body.
-  //! @brief Parse an if predicate into the AST.
-  //! @return std::unique_ptr<node::IfPred> The if predicate node of the AST.
+  //! @brief Parse an If Predicate into the AST.
+  //! @return std::optional<std::shared_ptr<node::IfPred>> The If Predicate node
+  //! of the AST.
   std::optional<std::shared_ptr<node::IfPredNode>> parse_ifpred() {
     auto &logger = utils::get_logger();
     std::optional<std::shared_ptr<node::IfPredNode>> ifpred;
@@ -470,8 +470,8 @@ private:
     return ifpred;
   }
 
-  //! @brief Parse a term into the AST.
-  //! @return std::unique_ptr<node::TermNode> The term node of the AST.
+  //! @brief Parse a Term into the AST.
+  //! @return std::shared_ptr<node::TermNode> The Term node of the AST.
   std::shared_ptr<node::TermNode> parse_term() {
     auto &logger = utils::get_logger();
     std::shared_ptr<node::TermNode> term;
