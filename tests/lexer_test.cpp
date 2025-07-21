@@ -26,6 +26,8 @@ TEST(Lexer, TT_ELSE) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_ELSE);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_EXIT) {
@@ -36,6 +38,8 @@ TEST(Lexer, TT_EXIT) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_EXIT);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_IF) {
@@ -46,6 +50,8 @@ TEST(Lexer, TT_IF) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_IF);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_ELIF) {
@@ -56,6 +62,8 @@ TEST(Lexer, TT_ELIF) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_ELIF);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_LET) {
@@ -66,6 +74,8 @@ TEST(Lexer, TT_LET) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LET);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_LEFT_CURLY) {
@@ -76,6 +86,8 @@ TEST(Lexer, TT_LEFT_CURLY) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LEFT_CURLY);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_LEFT_PAREN) {
@@ -86,6 +98,8 @@ TEST(Lexer, TT_LEFT_PAREN) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LEFT_PAREN);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_RIGHT_CURLY) {
@@ -96,6 +110,8 @@ TEST(Lexer, TT_RIGHT_CURLY) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_RIGHT_CURLY);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_RIGHT_PAREN) {
@@ -106,6 +122,8 @@ TEST(Lexer, TT_RIGHT_PAREN) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_RIGHT_PAREN);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_DOUBLE_CARET) {
@@ -269,6 +287,8 @@ TEST(Lexer, TT_EQUAL) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_EQUAL);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_SEMI) {
@@ -279,6 +299,8 @@ TEST(Lexer, TT_SEMI) {
   ASSERT_FALSE(lexer.tokens().empty());
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_SEMI);
+  EXPECT_TRUE(
+      std::holds_alternative<std::monostate>(lexer.tokens()[0].properties));
 }
 
 TEST(Lexer, TT_INT_LITERAL) {
@@ -291,10 +313,11 @@ TEST(Lexer, TT_INT_LITERAL) {
             pimento::tokenization::TokenType::TT_INT_LITERAL);
   ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IntLitProperties>(
       lexer.tokens()[0].properties));
-  EXPECT_EQ(std::get<pimento::tokenization::IntLitProperties>(
-                lexer.tokens()[0].properties)
-                .value,
-            std::stoull(iss->str()));
+
+  pimento::tokenization::IntLitProperties properties =
+      std::get<pimento::tokenization::IntLitProperties>(
+          lexer.tokens()[0].properties);
+  EXPECT_EQ(properties.value, std::stoull(iss->str()));
 }
 
 TEST(Lexer, TT_IDENTIFIER) {
@@ -308,8 +331,9 @@ TEST(Lexer, TT_IDENTIFIER) {
 
   ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IdentProperties>(
       lexer.tokens()[0].properties));
-  EXPECT_EQ(std::get<pimento::tokenization::IdentProperties>(
-                lexer.tokens()[0].properties)
-                .identifier,
-            iss->str());
+
+  pimento::tokenization::IdentProperties properties =
+      std::get<pimento::tokenization::IdentProperties>(
+          lexer.tokens()[0].properties);
+  EXPECT_EQ(properties.identifier, iss->str());
 }
