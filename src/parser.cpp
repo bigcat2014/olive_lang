@@ -393,15 +393,13 @@ std::shared_ptr<node::ScopeNode> Parser::parse_scope() {
 }
 
 std::optional<std::shared_ptr<node::IfPredNode>> Parser::parse_ifpred() {
-  auto &logger = utils::get_logger();
   std::optional<std::shared_ptr<node::IfPredNode>> ifpred;
   tokenization::Token current_token;
 
   if (auto token_opt = peek()) {
     current_token = token_opt.value();
   } else {
-    logger.error("Expected term at TODO Line & Column number");
-    exit(EXIT_FAILURE);
+    return {};
   }
 
   switch (current_token.token_type) {
