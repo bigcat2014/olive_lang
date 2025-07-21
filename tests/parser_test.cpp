@@ -117,6 +117,30 @@ TEST(Parser, StmtIf) {
   EXPECT_FALSE(stmt_if_node->ifpred.has_value());
 }
 
+TEST(Parser, StmtWhile) {
+  std::istringstream iss{"while 0 {\n    let x = 1;\n}"};
+  Parser parser(iss);
+
+  ASSERT_EQ(parser.get_program().statements.size(), 1);
+  // Ensure node is "Statement While AST node"
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::StmtWhileNode>>(
+      parser.get_program().statements[0]->node));
+  std::shared_ptr<node::StmtWhileNode> stmt_while_node =
+      std::get<std::shared_ptr<node::StmtWhileNode>>(
+          parser.get_program().statements[0]->node);
+
+  // Check that the expression is correct
+  ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
+      stmt_while_node->expression->node));
+  std::shared_ptr<node::TermNode> term_node =
+      std::get<std::shared_ptr<node::TermNode>>(
+          stmt_while_node->expression->node);
+
+  TEST_INT_LIT_TERM(term_node->node, 0);
+
+  EXPECT_EQ(stmt_while_node->scope->statements.size(), 1);
+}
+
 TEST(Parser, Scope) {
   std::istringstream iss{"{\n    let x = 1;\n}"};
   Parser parser(iss);

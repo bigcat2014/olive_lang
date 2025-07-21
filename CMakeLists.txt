@@ -104,6 +104,27 @@ if (BUILD_TESTING)
         $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --stdout
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
+    set(${PROJECT_NAME}_TEST_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
+    add_test(NAME ${PROJECT_NAME}_valgrind_file_trace
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --trace
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_trace
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}> ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil --stdout --trace
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
     # GTest
     find_package(GTest REQUIRED)
     add_executable(lexer_test EXCLUDE_FROM_ALL
@@ -152,7 +173,7 @@ if (BUILD_TESTING)
         COMMAND ${CTEST_PATH}
         --output-on-failure
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS build_tests)
+        DEPENDS build_tests ${PROJECT_NAME})
 
 endif()
 
