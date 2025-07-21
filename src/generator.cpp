@@ -5,12 +5,11 @@
 
 namespace pimento::generation {
 
-Generator::Generator(std::shared_ptr<std::istream> istream,
-                     std::shared_ptr<std::ostream> ostream)
-    : m_parser(istream), p_output(ostream) {}
+Generator::Generator(std::istream &istream, std::ostream &ostream)
+    : m_parser(istream), m_output(ostream) {}
 
 void Generator::generate() noexcept {
-  *p_output << "global _start\n_start:\n";
+  m_output << "global _start\n_start:\n";
 
   const ast::node::ProgNode program = m_parser.get_program();
   for (const auto &statement : program.statements) {
@@ -25,9 +24,9 @@ void Generator::gen_statement(
 
     void operator()(std::shared_ptr<ast::node::StmtExitNode> stmt) const {
       gen.gen_expression(stmt->expression);
-      *gen.p_output << "    mov rax, 60\n";
+      gen.m_output << "    mov rax, 60\n";
       gen.pop("rdi");
-      *gen.p_output << "    syscall\n";
+      gen.m_output << "    syscall\n";
     }
 
     void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt) const {
@@ -148,14 +147,14 @@ void Generator::gen_statement(
 
       gen.gen_expression(stmt->expression);
       gen.pop("rax");
-      *gen.p_output << "    mov [rsp + "
-                    << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
+      gen.m_output << "    mov [rsp + "
+                   << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
     }
 
     void operator()(std::shared_ptr<ast::node::ScopeNode> stmt) const {
-      *gen.p_output << "    ;; scope\n";
+      gen.m_output << "    ;; scope\n";
       gen.gen_scope(stmt);
-      *gen.p_output << "    ;; /scope\n";
+      gen.m_output << "    ;; /scope\n";
     }
 
     void operator()(std::shared_ptr<ast::node::StmtIfNode> stmt) const {
@@ -163,19 +162,19 @@ void Generator::gen_statement(
       gen.gen_expression(stmt->expression);
       gen.pop("rax");
       const std::string label = gen.create_label();
-      *gen.p_output << "    test rax, rax\n";
+      gen.m_output << "    test rax, rax\n";
       // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
       // true
-      *gen.p_output << "    jz " << label << "\n";
+      gen.m_output << "    jz " << label << "\n";
       gen.gen_scope(stmt->scope);
       if (stmt->ifpred.has_value()) {
         const std::string end_label = gen.create_label();
-        *gen.p_output << "    jmp " << end_label << "\n";
-        *gen.p_output << label << ":\n";
+        gen.m_output << "    jmp " << end_label << "\n";
+        gen.m_output << label << ":\n";
         gen.gen_ifpred(stmt->ifpred.value(), end_label);
-        *gen.p_output << end_label << ":\n";
+        gen.m_output << end_label << ":\n";
       } else {
-        *gen.p_output << label << ":\n";
+        gen.m_output << label << ":\n";
       }
     }
 
@@ -184,14 +183,14 @@ void Generator::gen_statement(
       const std::string loop_label = gen.create_label();
       const std::string end_label = gen.create_label();
 
-      *gen.p_output << loop_label << ":\n";
+      gen.m_output << loop_label << ":\n";
       gen.gen_expression(stmt->expression);
       gen.pop("rax");
-      *gen.p_output << "    test rax, rax\n";
-      *gen.p_output << "    jz " << end_label << "\n";
+      gen.m_output << "    test rax, rax\n";
+      gen.m_output << "    jz " << end_label << "\n";
       gen.gen_scope(stmt->scope);
-      *gen.p_output << "    jmp " << loop_label << "\n";
-      *gen.p_output << end_label << ":\n";
+      gen.m_output << "    jmp " << loop_label << "\n";
+      gen.m_output << end_label << ":\n";
     }
   };
 
@@ -234,13 +233,13 @@ void Generator::gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
       gen.gen_expression(ifpred->expression);
       gen.pop("rax");
       const std::string label = gen.create_label();
-      *gen.p_output << "    test rax, rax\n";
+      gen.m_output << "    test rax, rax\n";
       // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
       // true
-      *gen.p_output << "    jz " << label << "\n";
+      gen.m_output << "    jz " << label << "\n";
       gen.gen_scope(ifpred->scope);
-      *gen.p_output << "    jmp " << end_label << "\n";
-      *gen.p_output << label << ":\n";
+      gen.m_output << "    jmp " << end_label << "\n";
+      gen.m_output << label << ":\n";
       if (ifpred->ifpred.has_value()) {
         gen.gen_ifpred(ifpred->ifpred.value(), end_label);
       }
@@ -268,7 +267,7 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
         void operator()(tokenization::IdentProperties) {}
         void operator()(tokenization::BinOpProperties) {}
         void operator()(tokenization::IntLitProperties properties) {
-          *gen.p_output << "    mov rax, " << properties.value << "\n";
+          gen.m_output << "    mov rax, " << properties.value << "\n";
           gen.push("rax");
         }
         void operator()(std::monostate) {}
@@ -354,17 +353,17 @@ void Generator::gen_bin_expr(
       std::string end_label = gen.create_label();
 
       gen.pop("rax");
-      *gen.p_output << "    mov rbx, rax\n";
+      gen.m_output << "    mov rbx, rax\n";
       gen.pop("rcx");
-      *gen.p_output << loop_label << ":\n";
-      *gen.p_output << "    sub rcx, 1\n";
-      *gen.p_output << "    jc " << neg_label << "\n";
-      *gen.p_output << "    jz " << end_label << "\n";
-      *gen.p_output << "    mul rbx\n";
-      *gen.p_output << "    jmp " << loop_label << "\n";
-      *gen.p_output << neg_label << ":\n";
-      *gen.p_output << "    mov rax, 1\n";
-      *gen.p_output << end_label << ":\n";
+      gen.m_output << loop_label << ":\n";
+      gen.m_output << "    sub rcx, 1\n";
+      gen.m_output << "    jc " << neg_label << "\n";
+      gen.m_output << "    jz " << end_label << "\n";
+      gen.m_output << "    mul rbx\n";
+      gen.m_output << "    jmp " << loop_label << "\n";
+      gen.m_output << neg_label << ":\n";
+      gen.m_output << "    mov rax, 1\n";
+      gen.m_output << end_label << ":\n";
       gen.push("rax");
     }
 
@@ -373,7 +372,7 @@ void Generator::gen_bin_expr(
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    div rbx\n";
+      gen.m_output << "    div rbx\n";
       gen.push("rdx");
     }
 
@@ -382,7 +381,7 @@ void Generator::gen_bin_expr(
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    mul rbx\n";
+      gen.m_output << "    mul rbx\n";
       gen.push("rax");
     }
 
@@ -391,7 +390,7 @@ void Generator::gen_bin_expr(
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    div rbx\n";
+      gen.m_output << "    div rbx\n";
       gen.push("rax");
     }
 
@@ -401,7 +400,7 @@ void Generator::gen_bin_expr(
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    add rax, rbx\n";
+      gen.m_output << "    add rax, rbx\n";
       gen.push("rax");
     }
 
@@ -411,7 +410,7 @@ void Generator::gen_bin_expr(
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    sub rax, rbx\n";
+      gen.m_output << "    sub rax, rbx\n";
       gen.push("rax");
     }
 
@@ -425,13 +424,13 @@ void Generator::gen_bin_expr(
 
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    cmp rax, rbx\n";
-      *gen.p_output << "    jl " << label << "\n";
-      *gen.p_output << "    mov rax, 0\n";
-      *gen.p_output << "    jmp " << end_label << "\n";
-      *gen.p_output << label << ":\n";
-      *gen.p_output << "    mov rax, 1\n";
-      *gen.p_output << end_label << ":\n";
+      gen.m_output << "    cmp rax, rbx\n";
+      gen.m_output << "    jl " << label << "\n";
+      gen.m_output << "    mov rax, 0\n";
+      gen.m_output << "    jmp " << end_label << "\n";
+      gen.m_output << label << ":\n";
+      gen.m_output << "    mov rax, 1\n";
+      gen.m_output << end_label << ":\n";
       gen.push("rax");
     }
 
@@ -445,13 +444,13 @@ void Generator::gen_bin_expr(
 
       gen.pop("rax");
       gen.pop("rbx");
-      *gen.p_output << "    cmp rax, rbx\n";
-      *gen.p_output << "    jg " << label << "\n";
-      *gen.p_output << "    mov rax, 0\n";
-      *gen.p_output << "    jmp " << end_label << "\n";
-      *gen.p_output << label << ":\n";
-      *gen.p_output << "    mov rax, 1\n";
-      *gen.p_output << end_label << ":\n";
+      gen.m_output << "    cmp rax, rbx\n";
+      gen.m_output << "    jg " << label << "\n";
+      gen.m_output << "    mov rax, 0\n";
+      gen.m_output << "    jmp " << end_label << "\n";
+      gen.m_output << label << ":\n";
+      gen.m_output << "    mov rax, 1\n";
+      gen.m_output << end_label << ":\n";
       gen.push("rax");
     }
   };
@@ -460,12 +459,12 @@ void Generator::gen_bin_expr(
 }
 
 void Generator::push(const std::string &reg) noexcept {
-  *p_output << "    push " << reg << "\n";
+  m_output << "    push " << reg << "\n";
   m_stack_size++;
 }
 
 void Generator::pop(const std::string &reg) noexcept {
-  *p_output << "    pop " << reg << "\n";
+  m_output << "    pop " << reg << "\n";
   m_stack_size--;
 }
 
@@ -474,7 +473,7 @@ void Generator::begin_scope() noexcept { m_scopes.emplace_back(m_vars.size()); }
 void Generator::end_scope() noexcept {
   const size_t pop_count = m_vars.size() - m_scopes.back();
   if (pop_count != 0) {
-    *p_output << "    add rsp, " << pop_count * 8 << "\n";
+    m_output << "    add rsp, " << pop_count * 8 << "\n";
   }
   m_stack_size -= pop_count;
   for (size_t i = 0; i < pop_count; i++) {

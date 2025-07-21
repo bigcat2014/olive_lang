@@ -18,9 +18,9 @@ namespace pimento::ast {
 class Parser {
 public:
   //! @brief Construct a new Parser object.
-  //! @param istream //! @param stream std::shared_ptr<std::istream> The stream
-  //! of characters to tokenize and parse parse.
-  explicit Parser(std::shared_ptr<std::istream> istream);
+  //! @param istream std::istream& The stream of characters to tokenize and
+  //! parse parse.
+  explicit Parser(std::istream &istream);
 
   //! @brief Getter for the top level program AST node.
   //! @return const node::ProgNode& The top level program AST node.

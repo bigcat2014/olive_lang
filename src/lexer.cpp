@@ -5,7 +5,7 @@
 
 namespace pimento::tokenization {
 
-Lexer::Lexer(std::shared_ptr<std::istream> istream) : p_stream(istream) {
+Lexer::Lexer(std::istream &istream) : m_stream(istream) {
   m_tokens.reserve(BUFFER_SIZE);
   tokenize();
 }
@@ -23,9 +23,9 @@ void Lexer::tokenize() {
   std::string token_buffer;
   token_buffer.reserve(MAX_TOKEN_LEN);
 
-  while (*p_stream) {
-    p_stream->read(file_buffer.data(), file_buffer.size());
-    size_t n = static_cast<size_t>(p_stream->gcount());
+  while (m_stream) {
+    m_stream.read(file_buffer.data(), file_buffer.size());
+    size_t n = static_cast<size_t>(m_stream.gcount());
     if (n <= 0) {
       break;
     }

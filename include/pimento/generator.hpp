@@ -17,11 +17,10 @@ namespace pimento::generation {
 class Generator {
 public:
   //! @brief Constructor for the Generator.
-  //! @param istream std::shared_ptr<std::istream> Input stream of characters to
+  //! @param istream std::istream& Input stream of characters to
   //! lex, parse, and generate.
-  //! @param ostream std::shared_ptr<std::ostream> Output stream to generate to.
-  explicit Generator(std::shared_ptr<std::istream> istream,
-                     std::shared_ptr<std::ostream> ostream);
+  //! @param ostream std::ostream& Output stream to generate to.
+  explicit Generator(std::istream &istream, std::ostream &ostream);
 
   //! @brief Lex, parse, and generate output.
   void generate() noexcept;
@@ -96,7 +95,7 @@ private:
   //! @brief Parser object for parsing tokens into AST.
   ast::Parser m_parser;
   //! @brief Output stream.
-  std::shared_ptr<std::ostream> p_output;
+  std::ostream &m_output;
   //! @brief The current stack size.
   size_t m_stack_size{0};
   //! @brief Current variables in use.

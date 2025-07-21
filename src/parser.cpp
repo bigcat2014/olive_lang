@@ -3,9 +3,7 @@
 
 namespace pimento::ast {
 
-Parser::Parser(std::shared_ptr<std::istream> istream) : m_lexer(istream) {
-  parse();
-}
+Parser::Parser(std::istream &istream) : m_lexer(istream) { parse(); }
 
 [[nodiscard]] const node::ProgNode &Parser::get_program() const noexcept {
   return m_prog;

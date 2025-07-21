@@ -15,9 +15,9 @@ namespace pimento::tokenization {
 class Lexer {
 public:
   //! @brief Constructor for the Lexer
-  //! @param istream std::shared_ptr<std::istream> The stream of characters to
+  //! @param istream std::istream& The stream of characters to
   //! tokenize.
-  explicit Lexer(std::shared_ptr<std::istream> istream);
+  explicit Lexer(std::istream &istream);
 
   //! @brief Getter for the vector of tokens lexed.
   //! @return const std::vector<Token>& The vector of tokens lexed.
@@ -80,7 +80,7 @@ private:
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
   //! @brief The input stream to tokenize.
-  std::shared_ptr<std::istream> p_stream;
+  std::istream &m_stream;
   //! @brief The tokens parsed from the input stream.
   std::vector<Token> m_tokens;
 };

@@ -83,7 +83,7 @@ if (BUILD_TESTING)
     enable_testing()
     find_package(GTest REQUIRED)
 
-    add_test(NAME ${PROJECT_NAME}_valgrind
+    add_test(NAME ${PROJECT_NAME}_valgrind_file
         COMMAND valgrind
         --error-exitcode=1
         --tool=memcheck
@@ -91,6 +91,16 @@ if (BUILD_TESTING)
         --errors-for-leak-kinds=definite
         --show-leak-kinds=definite
         $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    add_test(NAME ${PROJECT_NAME}_valgrind_stdout
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/valgrind_test.oil --stdout
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
     add_executable(lexer_test

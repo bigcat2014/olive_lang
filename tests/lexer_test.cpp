@@ -11,16 +11,14 @@
 #include <pimento/tokens.hpp>
 
 TEST(Lexer, EmptyStream) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>();
+  std::istringstream iss;
   pimento::tokenization::Lexer lexer(iss);
 
   EXPECT_TRUE(lexer.tokens().empty());
 }
 
 TEST(Lexer, TT_ELSE) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("else");
+  std::istringstream iss{"else"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -31,8 +29,7 @@ TEST(Lexer, TT_ELSE) {
 }
 
 TEST(Lexer, TT_EXIT) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("exit");
+  std::istringstream iss{"exit"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -43,8 +40,7 @@ TEST(Lexer, TT_EXIT) {
 }
 
 TEST(Lexer, TT_IF) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("if");
+  std::istringstream iss{"if"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -55,8 +51,7 @@ TEST(Lexer, TT_IF) {
 }
 
 TEST(Lexer, TT_ELIF) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("elif");
+  std::istringstream iss{"elif"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -67,8 +62,7 @@ TEST(Lexer, TT_ELIF) {
 }
 
 TEST(Lexer, TT_LET) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("let");
+  std::istringstream iss{"let"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -79,8 +73,7 @@ TEST(Lexer, TT_LET) {
 }
 
 TEST(Lexer, TT_LEFT_CURLY) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("{");
+  std::istringstream iss{"{"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -91,8 +84,7 @@ TEST(Lexer, TT_LEFT_CURLY) {
 }
 
 TEST(Lexer, TT_LEFT_PAREN) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("(");
+  std::istringstream iss{"("};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -103,8 +95,7 @@ TEST(Lexer, TT_LEFT_PAREN) {
 }
 
 TEST(Lexer, TT_RIGHT_CURLY) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("}");
+  std::istringstream iss{"}"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -115,8 +106,7 @@ TEST(Lexer, TT_RIGHT_CURLY) {
 }
 
 TEST(Lexer, TT_RIGHT_PAREN) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>(")");
+  std::istringstream iss{")"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -127,8 +117,7 @@ TEST(Lexer, TT_RIGHT_PAREN) {
 }
 
 TEST(Lexer, TT_DOUBLE_CARET) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("^^");
+  std::istringstream iss{"^^"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -147,8 +136,7 @@ TEST(Lexer, TT_DOUBLE_CARET) {
 }
 
 TEST(Lexer, TT_FORWARD_SLASH) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("/");
+  std::istringstream iss{"/"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -166,8 +154,7 @@ TEST(Lexer, TT_FORWARD_SLASH) {
 }
 
 TEST(Lexer, TT_MINUS) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("-");
+  std::istringstream iss{"-"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -185,8 +172,7 @@ TEST(Lexer, TT_MINUS) {
 }
 
 TEST(Lexer, TT_PERCENT) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("%");
+  std::istringstream iss{"%"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -204,8 +190,7 @@ TEST(Lexer, TT_PERCENT) {
 }
 
 TEST(Lexer, TT_PLUS) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("+");
+  std::istringstream iss{"+"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -223,8 +208,7 @@ TEST(Lexer, TT_PLUS) {
 }
 
 TEST(Lexer, TT_STAR) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("*");
+  std::istringstream iss{"*"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -242,8 +226,7 @@ TEST(Lexer, TT_STAR) {
 }
 
 TEST(Lexer, TT_LT) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("<");
+  std::istringstream iss{"<"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -261,8 +244,7 @@ TEST(Lexer, TT_LT) {
 }
 
 TEST(Lexer, TT_GT) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>(">");
+  std::istringstream iss{">"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -280,8 +262,7 @@ TEST(Lexer, TT_GT) {
 }
 
 TEST(Lexer, TT_EQUAL) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("=");
+  std::istringstream iss{"="};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -292,8 +273,7 @@ TEST(Lexer, TT_EQUAL) {
 }
 
 TEST(Lexer, TT_SEMI) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>(";");
+  std::istringstream iss{";"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -304,8 +284,7 @@ TEST(Lexer, TT_SEMI) {
 }
 
 TEST(Lexer, TT_WHILE) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("while");
+  std::istringstream iss{"while"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -316,8 +295,7 @@ TEST(Lexer, TT_WHILE) {
 }
 
 TEST(Lexer, TT_INT_LITERAL) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("123456");
+  std::istringstream iss{"123456"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -329,12 +307,11 @@ TEST(Lexer, TT_INT_LITERAL) {
   pimento::tokenization::IntLitProperties properties =
       std::get<pimento::tokenization::IntLitProperties>(
           lexer.tokens()[0].properties);
-  EXPECT_EQ(properties.value, std::stoull(iss->str()));
+  EXPECT_EQ(properties.value, std::stoull(iss.str()));
 }
 
 TEST(Lexer, TT_IDENTIFIER) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("qwerty");
+  std::istringstream iss{"qwerty"};
   pimento::tokenization::Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
@@ -347,13 +324,12 @@ TEST(Lexer, TT_IDENTIFIER) {
   pimento::tokenization::IdentProperties properties =
       std::get<pimento::tokenization::IdentProperties>(
           lexer.tokens()[0].properties);
-  EXPECT_EQ(properties.identifier, iss->str());
+  EXPECT_EQ(properties.identifier, iss.str());
 }
 
 TEST(Lexer, MAX_TOKEN_LENGTH) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>(
-          "MaxTokenLengthExceededMaxTokenLengthExceededMaxTokenLengthExceeded");
+  std::istringstream iss{
+      "MaxTokenLengthExceededMaxTokenLengthExceededMaxTokenLengthExceeded"};
   EXPECT_EXIT(pimento::tokenization::Lexer lexer(iss),
               testing::ExitedWithCode(EXIT_FAILURE),
               "Max token length .*exceeded.");

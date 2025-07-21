@@ -22,10 +22,18 @@ int main(int argc, char *argv[]) {
       .help("Path to the .oil file to compile")
       .required();
 
-  program.add_argument("-o", "--output")
-      .help("Path for assembly output file")
+  auto &group = program.add_mutually_exclusive_group();
+  group.add_argument("-o", "--output")
+      .help(
+          "Path for assembly output file. Cannot be combined with `--stdout`.")
       .nargs(1)
       .default_value(std::string{"out.asm"});
+
+  group.add_argument("--stdout")
+      .default_value(false)
+      .implicit_value(true)
+      .nargs(0)
+      .help("Output to stdout. Cannot be combined with `-o` | `--output`.");
 
   program.add_argument("--trace")
       .default_value(false)
@@ -76,28 +84,33 @@ int main(int argc, char *argv[]) {
   logger.debug("Sanitized input file path: {}",
                input_resolved_path.value().string());
 
-  std::string out_file_str = program.get<std::string>("output");
-  logger.debug("Output file path: {}", out_file_str);
-
-  auto output_resolved_path = pimento::utils::expand_vars(out_file_str);
-  output_resolved_path = std::filesystem::absolute(output_resolved_path);
-  output_resolved_path = output_resolved_path.lexically_normal();
-  logger.debug("Sanitized output file path: {}", output_resolved_path.string());
-
-  std::shared_ptr<std::fstream> input_file =
-      std::make_shared<std::fstream>(input_resolved_path.value(), std::ios::in);
+  std::fstream input_file{input_resolved_path.value(), std::ios::in};
   if (!input_file) {
     throw std::runtime_error("cannot open " +
                              input_resolved_path.value().string());
   }
-  std::shared_ptr<std::fstream> output_file =
-      std::make_shared<std::fstream>(output_resolved_path, std::ios::out);
-  if (!output_file) {
-    throw std::runtime_error("cannot open " + output_resolved_path.string());
-  }
 
-  pimento::generation::Generator generator(input_file, output_file);
-  generator.generate();
+  if (program.get<bool>("--stdout")) {
+    pimento::generation::Generator generator(input_file, std::cout);
+    generator.generate();
+  } else {
+    std::string out_file_str = program.get<std::string>("output");
+    logger.debug("Output file path: {}", out_file_str);
+
+    auto output_resolved_path = pimento::utils::expand_vars(out_file_str);
+    output_resolved_path = std::filesystem::absolute(output_resolved_path);
+    output_resolved_path = output_resolved_path.lexically_normal();
+    logger.debug("Sanitized output file path: {}",
+                 output_resolved_path.string());
+
+    std::fstream output_file{output_resolved_path, std::ios::out};
+    if (!output_file) {
+      throw std::runtime_error("cannot open " + output_resolved_path.string());
+    }
+
+    pimento::generation::Generator generator(input_file, output_file);
+    generator.generate();
+  }
 
   // system("nasm -felf64 out.asm");
   // system("ld -o out out.o");

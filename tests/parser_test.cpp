@@ -11,16 +11,14 @@
 #include <pimento/tokens.hpp>
 
 TEST(Parser, EmptyStream) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>();
+  std::istringstream iss;
   pimento::ast::Parser parser(iss);
 
   EXPECT_TRUE(parser.get_program().statements.empty());
 }
 
 TEST(Parser, StmtLet) {
-  const std::shared_ptr<std::istringstream> iss =
-      std::make_shared<std::istringstream>("let x = 1;");
+  std::istringstream iss{"let x = 1;"};
   pimento::ast::Parser parser(iss);
 
   ASSERT_EQ(parser.get_program().statements.size(), 1);
