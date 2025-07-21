@@ -23,7 +23,7 @@ TEST(Lexer, TT_ELSE) {
       std::make_shared<std::istringstream>("else");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_ELSE);
   EXPECT_TRUE(
@@ -35,7 +35,7 @@ TEST(Lexer, TT_EXIT) {
       std::make_shared<std::istringstream>("exit");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_EXIT);
   EXPECT_TRUE(
@@ -47,7 +47,7 @@ TEST(Lexer, TT_IF) {
       std::make_shared<std::istringstream>("if");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_IF);
   EXPECT_TRUE(
@@ -59,7 +59,7 @@ TEST(Lexer, TT_ELIF) {
       std::make_shared<std::istringstream>("elif");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_ELIF);
   EXPECT_TRUE(
@@ -71,7 +71,7 @@ TEST(Lexer, TT_LET) {
       std::make_shared<std::istringstream>("let");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LET);
   EXPECT_TRUE(
@@ -83,7 +83,7 @@ TEST(Lexer, TT_LEFT_CURLY) {
       std::make_shared<std::istringstream>("{");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LEFT_CURLY);
   EXPECT_TRUE(
@@ -95,7 +95,7 @@ TEST(Lexer, TT_LEFT_PAREN) {
       std::make_shared<std::istringstream>("(");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LEFT_PAREN);
   EXPECT_TRUE(
@@ -107,7 +107,7 @@ TEST(Lexer, TT_RIGHT_CURLY) {
       std::make_shared<std::istringstream>("}");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_RIGHT_CURLY);
   EXPECT_TRUE(
@@ -119,7 +119,7 @@ TEST(Lexer, TT_RIGHT_PAREN) {
       std::make_shared<std::istringstream>(")");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_RIGHT_PAREN);
   EXPECT_TRUE(
@@ -131,7 +131,7 @@ TEST(Lexer, TT_DOUBLE_CARET) {
       std::make_shared<std::istringstream>("^^");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_DOUBLE_CARET);
 
@@ -151,7 +151,7 @@ TEST(Lexer, TT_FORWARD_SLASH) {
       std::make_shared<std::istringstream>("/");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_FORWARD_SLASH);
 
@@ -170,7 +170,7 @@ TEST(Lexer, TT_MINUS) {
       std::make_shared<std::istringstream>("-");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_MINUS);
 
@@ -189,7 +189,7 @@ TEST(Lexer, TT_PERCENT) {
       std::make_shared<std::istringstream>("%");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_PERCENT);
 
@@ -208,7 +208,7 @@ TEST(Lexer, TT_PLUS) {
       std::make_shared<std::istringstream>("+");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_PLUS);
 
@@ -227,7 +227,7 @@ TEST(Lexer, TT_STAR) {
       std::make_shared<std::istringstream>("*");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_STAR);
 
@@ -246,7 +246,7 @@ TEST(Lexer, TT_LT) {
       std::make_shared<std::istringstream>("<");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_LT);
 
@@ -265,7 +265,7 @@ TEST(Lexer, TT_GT) {
       std::make_shared<std::istringstream>(">");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_GT);
 
@@ -284,7 +284,7 @@ TEST(Lexer, TT_EQUAL) {
       std::make_shared<std::istringstream>("=");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_EQUAL);
   EXPECT_TRUE(
@@ -296,7 +296,7 @@ TEST(Lexer, TT_SEMI) {
       std::make_shared<std::istringstream>(";");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_SEMI);
   EXPECT_TRUE(
@@ -308,7 +308,7 @@ TEST(Lexer, TT_WHILE) {
       std::make_shared<std::istringstream>("while");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_WHILE);
   EXPECT_TRUE(
@@ -320,7 +320,7 @@ TEST(Lexer, TT_INT_LITERAL) {
       std::make_shared<std::istringstream>("123456");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_INT_LITERAL);
   ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IntLitProperties>(
@@ -337,7 +337,7 @@ TEST(Lexer, TT_IDENTIFIER) {
       std::make_shared<std::istringstream>("qwerty");
   pimento::tokenization::Lexer lexer(iss);
 
-  ASSERT_FALSE(lexer.tokens().empty());
+  ASSERT_EQ(lexer.tokens().size(), 1);
   EXPECT_EQ(lexer.tokens()[0].token_type,
             pimento::tokenization::TokenType::TT_IDENTIFIER);
 
@@ -348,4 +348,13 @@ TEST(Lexer, TT_IDENTIFIER) {
       std::get<pimento::tokenization::IdentProperties>(
           lexer.tokens()[0].properties);
   EXPECT_EQ(properties.identifier, iss->str());
+}
+
+TEST(Lexer, MAX_TOKEN_LENGTH) {
+  const std::shared_ptr<std::istringstream> iss =
+      std::make_shared<std::istringstream>(
+          "MaxTokenLengthExceededMaxTokenLengthExceededMaxTokenLengthExceeded");
+  EXPECT_EXIT(pimento::tokenization::Lexer lexer(iss),
+              testing::ExitedWithCode(EXIT_FAILURE),
+              "Max token length .*exceeded.");
 }

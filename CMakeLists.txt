@@ -35,17 +35,47 @@ set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.74.0 REQUIRED)
 
+# Utils library target
+add_library(${PROJECT_NAME}_utils
+src/utils.cpp)
+target_include_directories(${PROJECT_NAME}_utils PRIVATE
+$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+$<INSTALL_INTERFACE:include>)
+target_link_libraries(${PROJECT_NAME}_utils PRIVATE spdlog::spdlog_header_only)
+
+# Lexer library target
+add_library(${PROJECT_NAME}_lexer
+    src/lexer.cpp)
+target_include_directories(${PROJECT_NAME}_lexer PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}_lexer PRIVATE ${PROJECT_NAME}_utils ${Boost_LIBRARIES})
+
+# Parser library target
+add_library(${PROJECT_NAME}_parser
+    src/parser.cpp)
+target_include_directories(${PROJECT_NAME}_parser PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(${PROJECT_NAME}_parser PRIVATE ${PROJECT_NAME}_lexer)
+
+# Generator library target
+add_library(${PROJECT_NAME}_generator
+    src/generator.cpp)
+target_include_directories(${PROJECT_NAME}_generator PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(${PROJECT_NAME}_generator PRIVATE ${PROJECT_NAME}_parser)
+
+# Pimento executable target
 add_executable(${PROJECT_NAME}
-    src/generator.cpp
-    src/lexer.cpp
-    src/parser.cpp
-    src/pimento.cpp
-    src/utils.cpp)
+    src/pimento.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
     ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog_header_only ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE argparse ${PROJECT_NAME}_generator)
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
 
@@ -64,15 +94,22 @@ if (BUILD_TESTING)
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
     add_executable(lexer_test
-        src/lexer.cpp
-        src/utils.cpp
         tests/lexer_test.cpp)
     target_include_directories(lexer_test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         ${Boost_INCLUDE_DIRS})
-    target_link_libraries(lexer_test PRIVATE spdlog::spdlog_header_only ${Boost_LIBRARIES} GTest::gtest_main)
+    target_link_libraries(lexer_test PRIVATE ${PROJECT_NAME}_lexer GTest::gtest_main)
     gtest_discover_tests(lexer_test)
+
+    add_executable(parser_test
+        tests/parser_test.cpp)
+    target_include_directories(parser_test PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        ${Boost_INCLUDE_DIRS})
+    target_link_libraries(parser_test PRIVATE ${PROJECT_NAME}_parser GTest::gtest_main)
+    gtest_discover_tests(parser_test)
 
 endif()
 
