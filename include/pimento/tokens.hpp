@@ -19,7 +19,7 @@ enum class TokenType {
   TT_RIGHT_CURLY,
   TT_RIGHT_PAREN,
   // Arithmetic operators
-  TT_CARET,
+  TT_DOUBLE_CARET,
   TT_FORWARD_SLASH,
   TT_MINUS,
   TT_PERCENT,
@@ -58,7 +58,7 @@ std::string token_to_str(const TokenType& token) {
       return "TT_RIGHT_CURLY";
     case TokenType::TT_RIGHT_PAREN:
       return "TT_RIGHT_PAREN";
-    case TokenType::TT_CARET:
+    case TokenType::TT_DOUBLE_CARET:
       return "TT_CARET";
     case TokenType::TT_FORWARD_SLASH:
       return "TT_FORWARD_SLASH";

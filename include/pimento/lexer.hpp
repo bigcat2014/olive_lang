@@ -100,8 +100,8 @@ class Lexer {
           m_tokens.emplace_back(TokenType::TT_RIGHT_CURLY);
           token_buffer.clear();
         } else if (std::strcmp(token_buffer.c_str(), "^^") == 0) {
-          logger.debug("Token `{}`", token_to_str(TokenType::TT_CARET));
-          m_tokens.emplace_back(TokenType::TT_CARET);
+          logger.debug("Token `{}`", token_to_str(TokenType::TT_DOUBLE_CARET));
+          m_tokens.emplace_back(TokenType::TT_DOUBLE_CARET);
           token_buffer.clear();
         } else if (std::strcmp(token_buffer.c_str(), "%") == 0) {
           logger.debug("Token `{}`", token_to_str(TokenType::TT_PERCENT));
