@@ -43,7 +43,12 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE argparse spdlog::spdlog ${Boost_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PRIVATE PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
-set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Werror -Wdouble-promotion -Wconversion")
+
+set(COMPILE_FLAGS "-Wall -Wextra -Wdouble-promotion -Wconversion")
+if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+set(COMPILE_FLAGS "${COMPILE_FLAGS} -Werror")
+endif()
+set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS ${COMPILE_FLAGS})
 
 install(
     DIRECTORY include/
@@ -54,6 +59,17 @@ include(CTest)
 enable_testing()
 if (BUILD_TESTING)
     find_package(GTest REQUIRED)
+
+    add_test(NAME ${PROJECT_NAME}
+        COMMAND valgrind
+        --error-exitcode=1
+        --tool=memcheck
+        --leak-check=full
+        --errors-for-leak-kinds=definite
+        --show-leak-kinds=definite
+        $<TARGET_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/test.oil
+        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
 endif()
 
 install(
