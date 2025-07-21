@@ -16,7 +16,7 @@
 namespace pimento::tokenization {
 
 class Lexer {
- public:
+public:
   //! @brief Constructor for the Lexer
   //! @param path const std::filesystem::path& The path to the file to tokenize.
   Lexer(const std::filesystem::path &path) : m_path(path) {
@@ -70,10 +70,10 @@ class Lexer {
         if (!m_tokens.empty() && token_added) {
           Token token = m_tokens.back();
           try {
-            logger.trace(
-                "Got token `{}` with value `{}`",
-                TokenTypeUtil::get_type_as_str(token.token_type),
-                token.value.has_value() ? token.value.value() : "None");
+            logger.trace("Got token `{}` with value `{}`",
+                         TokenTypeUtil::get_type_as_str(token.token_type),
+                         token.value.has_value() ? token.value.value()
+                                                 : "None");
           } catch (const std::out_of_range &) {
             logger.trace("Invalid token");
           }
@@ -91,7 +91,7 @@ class Lexer {
     return m_tokens;
   }
 
- private:
+private:
   //! @brief Peek at a character at an offset from the current character in the
   //! buffer.
   //!
@@ -162,4 +162,4 @@ class Lexer {
   std::vector<Token> m_tokens;
 };
 
-}  // namespace pimento::tokenization
+} // namespace pimento::tokenization

@@ -99,4 +99,4 @@ struct ProgNode {
   std::vector<std::unique_ptr<StmtNode>> statements;
 };
 
-}  // namespace pimento::ast::node
+} // namespace pimento::ast::node

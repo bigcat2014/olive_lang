@@ -54,17 +54,17 @@ struct Token {
 
 //! @brief Static utility class for interacting with token types.
 class TokenTypeUtil {
- public:
+public:
   TokenTypeUtil() = delete;
 
   //! @brief Get a human-readable string representing the token.
   //! @param token_type TokenType The token type for which to return the string.
   //! @return std::string The human-readable string representation of the token.
-  [[nodiscard]] static inline std::string get_type_as_str(
-      TokenType token_type) {
+  [[nodiscard]] static inline std::string
+  get_type_as_str(TokenType token_type) {
     try {
       return s_token_str.at(token_type);
-    } catch (const std::out_of_range&) {
+    } catch (const std::out_of_range &) {
       return "UNKNOWN_TOKEN";
     }
   }
@@ -76,7 +76,7 @@ class TokenTypeUtil {
   [[nodiscard]] static inline std::string get_token_str(TokenType token_type) {
     try {
       return s_token_lookup.right.at(token_type);
-    } catch (const std::out_of_range&) {
+    } catch (const std::out_of_range &) {
       return "UNKNOWN_TOKEN";
     }
   }
@@ -90,7 +90,7 @@ class TokenTypeUtil {
     return s_token_lookup.left.at(token);
   }
 
- private:
+private:
   //! @brief Create a boost::bimap from an initializer list.
   //! @tparam L The type of the left side of the boost::bimap to initialize.
   //! @tparam R The type of the right side of the boost::bimap to initialize.
@@ -147,4 +147,4 @@ class TokenTypeUtil {
                                           {"=", TokenType::TT_EQUAL},
                                           {";", TokenType::TT_SEMI}});
 };
-}  // namespace pimento::tokenization
+} // namespace pimento::tokenization

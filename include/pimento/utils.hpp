@@ -17,7 +17,7 @@ namespace pimento::utils {
 
 //! @brief Gets the global logger.
 //! @return spdlog::logger& Global logger.
-spdlog::logger& get_logger() {
+spdlog::logger &get_logger() {
   static auto logger = spdlog::stderr_color_mt("pimento");
   return *logger;
 }
@@ -31,14 +31,14 @@ void configure_logger(spdlog::level::level_enum level) {
 //! @brief Expands `~` and environment variables in input path.
 //! @param inputPath The file path in which to expand the variables.
 //! @return std::filesystem::path The file path with variables expanded.
-std::filesystem::path expand_vars(const std::string& inputPath) {
-  auto& logger = get_logger();
+std::filesystem::path expand_vars(const std::string &inputPath) {
+  auto &logger = get_logger();
 
   std::string path = inputPath;
 
   // Expand ~ at the start
   if (!path.empty() && path[0] == '~') {
-    const char* home = std::getenv("HOME");
+    const char *home = std::getenv("HOME");
     if (home == nullptr) {
       throw std::runtime_error("Unable to determine home directory.");
     }
@@ -47,7 +47,7 @@ std::filesystem::path expand_vars(const std::string& inputPath) {
     if (path == "~") {
       path = home;
     } else if (path[1] == '/') {
-      path = std::string(home) + path.substr(1);  // replace "~" prefix
+      path = std::string(home) + path.substr(1); // replace "~" prefix
     } else {
       throw std::runtime_error(
           "Unsupported ~ expansion (e.g. ~username is not supported).");
@@ -64,7 +64,7 @@ std::filesystem::path expand_vars(const std::string& inputPath) {
     result.append(searchStart, match[0].first);
 
     std::string varName = match[1].matched ? match[1].str() : match[2].str();
-    const char* value = std::getenv(varName.c_str());
+    const char *value = std::getenv(varName.c_str());
 
     if (!value) {
       throw std::runtime_error("Environment variable not set: $" + varName);
@@ -88,9 +88,9 @@ std::filesystem::path expand_vars(const std::string& inputPath) {
 //! `.oil` extension.
 //! @param inputPath The file path to sanitize.
 //! @return std::optional<std::filesystem::path> The sanitized path.
-std::optional<std::filesystem::path> sanitize_path(
-    const std::string& inputPath) {
-  auto& logger = get_logger();
+std::optional<std::filesystem::path>
+sanitize_path(const std::string &inputPath) {
+  auto &logger = get_logger();
 
   std::filesystem::path resolvedPath = expand_vars(inputPath);
   try {
@@ -109,11 +109,11 @@ std::optional<std::filesystem::path> sanitize_path(
     if (resolvedPath.extension() != ".oil") {
       logger.warn("File is not a .oil file.");
     }
-  } catch (const std::filesystem::filesystem_error& e) {
+  } catch (const std::filesystem::filesystem_error &e) {
     logger.error("Filesystem error: {}", e.what());
     return {};
   }
 
   return resolvedPath;
 }
-}  // namespace pimento::utils
+} // namespace pimento::utils
