@@ -73,8 +73,9 @@ public:
             Token token = m_tokens.back();
             try {
               std::ostringstream trace_output;
-              trace_output << "Got token `{}`"
-                           << TokenTypeUtil::get_type_as_str(token.token_type);
+              trace_output << "Got token `"
+                           << TokenTypeUtil::get_type_as_str(token.token_type)
+                           << "`";
               std::visit(TraceTokenVisitor{.output = trace_output},
                          token.properties);
               logger.trace(trace_output.str());
@@ -134,7 +135,8 @@ private:
 
     try {
       TokenType token_type = TokenTypeUtil::get_token_type(token_buffer);
-      m_tokens.emplace_back(m_token_factory.create_token(token_type));
+      Token token = m_token_factory.create_token(token_type);
+      m_tokens.push_back(token);
       token_buffer.clear();
       return true;
     } catch (const std::out_of_range &) {
@@ -142,7 +144,7 @@ private:
       if (std::isdigit(token_buffer.back())) {
         if (!std::isdigit(next)) {
           uint64_t value = std::stoull(token_buffer);
-          m_tokens.emplace_back(
+          m_tokens.push_back(
               m_token_factory.create_token(TokenType::TT_INT_LITERAL, value));
           token_buffer.clear();
           return true;
@@ -150,7 +152,7 @@ private:
         // Identifier special case
       } else if (std::isalpha(token_buffer.back())) {
         if (!std::isalpha(next)) {
-          m_tokens.emplace_back(m_token_factory.create_token(
+          m_tokens.push_back(m_token_factory.create_token(
               TokenType::TT_IDENTIFIER, token_buffer));
           token_buffer.clear();
           return true;
@@ -158,15 +160,15 @@ private:
       }
     }
 
-    return true;
+    return false;
   }
 
   struct TraceTokenVisitor {
     std::ostringstream &output;
 
     void operator()(const BinOpProperties &properties) const noexcept {
-      output << "; Binary operator with prec: " << properties.precedence
-             << " and associativity: "
+      output << "; Binary operator with prec: "
+             << std::to_string(properties.precedence) << " and associativity: "
              << TokenTypeUtil::get_associativity_str(properties.associativity);
     }
 

@@ -179,7 +179,7 @@ private:
   //! @return std::optional<tokenization::Token> The token that was consumed.
   [[nodiscard]] inline std::optional<tokenization::Token>
   try_consume() noexcept {
-    if (auto ret = peek(1)) {
+    if (auto ret = peek()) {
       consume();
       return ret;
     }
@@ -231,7 +231,7 @@ private:
   //! @return std::unique_ptr<node::StmtNode> The Statement node of the AST.
   std::unique_ptr<node::StmtNode> parse_statement() {
     auto &logger = utils::get_logger();
-    std::unique_ptr<node::StmtNode> stmt;
+    std::unique_ptr<node::StmtNode> stmt = std::make_unique<node::StmtNode>();
     tokenization::Token current_token;
 
     if (auto token_opt = peek()) {
@@ -244,6 +244,7 @@ private:
     switch (current_token.token_type) {
     // Parse format exit([Expr]);
     case tokenization::TokenType::TT_EXIT: {
+      try_consume(tokenization::TokenType::TT_EXIT);
       try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
@@ -256,6 +257,7 @@ private:
     }
     // Parse format let ident = [Expr];
     case tokenization::TokenType::TT_LET: {
+      try_consume(tokenization::TokenType::TT_LET);
       tokenization::Token identifier =
           try_consume(tokenization::TokenType::TT_IDENTIFIER);
 
@@ -271,6 +273,7 @@ private:
     }
     // Parse format ident = [Expr];
     case tokenization::TokenType::TT_IDENTIFIER: {
+      try_consume(tokenization::TokenType::TT_IDENTIFIER);
       try_consume(tokenization::TokenType::TT_EQUAL);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
@@ -283,6 +286,7 @@ private:
     }
     // Parse format if ([Expr]) [Scope] [IfPred]
     case tokenization::TokenType::TT_IF: {
+      try_consume(tokenization::TokenType::TT_IF);
       try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
@@ -302,6 +306,7 @@ private:
     }
     // Parse format {[Stmt]*}
     case tokenization::TokenType::TT_LEFT_CURLY: {
+      try_consume(tokenization::TokenType::TT_LEFT_CURLY);
       stmt->node = parse_scope();
       break;
     }
@@ -330,67 +335,145 @@ private:
     // return result
 
     auto &logger = utils::get_logger();
-    std::unique_ptr<node::ExprNode> expr;
+    std::unique_ptr<node::ExprNode> expr = std::make_unique<node::ExprNode>();
 
     std::unique_ptr<node::TermNode> term_lhs = parse_term();
 
-    while (auto next = try_consume()) {
+    while (std::optional<tokenization::Token> next = peek()) {
       tokenization::Token current_token = next.value();
 
-      std::pair<uint8_t, tokenization::Associativity> token_params =
-          tokenization::TokenTypeUtil::get_bin_expr_properties(
-              current_token.token_type);
+      switch (current_token.token_type) {
+      case tokenization::TokenType::TT_DOUBLE_CARET: {
+        try_consume(tokenization::TokenType::TT_DOUBLE_CARET);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
 
-      uint8_t next_prec =
-          token_params.second == tokenization::Associativity::LEFT
-              ? token_params.first + 1
-              : token_params.first;
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
 
-      std::unique_ptr<node::BinExprNode> bin_expr;
+        std::unique_ptr<node::ExprNode> lhs =
+            std::make_unique<node::ExprNode>(std::move(term_lhs));
+        std::unique_ptr<node::BinExprPowerNode> bin_expr_power =
+            std::make_unique<node::BinExprPowerNode>(
+                std::move(lhs), std::move(parse_expression(next_prec)));
+        expr->node =
+            std::make_unique<node::BinExprNode>(std::move(bin_expr_power));
+        break;
+      }
+      case tokenization::TokenType::TT_PERCENT: {
+        try_consume(tokenization::TokenType::TT_PERCENT);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
 
-      // switch (current_token.token_type) {
-      // // Parse format ident;
-      // case tokenization::TokenType::TT_DOUBLE_CARET: {
-      //   std::unique_ptr<node::BinExprPowerNode> bin_expr = std expr->node =
-      //       std::make_unique<node::BinExprNode>();
-      //   break;
-      // }
-      // // Parse format int_lit
-      // case tokenization::TokenType::TT_PERCENT: {
-      //   std::unique_ptr<node::BinExprModNode> bin_expr =
-      //       parse_bin_expression();
-      //   expr->node = std::make_unique<node::BinExprNode>();
-      //   break;
-      // }
-      // // Parse format ident = ([Expr]);
-      // case tokenization::TokenType::TT_STAR: {
-      //   std::unique_ptr<node::BinExprMulNode> bin_expr =
-      //       parse_bin_expression();
-      //   expr->node = std::make_unique<node::BinExprNode>();
-      //   break;
-      // }
-      // // Parse format ident = ([Expr]);
-      // case tokenization::TokenType::TT_FORWARD_SLASH: {
-      //   std::unique_ptr<node::BinExprDivNode> bin_expr =
-      //       parse_bin_expression();
-      //   expr->node = std::make_unique<node::BinExprNode>();
-      //   break;
-      // }
-      // // Parse format ident = ([Expr]);
-      // case tokenization::TokenType::TT_PLUS: {
-      //   std::unique_ptr<node::BinExprPlusNode> bin_expr =
-      //       parse_bin_expression();
-      //   expr->node = std::make_unique<node::BinExprNode>();
-      //   break;
-      // }
-      // // Parse format ident = ([Expr]);
-      // case tokenization::TokenType::TT_MINUS: {
-      //   std::unique_ptr<node::BinExprMinusNode> bin_expr =
-      //       parse_bin_expression();
-      //   expr->node = std::make_unique<node::BinExprNode>();
-      //   break;
-      // }
-      // }
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        std::unique_ptr<node::ExprNode> lhs =
+            std::make_unique<node::ExprNode>(std::move(term_lhs));
+        std::unique_ptr<node::BinExprModNode> bin_expr_power =
+            std::make_unique<node::BinExprModNode>(
+                std::move(lhs), std::move(parse_expression(next_prec)));
+        expr->node =
+            std::make_unique<node::BinExprNode>(std::move(bin_expr_power));
+
+        break;
+      }
+      case tokenization::TokenType::TT_STAR: {
+        try_consume(tokenization::TokenType::TT_STAR);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
+
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        std::unique_ptr<node::ExprNode> lhs =
+            std::make_unique<node::ExprNode>(std::move(term_lhs));
+        std::unique_ptr<node::BinExprMulNode> bin_expr_power =
+            std::make_unique<node::BinExprMulNode>(
+                std::move(lhs), std::move(parse_expression(next_prec)));
+        expr->node =
+            std::make_unique<node::BinExprNode>(std::move(bin_expr_power));
+
+        break;
+      }
+      case tokenization::TokenType::TT_FORWARD_SLASH: {
+        try_consume(tokenization::TokenType::TT_FORWARD_SLASH);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
+
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        std::unique_ptr<node::ExprNode> lhs =
+            std::make_unique<node::ExprNode>(std::move(term_lhs));
+        std::unique_ptr<node::BinExprDivNode> bin_expr_power =
+            std::make_unique<node::BinExprDivNode>(
+                std::move(lhs), std::move(parse_expression(next_prec)));
+        expr->node =
+            std::make_unique<node::BinExprNode>(std::move(bin_expr_power));
+
+        break;
+      }
+      case tokenization::TokenType::TT_PLUS: {
+        try_consume(tokenization::TokenType::TT_PLUS);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
+
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        std::unique_ptr<node::ExprNode> lhs =
+            std::make_unique<node::ExprNode>(std::move(term_lhs));
+        std::unique_ptr<node::BinExprPlusNode> bin_expr_power =
+            std::make_unique<node::BinExprPlusNode>(
+                std::move(lhs), std::move(parse_expression(next_prec)));
+        expr->node =
+            std::make_unique<node::BinExprNode>(std::move(bin_expr_power));
+
+        break;
+      }
+      case tokenization::TokenType::TT_MINUS: {
+        try_consume(tokenization::TokenType::TT_MINUS);
+        std::pair<uint8_t, tokenization::Associativity> properties =
+            tokenization::TokenTypeUtil::get_bin_expr_properties(
+                current_token.token_type);
+
+        uint8_t next_prec =
+            properties.second == tokenization::Associativity::LEFT
+                ? properties.first + 1
+                : properties.first;
+
+        std::unique_ptr<node::ExprNode> lhs =
+            std::make_unique<node::ExprNode>(std::move(term_lhs));
+        std::unique_ptr<node::BinExprMinusNode> bin_expr_power =
+            std::make_unique<node::BinExprMinusNode>(
+                std::move(lhs), std::move(parse_expression(next_prec)));
+        expr->node =
+            std::make_unique<node::BinExprNode>(std::move(bin_expr_power));
+
+        break;
+      }
+      default: {
+        expr->node = std::move(term_lhs);
+      }
+      }
+
+      return expr;
     }
   }
 
@@ -422,7 +505,7 @@ private:
     logger.error("Expected binexpr at TODO Line & Column number");
     exit(EXIT_FAILURE);
 
-    std::unique_ptr<node::ExprNode> expr;
+    std::unique_ptr<node::ExprNode> expr = std::make_unique<node::ExprNode>();
     std::unique_ptr<node::TermNode> term_lhs = parse_term();
 
     // while (auto next = try_consume()) {
@@ -477,10 +560,10 @@ private:
   //! @return std::unique_ptr<node::TermNode> The term node of the AST.
   std::unique_ptr<node::TermNode> parse_term() {
     auto &logger = utils::get_logger();
-    std::unique_ptr<node::TermNode> term;
+    std::unique_ptr<node::TermNode> term = std::make_unique<node::TermNode>();
     tokenization::Token current_token;
 
-    if (auto token_opt = peek()) {
+    if (auto token_opt = try_consume()) {
       current_token = token_opt.value();
     } else {
       logger.error("Expected term at TODO Line & Column number");
