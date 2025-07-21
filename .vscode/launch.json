@@ -11,7 +11,9 @@
             "program": "${workspaceFolder}/build/pimento",
             "args": [
                 "--debug",
-                "${workspaceFolder}/test.oil"
+                "${workspaceFolder}/test.oil",
+                "--output",
+                "${workspaceFolder}/out.asm"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -38,7 +40,9 @@
             "program": "${workspaceFolder}/build/pimento",
             "args": [
                 "--trace",
-                "${workspaceFolder}/test.oil"
+                "${workspaceFolder}/test.oil",
+                "--output",
+                "${workspaceFolder}/out.asm"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

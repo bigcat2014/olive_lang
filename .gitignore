@@ -45,6 +45,11 @@ _deps
 *.out
 *.app
 
-# Build and install
+# Assembly files
+*.asm
+
+# Build, install, and output
 build
 install
+output
+out
