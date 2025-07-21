@@ -1,0 +1,5 @@
+set(oliveoil_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+include("${oliveoil_DIR/export_oliveoil.cmake}")
+
+set(oliveoil_LIBRARIES oliveoil)
