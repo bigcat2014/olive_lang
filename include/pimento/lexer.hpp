@@ -12,6 +12,7 @@
 #include <pimento/utils.hpp>
 #include <sstream>
 #include <stdexcept>
+#include <variant>
 
 namespace pimento::tokenization {
 
@@ -67,15 +68,19 @@ public:
         const char next = peek(i, file_buffer.data(), n, 1);
         bool token_added = try_parse_token(token_buffer, next);
 
-        if (!m_tokens.empty() && token_added) {
-          Token token = m_tokens.back();
-          try {
-            logger.trace("Got token `{}` with value `{}`",
-                         TokenTypeUtil::get_type_as_str(token.token_type),
-                         token.value.has_value() ? token.value.value()
-                                                 : "None");
-          } catch (const std::out_of_range &) {
-            logger.trace("Invalid token");
+        if (logger.level() == spdlog::level::trace) {
+          if (!m_tokens.empty() && token_added) {
+            Token token = m_tokens.back();
+            try {
+              std::ostringstream trace_output;
+              trace_output << "Got token `{}`"
+                           << TokenTypeUtil::get_type_as_str(token.token_type);
+              std::visit(TraceTokenVisitor{.output = trace_output},
+                         token.properties);
+              logger.trace(trace_output.str());
+            } catch (const std::out_of_range &) {
+              logger.trace("Invalid token");
+            }
           }
         }
       }
@@ -129,35 +134,62 @@ private:
 
     try {
       TokenType token_type = TokenTypeUtil::get_token_type(token_buffer);
-      m_tokens.emplace_back(token_type);
+      m_tokens.emplace_back(m_token_factory.create_token(token_type));
       token_buffer.clear();
       return true;
     } catch (const std::out_of_range &) {
       // Int literal special case
       if (std::isdigit(token_buffer.back())) {
         if (!std::isdigit(next)) {
-          m_tokens.emplace_back(TokenType::TT_INT_LITERAL, token_buffer);
+          uint64_t value = std::stoull(token_buffer);
+          m_tokens.emplace_back(
+              m_token_factory.create_token(TokenType::TT_INT_LITERAL, value));
           token_buffer.clear();
           return true;
         }
         // Identifier special case
       } else if (std::isalpha(token_buffer.back())) {
         if (!std::isalpha(next)) {
-          m_tokens.emplace_back(TokenType::TT_IDENTIFIER, token_buffer);
+          m_tokens.emplace_back(m_token_factory.create_token(
+              TokenType::TT_IDENTIFIER, token_buffer));
           token_buffer.clear();
           return true;
         }
       }
     }
-    return false;
+
+    return true;
   }
 
+  struct TraceTokenVisitor {
+    std::ostringstream &output;
+
+    void operator()(const BinOpProperties &properties) const noexcept {
+      output << "; Binary operator with prec: " << properties.precedence
+             << " and associativity: "
+             << TokenTypeUtil::get_associativity_str(properties.associativity);
+    }
+
+    void operator()(const IntLitProperties &properties) const noexcept {
+      output << "; Int literal with value: " << properties.value;
+    }
+
+    void operator()(const IdentProperties &properties) const noexcept {
+      output << "; Identifier: " << properties.identifier;
+    }
+
+    void operator()(const std::monostate) const noexcept {}
+  };
+
+private:
   //! @brief The size in bytes of the chunks to read from the file.
   constexpr static size_t BUFFER_SIZE = 4096;
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
   //! @brief The path to the file to tokenize.
   const std::filesystem::path m_path;
+  //! @brief Token factory for creating tokens.
+  const TokenFactory m_token_factory{};
   //! @brief The tokens parsed from the file.
   std::vector<Token> m_tokens;
 };

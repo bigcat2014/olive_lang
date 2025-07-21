@@ -8,6 +8,7 @@
 #include <pimento/ast.hpp>
 #include <pimento/tokens.hpp>
 #include <pimento/utils.hpp>
+#include <utility>
 #include <vector>
 
 namespace pimento::ast {
@@ -185,16 +186,17 @@ private:
     return {};
   }
 
-  //! @brief Assert the next token to be a specific TokenType.
+  //! @brief Try to consume the next token if it is the provided TokenType.
   //!
-  //! Assert the next token to be a specific TokenType. If the token type
-  //! matches, consume it, otherwise log an error and exit.
+  //! Try to consume the next token if it is a specific TokenType. If the token
+  //! type matches, consume it, otherwise log an error and exit.
   //! @param token_type tokenization::TokenType The token type we are asserting
   //! is next.
   inline tokenization::Token
-  assert_next_token(tokenization::TokenType token_type) noexcept {
+  try_consume(tokenization::TokenType token_type) noexcept {
     auto next = try_consume();
     if (!next.has_value() || next.value().token_type != token_type) {
+      // TODO(lthomas): I don't know if I want to log and exit here
       auto &logger = utils::get_logger();
       logger.error("Expected `{}` at TODO Line & Column number",
                    tokenization::TokenTypeUtil::get_token_str(token_type));
@@ -203,61 +205,89 @@ private:
     return next.value();
   }
 
-  // TODO(lthomas): Fill out this function body.
+  //! @brief Assert the next token to be a specific TokenType.
+  //!
+  //! Assert the next token to be a specific TokenType. If the token type
+  //! matches, consume it, otherwise log an error and exit.
+  //! @param token_type tokenization::TokenType The token type we are asserting
+  //! is next.
+  inline std::pair<bool, tokenization::Token>
+  compare_next_token(tokenization::TokenType token_type) noexcept {
+    auto next = try_consume();
+    if (!next.has_value()) {
+      // TODO(lthomas): I don't know if I want to log and exit here
+      auto &logger = utils::get_logger();
+      logger.error("Expected `{}` at TODO Line & Column number",
+                   tokenization::TokenTypeUtil::get_token_str(token_type));
+      exit(EXIT_FAILURE);
+    }
+    if (next.value().token_type != token_type) {
+      return std::make_pair<bool, tokenization::Token &>(false, next.value());
+    }
+    return std::make_pair<bool, tokenization::Token &>(true, next.value());
+  }
+
+  //! @brief Parse a statement into the AST.
+  //! @return std::unique_ptr<node::StmtNode> The Statement node of the AST.
   std::unique_ptr<node::StmtNode> parse_statement() {
     auto &logger = utils::get_logger();
     std::unique_ptr<node::StmtNode> stmt;
-    tokenization::Token current_token = m_tokens[m_index];
+    tokenization::Token current_token;
+
+    if (auto token_opt = peek()) {
+      current_token = token_opt.value();
+    } else {
+      logger.error("Expected statement at TODO Line & Column number");
+      exit(EXIT_FAILURE);
+    }
 
     switch (current_token.token_type) {
     // Parse format exit([Expr]);
     case tokenization::TokenType::TT_EXIT: {
-      assert_next_token(tokenization::TokenType::TT_LEFT_PAREN);
+      try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
 
-      assert_next_token(tokenization::TokenType::TT_RIGHT_PAREN);
-      assert_next_token(tokenization::TokenType::TT_SEMI);
+      try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
+      try_consume(tokenization::TokenType::TT_SEMI);
 
-      stmt->node = std::unique_ptr<node::StmtExitNode>(
-          new node::StmtExitNode{.expression = std::move(expression)});
+      stmt->node = std::make_unique<node::StmtExitNode>(std::move(expression));
       break;
     }
     // Parse format let ident = [Expr];
     case tokenization::TokenType::TT_LET: {
       tokenization::Token identifier =
-          assert_next_token(tokenization::TokenType::TT_IDENTIFIER);
+          try_consume(tokenization::TokenType::TT_IDENTIFIER);
 
-      assert_next_token(tokenization::TokenType::TT_EQUAL);
+      try_consume(tokenization::TokenType::TT_EQUAL);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
 
-      assert_next_token(tokenization::TokenType::TT_SEMI);
+      try_consume(tokenization::TokenType::TT_SEMI);
 
-      stmt->node = std::unique_ptr<node::StmtLetNode>(new node::StmtLetNode{
-          .identifier = identifier, .expression = std::move(expression)});
+      stmt->node = std::make_unique<node::StmtLetNode>(identifier,
+                                                       std::move(expression));
       break;
     }
     // Parse format ident = [Expr];
     case tokenization::TokenType::TT_IDENTIFIER: {
-      assert_next_token(tokenization::TokenType::TT_EQUAL);
+      try_consume(tokenization::TokenType::TT_EQUAL);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
 
-      assert_next_token(tokenization::TokenType::TT_SEMI);
+      try_consume(tokenization::TokenType::TT_SEMI);
 
-      stmt->node = std::unique_ptr<node::StmtAssignNode>(
-          new node::StmtAssignNode{.identifier = current_token,
-                                   .expression = std::move(expression)});
+      stmt->node = std::make_unique<node::StmtAssignNode>(
+          current_token, std::move(expression));
       break;
     }
     // Parse format if ([Expr]) [Scope] [IfPred]
     case tokenization::TokenType::TT_IF: {
-      assert_next_token(tokenization::TokenType::TT_LEFT_PAREN);
+      try_consume(tokenization::TokenType::TT_LEFT_PAREN);
 
       std::unique_ptr<node::ExprNode> expression = parse_expression();
 
-      assert_next_token(tokenization::TokenType::TT_RIGHT_PAREN);
+      try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
 
       std::unique_ptr<node::ScopeNode> scope = parse_scope();
 
@@ -265,43 +295,118 @@ private:
       // here or somewhere else.
       std::unique_ptr<node::IfPredNode> ifpred = parse_ifpred();
 
-      stmt->node = std::unique_ptr<node::StmtIfNode>(
-          new node::StmtIfNode{.expression = std::move(expression),
-                               .scope = std::move(scope),
-                               .ifpred = std::move(ifpred)});
+      stmt->node = std::make_unique<node::StmtIfNode>(
+          std::move(expression), std::move(scope), std::move(ifpred));
 
       break;
     }
+    // Parse format {[Stmt]*}
+    case tokenization::TokenType::TT_LEFT_CURLY: {
+      stmt->node = parse_scope();
+      break;
+    }
     default: {
-      // stmt.node = parse_scope();
-      logger.debug("Need to parse scope?");
+      logger.error("Expected statemetnt at TODO Line & Column number");
+      exit(EXIT_FAILURE);
     }
     }
     return stmt;
   }
 
   // TODO(lthomas): Fill out this function body.
-  std::unique_ptr<node::ExprNode> parse_expression() {
+  //! @brief Parse an expression into the AST.
+  //! @return std::unique_ptr<node::ExprNode> The expression node of the AST.
+  std::unique_ptr<node::ExprNode> parse_expression(uint8_t min_precedence = 0) {
+    // Precedence climbing pseudocode
+    // result = compute_atom()
+    // while cur token is a binary operator with precedence >= min_prec:
+    //   prec, assoc = precedence and associativity of current token
+    //   if assoc is left:
+    //     next_min_prec = prec + 1
+    //   else:
+    //     next_min_prec = prec
+    //   rhs = compute_expr(next_min_prec)
+    //   result = compute operator(result, rhs)
+    // return result
+
     auto &logger = utils::get_logger();
-    logger.error("Expected expression at TODO Line & Column number");
-    exit(EXIT_FAILURE);
+    std::unique_ptr<node::ExprNode> expr;
+
+    std::unique_ptr<node::TermNode> term_lhs = parse_term();
+
+    while (auto next = try_consume()) {
+      tokenization::Token current_token = next.value();
+
+      std::pair<uint8_t, tokenization::Associativity> token_params =
+          tokenization::TokenTypeUtil::get_bin_expr_properties(
+              current_token.token_type);
+
+      uint8_t next_prec =
+          token_params.second == tokenization::Associativity::LEFT
+              ? token_params.first + 1
+              : token_params.first;
+
+      std::unique_ptr<node::BinExprNode> bin_expr;
+
+      // switch (current_token.token_type) {
+      // // Parse format ident;
+      // case tokenization::TokenType::TT_DOUBLE_CARET: {
+      //   std::unique_ptr<node::BinExprPowerNode> bin_expr = std expr->node =
+      //       std::make_unique<node::BinExprNode>();
+      //   break;
+      // }
+      // // Parse format int_lit
+      // case tokenization::TokenType::TT_PERCENT: {
+      //   std::unique_ptr<node::BinExprModNode> bin_expr =
+      //       parse_bin_expression();
+      //   expr->node = std::make_unique<node::BinExprNode>();
+      //   break;
+      // }
+      // // Parse format ident = ([Expr]);
+      // case tokenization::TokenType::TT_STAR: {
+      //   std::unique_ptr<node::BinExprMulNode> bin_expr =
+      //       parse_bin_expression();
+      //   expr->node = std::make_unique<node::BinExprNode>();
+      //   break;
+      // }
+      // // Parse format ident = ([Expr]);
+      // case tokenization::TokenType::TT_FORWARD_SLASH: {
+      //   std::unique_ptr<node::BinExprDivNode> bin_expr =
+      //       parse_bin_expression();
+      //   expr->node = std::make_unique<node::BinExprNode>();
+      //   break;
+      // }
+      // // Parse format ident = ([Expr]);
+      // case tokenization::TokenType::TT_PLUS: {
+      //   std::unique_ptr<node::BinExprPlusNode> bin_expr =
+      //       parse_bin_expression();
+      //   expr->node = std::make_unique<node::BinExprNode>();
+      //   break;
+      // }
+      // // Parse format ident = ([Expr]);
+      // case tokenization::TokenType::TT_MINUS: {
+      //   std::unique_ptr<node::BinExprMinusNode> bin_expr =
+      //       parse_bin_expression();
+      //   expr->node = std::make_unique<node::BinExprNode>();
+      //   break;
+      // }
+      // }
+    }
   }
 
   // TODO(lthomas): Fill out this function body.
+  //! @brief Parse a scope into the AST.
+  //! @return std::unique_ptr<node::ScopeNode> The scope node of the AST.
   std::unique_ptr<node::ScopeNode> parse_scope() {
-    assert_next_token(tokenization::TokenType::TT_LEFT_CURLY);
-
-    do {
-      tokenization::Token next = try_consume();
-      tokenization::Token current_token = m_tokens[m_index];
-    } while (next != tokenization::TokenType::TT_RIGHT_CURLY);
 
     std::unique_ptr<node::StmtNode> statement = parse_statement();
 
-    assert_next_token(tokenization::TokenType::TT_RIGHT_CURLY);
+    try_consume(tokenization::TokenType::TT_RIGHT_CURLY);
   }
 
   // TODO(lthomas): Fill out this function body.
+  //! @brief Parse an if predicate into the AST.
+  //! @return std::unique_ptr<node::IfPred> The if predicate node of the AST.
   std::unique_ptr<node::IfPredNode> parse_ifpred() {
     auto &logger = utils::get_logger();
     logger.error("Expected ifpred at TODO Line & Column number");
@@ -309,24 +414,111 @@ private:
   }
 
   // TODO(lthomas): Fill out this function body.
+  //! @brief Parse a binary expression into the AST.
+  //! @return std::unique_ptr<node::BinExprNode> The binary expression node of
+  //! the AST.
   std::unique_ptr<node::BinExprNode> parse_bin_expression() {
     auto &logger = utils::get_logger();
     logger.error("Expected binexpr at TODO Line & Column number");
     exit(EXIT_FAILURE);
+
+    std::unique_ptr<node::ExprNode> expr;
+    std::unique_ptr<node::TermNode> term_lhs = parse_term();
+
+    // while (auto next = try_consume()) {
+    //   tokenization::Token current_token = next.value();
+
+    //   switch (current_token.token_type) {
+    //   // Parse format ident;
+    //   case tokenization::TokenType::TT_DOUBLE_CARET: {
+    //     std::unique_ptr<node::BinExprPowerNode> bin_expr =
+    //         parse_bin_expression();
+    //     expr->node = std::make_unique<node::BinExprNode>();
+    //     break;
+    //   }
+    //   // Parse format int_lit
+    //   case tokenization::TokenType::TT_PERCENT: {
+    //     std::unique_ptr<node::BinExprModNode> bin_expr =
+    //     parse_bin_expression(); expr->node =
+    //     std::make_unique<node::BinExprNode>(); break;
+    //   }
+    //   // Parse format ident = ([Expr]);
+    //   case tokenization::TokenType::TT_STAR: {
+    //     std::unique_ptr<node::BinExprMulNode> bin_expr =
+    //     parse_bin_expression(); expr->node =
+    //     std::make_unique<node::BinExprNode>(); break;
+    //   }
+    //   // Parse format ident = ([Expr]);
+    //   case tokenization::TokenType::TT_FORWARD_SLASH: {
+    //     std::unique_ptr<node::BinExprDivNode> bin_expr =
+    //     parse_bin_expression(); expr->node =
+    //     std::make_unique<node::BinExprNode>(); break;
+    //   }
+    //   // Parse format ident = ([Expr]);
+    //   case tokenization::TokenType::TT_PLUS: {
+    //     std::unique_ptr<node::BinExprPlusNode> bin_expr =
+    //         parse_bin_expression();
+    //     expr->node = std::make_unique<node::BinExprNode>();
+    //     break;
+    //   }
+    //   // Parse format ident = ([Expr]);
+    //   case tokenization::TokenType::TT_MINUS: {
+    //     std::unique_ptr<node::BinExprMinusNode> bin_expr =
+    //         parse_bin_expression();
+    //     expr->node = std::make_unique<node::BinExprNode>();
+    //     break;
+    //   }
+    //   }
+    // }
   }
 
   // TODO(lthomas): Fill out this function body.
+  //! @brief Parse a term into the AST.
+  //! @return std::unique_ptr<node::TermNode> The term node of the AST.
   std::unique_ptr<node::TermNode> parse_term() {
     auto &logger = utils::get_logger();
-    logger.error("Expected term at TODO Line & Column number");
-    exit(EXIT_FAILURE);
+    std::unique_ptr<node::TermNode> term;
+    tokenization::Token current_token;
+
+    if (auto token_opt = peek()) {
+      current_token = token_opt.value();
+    } else {
+      logger.error("Expected term at TODO Line & Column number");
+      exit(EXIT_FAILURE);
+    }
+
+    switch (current_token.token_type) {
+    // Parse format ident;
+    case tokenization::TokenType::TT_IDENTIFIER: {
+      term->node = std::make_unique<node::TermIdentNode>(current_token);
+      break;
+    }
+    // Parse format int_lit
+    case tokenization::TokenType::TT_INT_LITERAL: {
+      term->node = std::make_unique<node::TermIntLitNode>(current_token);
+      break;
+    }
+    // Parse format ident = ([Expr]);
+    case tokenization::TokenType::TT_LEFT_PAREN: {
+      std::unique_ptr<node::ExprNode> expression = parse_expression();
+      try_consume(tokenization::TokenType::TT_RIGHT_PAREN);
+
+      term->node = std::make_unique<node::TermExprNode>(std::move(expression));
+      break;
+    }
+    default:
+      logger.error("Expected term at TODO Line & Column number");
+      exit(EXIT_FAILURE);
+    }
+
+    return term;
   }
 
+private:
   //! @brief The current parsing index
   size_t m_index{0};
   //! @brief The tokens to parse.
   const std::vector<tokenization::Token> m_tokens;
-
   //! @brief The root node of the ast
   node::ProgNode prog;
 };

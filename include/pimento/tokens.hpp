@@ -8,6 +8,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <variant>
 
 namespace pimento::tokenization {
 
@@ -44,19 +45,34 @@ enum class TokenType {
   NUM_TOKENS
 };
 
+enum class Associativity { LEFT = 0, RIGHT };
+
+struct BinOpProperties {
+  uint8_t precedence;
+  Associativity associativity;
+};
+
+struct IntLitProperties {
+  uint64_t value;
+};
+
+struct IdentProperties {
+  std::string identifier;
+};
+
 //! @brief Parsed token.
 struct Token {
   //! @brief  @brief The type of this token.
   TokenType token_type;
-  //! @brief The optional value associated with this token.
-  std::optional<std::string> value;
+
+  //! @brief The properties associated with this token.
+  std::variant<BinOpProperties, IntLitProperties, IdentProperties,
+               std::monostate>
+      properties;
 };
 
 //! @brief Static utility class for interacting with token types.
 class TokenTypeUtil {
-public:
-  enum class Associativity { LEFT = 0, RIGHT };
-
 public:
   TokenTypeUtil() = delete;
 
@@ -84,6 +100,15 @@ public:
     }
   }
 
+  [[nodiscard]] static inline std::string
+  get_associativity_str(Associativity assoc) {
+    try {
+      return s_associativity_str.at(assoc);
+    } catch (const std::out_of_range &) {
+      return "UNKNOWN_ASSOCIATIVITY";
+    }
+  }
+
   //! @brief Get the token type associated with a parsed string.
   //! @param token std::string The parsed token for which to get the token type.
   //! @return TokenType The token type associated with the provided token
@@ -93,7 +118,7 @@ public:
     return s_token_lookup.left.at(token);
   }
 
-  [[nodiscard]] static inline std::pair<int, Associativity>
+  [[nodiscard]] static inline std::pair<uint8_t, Associativity>
   get_bin_expr_properties(TokenType token) {
     // Bubble up exception
     return s_bin_expr_properties.at(token);
@@ -112,6 +137,15 @@ private:
       std::initializer_list<typename boost::bimap<L, R>::value_type> list) {
     return boost::bimap<L, R>(list.begin(), list.end());
   }
+
+private:
+  // clang-format off
+  //! @brief Map from token types to printable strings.
+  static const inline std::unordered_map<Associativity, std::string> s_associativity_str{
+      {Associativity::LEFT,  "LEFT"},
+      {Associativity::RIGHT, "RIGHT"}
+  };
+  // clang-format on
 
   // clang-format off
   //! @brief Map from token types to printable strings.
@@ -162,7 +196,7 @@ private:
   // clang-format off
   //! @brief Map from token types to printable strings.
   static const inline std::unordered_map<TokenType,
-                                         std::pair<int, Associativity>>
+                                         std::pair<uint8_t, Associativity>>
       s_bin_expr_properties{
           {TokenType::TT_DOUBLE_CARET,  {2, Associativity::RIGHT}},
           {TokenType::TT_STAR,          {1, Associativity::LEFT}},
@@ -171,5 +205,37 @@ private:
           {TokenType::TT_PLUS,          {0, Associativity::LEFT}},
           {TokenType::TT_MINUS,         {0, Associativity::LEFT}}};
   // clang-format on
+};
+
+class TokenFactory {
+public:
+  [[nodiscard]] Token create_token(TokenType token_type) const noexcept {
+    try {
+      std::pair<uint8_t, Associativity> bin_op_properties =
+          TokenTypeUtil::get_bin_expr_properties(token_type);
+      // Token is a binary operator, should include binary operator properties
+      return Token{.token_type = token_type,
+                   .properties = BinOpProperties{
+                       .precedence = bin_op_properties.first,
+                       .associativity = bin_op_properties.second}};
+    } catch (const std::out_of_range &) {
+      // No token properties
+      return Token{.token_type = token_type, .properties = std::monostate()};
+    }
+  }
+
+  [[nodiscard]] Token create_token(TokenType token_type,
+                                   uint64_t value) const noexcept {
+    return Token{.token_type = token_type,
+                 .properties = IntLitProperties{.value = value}};
+  }
+
+  [[nodiscard]] Token create_token(TokenType token_type,
+                                   std::string identifier) const noexcept {
+    return Token{.token_type = token_type,
+                 .properties = IdentProperties{.identifier = identifier}};
+  }
+
+private:
 };
 } // namespace pimento::tokenization
