@@ -8,6 +8,9 @@
 #include <fstream>
 #include <iostream>
 #include <pimento/ast.hpp>
+#include <pimento/utils.hpp>
+#include <ranges>
+#include <string>
 #include <variant>
 
 namespace pimento::generation {
@@ -33,50 +36,170 @@ private:
     struct Visitor {
       Generator &gen;
 
-      void operator()(const ast::node::StmtExitNode *const stmt_exit) const {
+      void operator()(const ast::node::StmtExitNode *const stmt_node) const {
         gen.m_output << "    ;; exit\n";
+        gen.gen_expression(stmt_node->expression);
         gen.m_output << "    mov rax, 60\n";
-        gen.gen_expression(stmt_exit->expression);
-        // TODO(lthomas): Remove hard-coded exit value
-        gen.m_output << "    mov rdi, 23\n";
+        gen.pop("rdi");
         gen.m_output << "    syscall\n";
         gen.m_output << "    ;; /exit\n";
       }
 
-      void operator()(const ast::node::StmtLetNode *const stmt_let) const {
+      void operator()(const ast::node::StmtLetNode *const stmt_node) const {
         gen.m_output << "    ;; let\n";
-        gen.m_output << "    ;; "
-                     << tokenization::TokenTypeUtil::get_type_as_str(
-                            stmt_let->identifier.token_type)
-                     << "\n";
-        gen.gen_expression(stmt_let->expression);
+        const auto it = std::ranges::find_if(
+            std::as_const(gen.m_vars), [&](const Var &var) {
+              bool match{false};
+              // TODO(lthomas): Probably a cleaner way to do this... Refactor
+              // later
+              struct TokenVisitor {
+                bool &match;
+                const std::string &name;
+
+                void operator()(tokenization::IdentProperties properties) {
+                  match = properties.identifier == name;
+                }
+                void operator()(tokenization::BinOpProperties properties) {
+                  match = false;
+                }
+                void operator()(tokenization::IntLitProperties properties) {
+                  match = false;
+                }
+                void operator()(std::monostate properties) { match = false; }
+              };
+
+              std::visit(TokenVisitor{.match = match, .name = var.name},
+                         stmt_node->identifier.properties);
+              return match;
+            });
+
+        if (it != gen.m_vars.cend()) {
+          std::ostringstream oss;
+          oss << "Identifier already used: ";
+          // TODO(lthomas): Probably a cleaner way to do this... Refactor later
+          struct TokenVisitor {
+            std::ostringstream &oss;
+            void operator()(tokenization::IdentProperties properties) {
+              oss << properties.identifier;
+            }
+            void operator()(tokenization::BinOpProperties properties) {}
+            void operator()(tokenization::IntLitProperties properties) {}
+            void operator()(std::monostate properties) {}
+          };
+
+          std::visit(TokenVisitor(oss), stmt_node->identifier.properties);
+
+          auto &logger = utils::get_logger();
+          logger.error(oss.str());
+          exit(EXIT_FAILURE);
+        }
+
+        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
+        struct TokenVisitor {
+          std::vector<Var> &m_vars;
+          size_t stack_size;
+
+          void operator()(tokenization::IdentProperties properties) {
+            m_vars.emplace_back(properties.identifier, stack_size);
+          }
+          void operator()(tokenization::BinOpProperties properties) {}
+          void operator()(tokenization::IntLitProperties properties) {}
+          void operator()(std::monostate properties) {}
+        };
+
+        std::visit(TokenVisitor(gen.m_vars, gen.m_stack_size),
+                   stmt_node->identifier.properties);
+
+        gen.gen_expression(stmt_node->expression);
         gen.m_output << "    ;; /let\n";
       }
 
-      void
-      operator()(const ast::node::StmtAssignNode *const stmt_assign) const {
-        gen.m_output << "    ;; assign";
-        gen.m_output << "    ;; "
-                     << tokenization::TokenTypeUtil::get_type_as_str(
-                            stmt_assign->identifier.token_type)
-                     << "\n";
-        gen.gen_expression(stmt_assign->expression);
-        gen.m_output << "    ;; /assign";
+      void operator()(const ast::node::StmtAssignNode *const stmt_node) const {
+        gen.m_output << "    ;; assign\n";
+        gen.gen_expression(stmt_node->expression);
+
+        const auto it = std::ranges::find_if(
+            std::as_const(gen.m_vars), [&](const Var &var) {
+              bool match{false};
+              // TODO(lthomas): Probably a cleaner way to do this... Refactor
+              // later
+              struct TokenVisitor {
+                bool &match;
+                const std::string &name;
+
+                void operator()(tokenization::IdentProperties properties) {
+                  match = properties.identifier == name;
+                }
+                void operator()(tokenization::BinOpProperties properties) {
+                  match = false;
+                }
+                void operator()(tokenization::IntLitProperties properties) {
+                  match = false;
+                }
+                void operator()(std::monostate properties) { match = false; }
+              };
+
+              std::visit(TokenVisitor{.match = match, .name = var.name},
+                         stmt_node->identifier.properties);
+              return match;
+            });
+
+        if (it == gen.m_vars.cend()) {
+          std::ostringstream oss;
+          oss << "Undeclared identifier: ";
+          // TODO(lthomas): Probably a cleaner way to do this... Refactor later
+          struct TokenVisitor {
+            std::ostringstream &oss;
+            void operator()(tokenization::IdentProperties properties) {
+              oss << properties.identifier;
+            }
+            void operator()(tokenization::BinOpProperties properties) {}
+            void operator()(tokenization::IntLitProperties properties) {}
+            void operator()(std::monostate properties) {}
+          };
+
+          std::visit(TokenVisitor(oss), stmt_node->identifier.properties);
+
+          auto &logger = utils::get_logger();
+          logger.error(oss.str());
+          exit(EXIT_FAILURE);
+        }
+
+        gen.gen_expression(stmt_node->expression);
+        gen.pop("rax");
+        gen.m_output << "    mov [rsp + "
+                     << (gen.m_stack_size - it->stack_loc - 1) * 8
+                     << "], rax\n";
+
+        gen.m_output << "    ;; /assign\n";
       }
 
-      void operator()(const ast::node::ScopeNode *const scope) const {
+      void operator()(const ast::node::ScopeNode *const stmt_node) const {
         gen.m_output << "    ;; scope\n";
-        gen.gen_scope(scope);
+        gen.gen_scope(stmt_node);
         gen.m_output << "    ;; /scope\n";
       }
 
-      void operator()(const ast::node::StmtIfNode *const stmt_if) const {
+      void operator()(const ast::node::StmtIfNode *const stmt_node) const {
         gen.m_output << "    ;; if\n";
-        gen.gen_expression(stmt_if->expression);
-        gen.gen_scope(stmt_if->scope);
+
+        gen.gen_expression(stmt_node->expression);
+        gen.pop("rax");
+        const std::string label = gen.create_label();
+        gen.m_output << "    test rax, rax\n";
+        // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
+        // true
+        gen.m_output << "    jz " << label << "\n";
+        gen.gen_scope(stmt_node->scope);
         gen.m_output << "    ;; /if\n";
-        if (stmt_if->ifpred.has_value()) {
-          gen.gen_ifpred(stmt_if->ifpred.value());
+        if (stmt_node->ifpred.has_value()) {
+          const std::string end_label = gen.create_label();
+          gen.m_output << "    jmp " << end_label << "\n";
+          gen.m_output << label << ":\n";
+          gen.gen_ifpred(stmt_node->ifpred.value(), end_label);
+          gen.m_output << end_label << ":\n";
+        } else {
+          gen.m_output << label << ":\n";
         }
       }
     };
@@ -109,23 +232,36 @@ private:
   void gen_scope(const ast::node::ScopeNode *const scope) noexcept {
     for (const auto stmt : scope->statements) {
       m_output << "    ;; scope\n";
+      begin_scope();
       gen_statement(stmt);
+      end_scope();
       m_output << "    ;; /scope\n";
     }
   }
 
-  void gen_ifpred(const ast::node::IfPredNode *const ifpred) noexcept {
+  void gen_ifpred(const ast::node::IfPredNode *const ifpred,
+                  const std::string &end_label) noexcept {
     struct Visitor {
       Generator &gen;
+      const std::string &end_label;
 
       void
       operator()(const ast::node::IfPredElifNode *const ifpred_elif) const {
         gen.m_output << "    ;; elif\n";
+
         gen.gen_expression(ifpred_elif->expression);
+        gen.pop("rax");
+        const std::string label = gen.create_label();
+        gen.m_output << "    test rax, rax\n";
+        // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
+        // true
+        gen.m_output << "    jz " << label << "\n";
         gen.gen_scope(ifpred_elif->scope);
+        gen.m_output << "    jmp " << end_label << "\n";
         gen.m_output << "    ;; /elif\n";
         if (ifpred_elif->ifpred.has_value()) {
-          gen.gen_ifpred(ifpred_elif->ifpred.value());
+          gen.m_output << label << ":\n";
+          gen.gen_ifpred(ifpred_elif->ifpred.value(), end_label);
         }
       }
 
@@ -137,7 +273,7 @@ private:
       }
     };
 
-    Visitor visitor{.gen = *this};
+    Visitor visitor{.gen = *this, .end_label = end_label};
     std::visit(visitor, ifpred->node);
   }
 
@@ -147,11 +283,78 @@ private:
 
       void operator()(const ast::node::TermIntLitNode *const int_lit) const {
         gen.m_output << "    ;; int_lit\n";
+        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
+        struct TokenVisitor {
+          std::ostringstream &oss;
+          void operator()(tokenization::IdentProperties properties) {}
+          void operator()(tokenization::BinOpProperties properties) {}
+          void operator()(tokenization::IntLitProperties properties) {
+            oss << "    mov rax, " << properties.value << "\n";
+          }
+          void operator()(std::monostate properties) {}
+        };
+
+        std::visit(TokenVisitor(gen.m_output),
+                   int_lit->int_lit_token.properties);
+
+        gen.push("rax");
         gen.m_output << "    ;; /int_lit\n";
       }
 
       void operator()(const ast::node::TermIdentNode *const ident) const {
         gen.m_output << "    ;; ident\n";
+        const auto it = std::ranges::find_if(
+            std::as_const(gen.m_vars), [&](const Var &var) {
+              bool match = false;
+              // TODO(lthomas): Probably a cleaner way to do this... Refactor
+              // later
+              struct TokenVisitor {
+                bool &match;
+                const std::string &name;
+
+                void operator()(tokenization::IdentProperties properties) {
+                  match = properties.identifier == name;
+                }
+                void operator()(tokenization::BinOpProperties properties) {
+                  match = false;
+                }
+                void operator()(tokenization::IntLitProperties properties) {
+                  match = false;
+                }
+                void operator()(std::monostate properties) { match = false; }
+              };
+
+              std::visit(TokenVisitor{.match = match, .name = var.name},
+                         ident->identifier_token.properties);
+              return match;
+            });
+
+        if (it == gen.m_vars.cend()) {
+          std::ostringstream oss;
+          oss << "Undeclared identifier: ";
+          // TODO(lthomas): Probably a cleaner way to do this... Refactor later
+          struct TokenVisitor {
+            std::ostringstream &oss;
+            void operator()(tokenization::IdentProperties properties) {
+              oss << properties.identifier;
+            }
+            void operator()(tokenization::BinOpProperties properties) {}
+            void operator()(tokenization::IntLitProperties properties) {}
+            void operator()(std::monostate properties) {}
+          };
+
+          std::visit(TokenVisitor(oss), ident->identifier_token.properties);
+
+          auto &logger = utils::get_logger();
+          logger.error(oss.str());
+          exit(EXIT_FAILURE);
+        }
+
+        std::stringstream offset;
+        // TODO(lthomas): Multiplying by 8 bytes for 64 bit sytem
+        offset << "QWORD [rsp + " << (gen.m_stack_size - it->stack_loc - 1) * 8
+               << "]";
+        gen.push(offset.str());
         gen.m_output << "    ;; /ident\n";
       }
 
@@ -174,6 +377,8 @@ private:
         gen.m_output << "    ;; power\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        // TODO(lthomas): Create loop in assembly, unroll the loop, or
+        // conditionally unroll the loop and multiply
         gen.m_output << "    ;; /power\n";
       }
 
@@ -181,6 +386,10 @@ private:
         gen.m_output << "    ;; mod\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    div rbx\n";
+        gen.push("rdx");
         gen.m_output << "    ;; /mod\n";
       }
 
@@ -188,6 +397,10 @@ private:
         gen.m_output << "    ;; multiply\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    mul rbx\n";
+        gen.push("rax");
         gen.m_output << "    ;; /multiply\n";
       }
 
@@ -195,6 +408,10 @@ private:
         gen.m_output << "    ;; divide\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    div rbx\n";
+        gen.push("rax");
         gen.m_output << "    ;; /divide\n";
       }
 
@@ -202,6 +419,10 @@ private:
         gen.m_output << "    ;; add\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    add rax, rbx\n";
+        gen.push("rax");
         gen.m_output << "    ;; /add\n";
       }
 
@@ -209,6 +430,10 @@ private:
         gen.m_output << "    ;; subtract\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        gen.pop("rax");
+        gen.pop("rbx");
+        gen.m_output << "    sub rax, rbx\n";
+        gen.push("rax");
         gen.m_output << "    ;; /subtract\n";
       }
 
@@ -216,6 +441,8 @@ private:
         gen.m_output << "    ;; less than\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        // TODO(lthomas): Not entirely sure yet now to handle the jump
+        // instruction here
         gen.m_output << "    ;; /less than\n";
       }
 
@@ -224,6 +451,8 @@ private:
         gen.m_output << "    ;; greater than\n";
         gen.gen_expression(node->left);
         gen.gen_expression(node->right);
+        // TODO(lthomas): Not entirely sure yet now to handle the jump
+        // instruction here
         gen.m_output << "    ;; /greater than\n";
       }
     };
@@ -232,10 +461,56 @@ private:
     std::visit(visitor, bin_expr->node);
   }
 
+  void push(const std::string &reg) noexcept {
+    m_output << "    push " << reg << "\n";
+    m_stack_size++;
+  }
+
+  void pop(const std::string &reg) noexcept {
+    m_output << "    pop " << reg << "\n";
+    m_stack_size--;
+  }
+
+  void begin_scope() { m_scopes.push_back(m_vars.size()); }
+
+  void end_scope() noexcept {
+    const size_t pop_count = m_vars.size() - m_scopes.back();
+    if (pop_count != 0) {
+      m_output << "    add rsp, " << pop_count * 8 << "\n";
+    }
+    m_stack_size -= pop_count;
+    for (size_t i = 0; i < pop_count; i++) {
+      m_vars.pop_back();
+    }
+    m_scopes.pop_back();
+  }
+
+  std::string create_label() noexcept {
+    std::ostringstream oss;
+    oss << "label" << std::to_string(m_label_count++);
+    return oss.str();
+  }
+
+private:
+  struct Var {
+    std::string name;
+    size_t stack_loc;
+  };
+
+  // helpers for visitors
+  template <class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+
+  template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
   // TODO(lthomas): Write output to this file
   std::filesystem::path m_output_path;
   std::ostringstream m_output;
   const ast::node::ProgNode &m_prog;
+
+  size_t m_stack_size{0};
+  std::vector<Var> m_vars{};
+  std::vector<size_t> m_scopes{};
+  size_t m_label_count{0};
 };
 
 } // namespace pimento::generation

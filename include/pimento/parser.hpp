@@ -330,6 +330,9 @@ private:
 
       return expr;
     }
+
+    logger.error("Expected expression at TODO Line & Column number");
+    exit(EXIT_FAILURE);
   }
 
   //! @brief Parse a scope into the AST.
