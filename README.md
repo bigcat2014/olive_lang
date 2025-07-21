@@ -52,13 +52,13 @@ ctest -V
 ### Not Installed
 From the root of the project, run the following command:
 ```bash
-./build/oliveoil
+./build/pimento
 ```
 
 ### Installed
 From the root of the project, run the following command:
 ```bash
-./install/bin/oliveoil
+./install/bin/pimento
 ```
 
 # Grammar
