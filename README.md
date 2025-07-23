@@ -108,7 +108,70 @@ From the root of the project, run the following command:
     - https://bugs.kde.org/show_bug.cgi?id=452758
 
 # Grammar
-## Subject to change
+## Lexical Grammar (Regular)
+**Subject to change**
+$$
+\begin{align}
+    \text{exit} &\to \text{TT_EXIT} \\
+    \text{if} &\to \text{TT_IF} \\
+    \text{elif} &\to \text{TT_ELIF} \\
+    \text{else} &\to \text{TT_ELSE} \\
+    \text{while} &\to \text{TT_WHILE} \\
+    \text{int} &\to \text{TT_DT_INT} \\
+    \text{float} &\to \text{TT_DT_FLOAT} \\
+    \text{string} &\to \text{TT_DT_STRING} \\
+    \text{func} &\to \text{TT_FUNCTION} \\
+    \text{class} &\to \text{TT_CLASS} \\
+    \text{iface} &\to \text{TT_INTERFACE} \\
+    \text{mut} &\to \text{TT_MUTABLE} \\
+    \text{\{} &\to \text{TT_LEFT_CURLY} \\
+    \text{(} &\to \text{TT_LEFT_PAREN} \\
+    \text{[} &\to \text{TT_LEFT_SQUARE} \\
+    \text{\}} &\to \text{TT_RIGHT_CURLY} \\
+    \text{)} &\to \text{TT_RIGHT_PAREN} \\
+    \text{]} &\to \text{TT_RIGHT_SQUARE} \\
+    \text{;} &\to \text{TT_SEMI} \\
+    \text{^^=} &\to \text{TT_DOUBLE_CARET_EQUAL} \\
+    \text{^^} &\to \text{TT_DOUBLE_CARET} \\
+    \text{^=} &\to \text{TT_CARET_EQUAL} \\
+    \text{^} &\to \text{TT_CARET} \\
+    \text{%=} &\to \text{TT_PERCENT_EQUAL} \\
+    \text{%} &\to \text{TT_PERCENT} \\
+    \text{*=} &\to \text{TT_STAR_EQUAL} \\
+    \text{*} &\to \text{TT_STAR} \\
+    \text{//} &\to \text{TT_DOUBLE_FORWARD_SLASH} \\
+    \text{/=} &\to \text{TT_FORWARD_SLASH_EQUAL} \\
+    \text{/} &\to \text{TT_FORWARD_SLASH} \\
+    \text{++} &\to \text{TT_DOUBLE_PLUS} \\
+    \text{+=} &\to \text{TT_PLUS_EQUAL} \\
+    \text{+} &\to \text{TT_PLUS} \\
+    \text{--} &\to \text{TT_DOUBLE_MINUS} \\
+    \text{-=} &\to \text{TT_MINUS_EQUAL} \\
+    \text{-} &\to \text{TT_MINUS} \\
+    \text{<<} &\to \text{TT_DOUBLE_LEFT_ANGLE} \\
+    \text{<=} &\to \text{TT_LE} \\
+    \text{<} &\to \text{TT_LT} \\
+    \text{>>} &\to \text{TT_DOUBLE_RIGHT_ANGLE} \\
+    \text{>=} &\to \text{TT_GE} \\
+    \text{>} &\to \text{TT_GT} \\
+    \text{==} &\to \text{TT_DOUBLE_EQUAL} \\
+    \text{=} &\to \text{TT_EQUAL} \\
+    \text{\&\&} &\to \text{TT_DOUBLE_AMP} \\
+    \text{\&=} &\to \text{TT_AMP_EQUAL} \\
+    \text{\&} &\to \text{TT_AMP} \\
+    \text{||} &\to \text{TT_DOUBLE_PIPE} \\
+    \text{|=} &\to \text{TT_PIPE_EQUAL} \\
+    \text{|} &\to \text{TT_PIPE} \\
+    \text{.} &\to \text{TT_DOT} \\
+    \text{[a-zA-Z_][a-zA-Z0-9_]+} &\to \text{TT_IDENTIFIER} \\
+    \text{[-]?[0-9]+} &\to \text{TT_INT_LITERAL} \\
+    \text{[-]?([0-9]+([.][0-9]*)?|[.][0-9]+)} &\to \text{TT_FLOAT_LITERAL} \\
+    \text{".*"} &\to \text{TT_STRING_LITERAL} \\
+\end{align}
+$$
+
+## Parser Grammar
+**Subject to change**
 $$
 \begin{align}
     [\text{Prog}] &\to [\text{Stmt}]^* \\
@@ -135,14 +198,14 @@ $$
     \end{cases} \\
     [\text{BinExpr}] &\to
     \begin{cases}
-        [\text{Expr}]\enspace \^{} \enspace \^{} &[\text{Expr}] \quad \text{prec} = 3; \enspace \text{associativity} = \text{right} \\
-        [\text{Expr}]\enspace               \%   &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               *    &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               /    &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               +    &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               -    &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               <    &[\text{Expr}] \quad \text{prec} = 0; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               >    &[\text{Expr}] \quad \text{prec} = 0; \enspace \text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{^^} &[\text{Expr}] &\text{prec} = 3; &\text{associativity} = \text{right} \\
+        [\text{Expr}] &\text{\%} &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{*}  &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{/}  &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{+}  &[\text{Expr}] &\text{prec} = 1; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{-}  &[\text{Expr}] &\text{prec} = 1; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{<}  &[\text{Expr}] &\text{prec} = 0; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{>}  &[\text{Expr}] &\text{prec} = 0; &\text{associativity} = \text{left}  \\
     \end{cases} \\ 
     [\text{Term}] &\to
     \begin{cases}
