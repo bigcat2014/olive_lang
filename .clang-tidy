@@ -1,5 +1,4 @@
 ---
 Checks: 'google-*,readability-function-size,readability-identifier-naming,readability-braces-around-statements,readability-make-member-function-const,readability-convert-member-functions-to-static,readability-redundant-member-init,modernize-use-nullptr,misc-definitions-in-headers,misc-misplaced-const,modernize-loop-convert,modernize-use-using,modernize-use-auto,modernize-use-equals-default,modernize-use-default-member-init,performance-*'
 WarningsAsErrors: ''
-AnalyzeTemporaryDtors: false
 FormatStyle: Google

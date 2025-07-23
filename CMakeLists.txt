@@ -35,7 +35,7 @@ endforeach()
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost 1.74.0 REQUIRED)
+find_package(Boost 1.74.0 REQUIRED NO_MODULE)
 
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
