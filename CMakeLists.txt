@@ -148,7 +148,11 @@ if (BUILD_TESTING)
             clang-tidy-12
             clang-tidy-13
             clang-tidy-14
-            clang-tidy-15)
+            clang-tidy-15
+            clang-tidy-16
+            clang-tidy-17
+            clang-tidy-18
+            clang-tidy-19)
     if(NOT CLANG_TIDY_PATH)
         message(FATAL_ERROR "clang-tidy not found! Aborting...")
     endif() # NOT CLANG_TIDY_PATH
