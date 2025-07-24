@@ -117,7 +117,9 @@ $$
     \text{elif} &\to \text{ELIF} \\
     \text{else} &\to \text{ELSE} \\
     \text{while} &\to \text{WHILE} \\
-    \text{uint8} &\to \text{UINT8} \\
+    \text{for} &\to \text{FOR} \\
+    \text{break} &\to \text{BREAK} \\
+    \text{uint8} &\to \text{UINT8} &&\text{Not sure if the unsigned and signed types should correspond to single enum or separate signed/unsigned enum values} \\
     \text{uint16} &\to \text{UINT16} \\
     \text{uint32} &\to \text{UINT32} \\
     \text{uint64} &\to \text{UINT64} \\
@@ -129,53 +131,58 @@ $$
     \text{string} &\to \text{STRING} \\
     \text{func} &\to \text{FUNCTION} \\
     \text{class} &\to \text{CLASS} \\
+    \text{enum} &\to \text{CLASS} \\
     \text{iface} &\to \text{INTERFACE} \\
     \text{mut} &\to \text{MUTABLE} \\
-    \text{\{} &\to \text{LEFT_CURLY} \\
-    \text{(} &\to \text{LEFT_PAREN} \\
-    \text{[} &\to \text{LEFT_SQUARE} \\
-    \text{\}} &\to \text{RIGHT_CURLY} \\
-    \text{)} &\to \text{RIGHT_PAREN} \\
-    \text{]} &\to \text{RIGHT_SQUARE} \\
+    \text{\{} &\to \text{LEFT\_CURLY} \\
+    \text{(} &\to \text{LEFT\_PAREN} \\
+    \text{[} &\to \text{LEFT\_SQUARE} \\
+    \backslash &\to \text{RIGHT\_CURLY} \\
+    \text{)} &\to \text{RIGHT\_PAREN} \\
+    \text{]} &\to \text{RIGHT\_SQUARE} \\
     \text{;} &\to \text{SEMI} \\
-    \text{^^=} &\to \text{EXPONENT_ASSIGN} \\
-    \text{^^} &\to \text{EXPONENT} \\
-    \text{^=} &\to \text{XOR_ASSIGN} \\
-    \text{^} &\to \text{XOR} \\
-    \text{%=} &\to \text{MOD_ASSIGN} \\
-    \text{%} &\to \text{MOD} \\
-    \text{*=} &\to \text{MUL_ASSIGN} \\
+    \hat{}\enspace\hat{}\text{=} &\to \text{EXPONENT\_ASSIGN} \\
+    \hat{}\enspace\hat{} &\to \text{EXPONENT} \\
+    \text{\^{}=} &\to \text{XOR\_ASSIGN} \\
+    \text{\^{}} &\to \text{XOR} \\
+    \text{\%=} &\to \text{MOD\_ASSIGN} \\
+    \text{\%} &\to \text{MOD} \\
+    \text{*=} &\to \text{MUL\_ASSIGN} \\
     \text{*} &\to \text{MUL} \\
-    \text{//=} &\to \text{INTEGER_DIV_ASSIGN} \\
-    \text{//} &\to \text{INTEGER_DIV} \\
-    \text{/=} &\to \text{DIV_ASSIGN} \\
+    \text{//=} &\to \text{INTEGER\_DIV\_ASSIGN} \\
+    \text{//} &\to \text{INTEGER\_DIV} \\
+    \text{/=} &\to \text{DIV\_ASSIGN} \\
     \text{/} &\to \text{DIV} \\
     \text{++} &\to \text{INC} \\
-    \text{+=} &\to \text{ADD_ASSIGN} \\
+    \text{+=} &\to \text{ADD\_ASSIGN} \\
     \text{+} &\to \text{ADD} \\
     \text{--} &\to \text{DEC} \\
-    \text{-=} &\to \text{SUB_ASSIGN} \\
+    \text{-=} &\to \text{SUB\_ASSIGN} \\
     \text{-} &\to \text{SUB} \\
-    \text{<<} &\to \text{SHIFT_LEFT} \\
-    \text{<=} &\to \text{LE_OP} \\
-    \text{<} &\to \text{LT_OP} \\
-    \text{>>} &\to \text{SHIFT_RIGHT} \\
-    \text{>=} &\to \text{GE_OP} \\
-    \text{>} &\to \text{GT_OP} \\
-    \text{==} &\to \text{EQ_OP} \\
+    \text{<<} &\to \text{SHIFT\_LEFT} \\
+    \text{<=} &\to \text{LE\_OP} \\
+    \text{<} &\to \text{LT\_OP} \\
+    \text{>>} &\to \text{SHIFT\_RIGHT} \\
+    \text{>=} &\to \text{GE\_OP} \\
+    \text{>} &\to \text{GT\_OP} \\
+    \text{==} &\to \text{EQ\_OP} \\
     \text{=} &\to \text{ASSIGN} \\
-    \text{&&} &\to \text{LOGICAL_AND} \\
-    \text{&=} &\to \text{AND_ASSIGN} \\
-    \text{&} &\to \text{AND} \\
-    \text{||} &\to \text{LOGICAL_OR} \\
-    \text{|=} &\to \text{OR_ASSIGN} \\
+    \text{\&\&} &\to \text{LOGICAL\_AND} \\
+    \text{\&=} &\to \text{AND\_ASSIGN} \\
+    \text{\&} &\to \text{AND} \\
+    \text{||} &\to \text{LOGICAL\_OR} \\
+    \text{|=} &\to \text{OR\_ASSIGN} \\
     \text{|} &\to \text{OR} \\
     \text{.} &\to \text{DOT} \\
-    \text{[a-zA-Z_][a-zA-Z0-9_]+} &\to \text{IDENTIFIER} \\
-    \text{[-]?[0-9]+} &\to \text{SIGNED_INT_LITERAL} \\
-    \text{[0-9]+} &\to \text{UNSIGNED_INT_LITERAL} \\
-    \text{[-]?([0-9]+([.][0-9]*)?|[.][0-9]+)} &\to \text{FLOAT_LITERAL} \\
-    \text{".*"} &\to \text{STRING_LITERAL} \\
+    \text{\#.*} \backslash \text{n} &\to \text{COMMENT} &&\text{Single line comments only} \\
+    \text{[a-zA-Z\_][a-zA-Z0-9\_]*} &\to \text{IDENTIFIER} \\
+    \text{[+-]?[0-9]+} &\to \text{NUMERIC\_CONST} &&\text{Positive or negative integer} \\
+    \text{0[xX][a-fA-F0-9]+} &\to \text{NUMERIC\_CONST} &&\text{Hex value} \\
+    \text{0[oO][0-7]+} &\to \text{NUMERIC\_CONST} &&\text{Octal value} \\
+    \text{0[bB][01]+} &\to \text{NUMERIC\_CONST} &&\text{Binary value} \\
+    \text{[+-]?[0-9]+[Ee][+-]?[0-9]+} &\to \text{NUMERIC\_CONST} &&\text{Positive or negative scientific notation} \\
+    \text{[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)} &\to \text{NUMERIC\_CONST} &&\text{Floating point number} \\
+    \text{".*"} &\to \text{STRING\_LITERAL} \\
 \end{align}
 $$
 
@@ -207,7 +214,7 @@ $$
     \end{cases} \\
     [\text{BinExpr}] &\to
     \begin{cases}
-        [\text{Expr}] &\text{^^} &[\text{Expr}] &\text{prec} = 3; &\text{associativity} = \text{right} \\
+        [\text{Expr}] &\hat{}\enspace\hat{} &[\text{Expr}] &\text{prec} = 3; &\text{associativity} = \text{right} \\
         [\text{Expr}] &\text{\%} &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
         [\text{Expr}] &\text{*}  &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
         [\text{Expr}] &\text{/}  &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
