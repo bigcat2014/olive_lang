@@ -27,9 +27,6 @@
 		"[cpp]": {
 			"editor.tabSize": 2
 		},
-		"files.associations": {
-			"*.cmake.in": "cmake"
-		},
 		"editor.tokenColorCustomizations": {
 			"textMateRules": [
 				{
