@@ -25,17 +25,18 @@ FetchContent_Declare(
   GIT_TAG        v3.2)
 FetchContent_MakeAvailable(argparse)
 
-set(BUILD_DEPS
-    spdlog)
-
-foreach(package ${BUILD_DEPS})
-    find_package(${package} REQUIRED)
-endforeach()
-
+# Find Boost
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost 1.74.0 REQUIRED NO_MODULE)
+
+# Find additional project dependencies
+set(BUILD_DEPS
+    spdlog)
+foreach(package ${BUILD_DEPS})
+    find_package(${package} REQUIRED)
+endforeach()
 
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
@@ -87,6 +88,7 @@ if (BUILD_TESTING)
     enable_testing()
 
     # GTest
+    ## Lexer
     find_package(GTest REQUIRED)
     add_executable(lexer_test EXCLUDE_FROM_ALL
         tests/lexer_test.cpp)
@@ -98,6 +100,7 @@ if (BUILD_TESTING)
         ${PROJECT_NAME}_lexer GTest::gtest_main)
     gtest_discover_tests(lexer_test)
 
+    ## Parser
     add_executable(parser_test EXCLUDE_FROM_ALL
         tests/parser_test.cpp)
     target_include_directories(parser_test PRIVATE
@@ -108,7 +111,7 @@ if (BUILD_TESTING)
         ${PROJECT_NAME}_parser GTest::gtest_main)
     gtest_discover_tests(parser_test)
 
-    # Gcovr
+    # Gcovr Coverage Report Generation
     list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
     include(CodeCoverage)
     append_coverage_compiler_flags()
@@ -128,6 +131,7 @@ if (BUILD_TESTING)
     # Linters
     set(${PROJECT_NAME}_LINTER_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Linters)
 
+    ## CMake Lint
     find_program(CMAKE_LINT_PATH cmake-lint)
     if(NOT CMAKE_LINT_PATH)
         message(FATAL_ERROR "cmake-lint not found! Aborting...")
@@ -140,6 +144,7 @@ if (BUILD_TESTING)
         -o ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_cmake_linter.txt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+    ## Clang Tidy
     find_program(
         CLANG_TIDY_PATH
         NAMES
@@ -167,12 +172,15 @@ if (BUILD_TESTING)
         --config-file ${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy
         -p ${CMAKE_CURRENT_BINARY_DIR}
         --use-color
+        --warnings-as-errors=*
         --export-fixes
         ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml  # cmake-lint: disable=C0301
         ${${PROJECT_NAME}_SOURCE_FILES}
         ${${PROJECT_NAME}_HEADER_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+    # Valgrind Memcheck Tests
+    # TODO(lthomas): Refactor this into a function
     set(${PROJECT_NAME}_TEST_RESOURCES_DIR
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
     add_test(NAME ${PROJECT_NAME}_valgrind_file
@@ -281,7 +289,7 @@ if (BUILD_TESTING)
         --output-on-failure
         -R "${PROJECT_NAME}_.*_linter"
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Run unit tests")
+        COMMENT "Run linters")
 
     find_program(CTEST_PATH ctest)
     if(NOT CTEST_PATH)
@@ -351,12 +359,11 @@ SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libspdlog-dev, libboost-dev")
 set(CPACK_TGZ_COMPONENT_INSTALL "ON")
 
 cpack_add_component(binaries
-DISPLAY_NAME "Pimento"
-DESCRIPTION "Compiler for Olive lang *.oil files."
-)
+  DISPLAY_NAME "Pimento"
+  DESCRIPTION "Compiler for Olive lang *.oil files.")
+
 cpack_add_component(dev
-DISPLAY_NAME "Olive lang headers"
-DESCRIPTION "Headers for olive lang compiler."
-)
+  DISPLAY_NAME "Olive lang headers"
+  DESCRIPTION "Headers for olive lang compiler.")
 
 include(CPack)

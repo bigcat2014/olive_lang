@@ -130,9 +130,9 @@ $$
     \text{int64}                               &\to \text{INT64}                                                                                                                                            \\
     \text{float}                               &\to \text{FLOAT}                                                                                                                                            \\
     \text{string}                              &\to \text{STRING}                                                                                                                                           \\
-    \text{bool}                                &\to \text{STRING}                                                                                                                                           \\
-    \text{true}                                &\to \text{STRING}                                                                                                                                           \\
-    \text{false}                               &\to \text{STRING}                                                                                                                                           \\
+    \text{bool}                                &\to \text{BOOL}                                                                                                                                             \\
+    \text{true}                                &\to \text{TRUE}                                                                                                                                             \\
+    \text{false}                               &\to \text{FALSE}                                                                                                                                            \\
     \text{func}                                &\to \text{FUNCTION}                                                                                                                                         \\
     \text{class}                               &\to \text{CLASS}                                                                                                                                            \\
     \text{enum}                                &\to \text{ENUM}                                                                                                                                             \\

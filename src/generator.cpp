@@ -59,7 +59,7 @@ void Generator::gen_statement(
         struct TokenVisitor {
           std::ostringstream &oss;
 
-          TokenVisitor(std::ostringstream &oss) : oss(oss) {}
+          explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
 
           void operator()(tokenization::IdentProperties properties) {
             oss << properties.identifier;
@@ -128,7 +128,7 @@ void Generator::gen_statement(
         struct TokenVisitor {
           std::ostringstream &oss;
 
-          TokenVisitor(std::ostringstream &oss) : oss(oss) {}
+          explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
 
           void operator()(tokenization::IdentProperties properties) {
             oss << properties.identifier;
@@ -153,7 +153,7 @@ void Generator::gen_statement(
 
     void operator()(std::shared_ptr<ast::node::ScopeNode> stmt) const {
       gen.m_output << "    ;; scope\n";
-      gen.gen_scope(stmt);
+      gen.gen_scope(std::move(stmt));
       gen.m_output << "    ;; /scope\n";
     }
 
@@ -203,11 +203,11 @@ void Generator::gen_expression(
     Generator &gen;
 
     void operator()(std::shared_ptr<ast::node::TermNode> expr) const {
-      gen.gen_term(expr);
+      gen.gen_term(std::move(expr));
     }
 
     void operator()(std::shared_ptr<ast::node::BinExprNode> expr) const {
-      gen.gen_bin_expr(expr);
+      gen.gen_bin_expr(std::move(expr));
     }
   };
 
@@ -262,7 +262,7 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
       struct TokenVisitor {
         Generator &gen;
 
-        TokenVisitor(Generator &gen) : gen(gen) {}
+        explicit TokenVisitor(Generator &gen) : gen(gen) {}
 
         void operator()(tokenization::IdentProperties) {}
         void operator()(tokenization::BinOpProperties) {}
@@ -306,7 +306,7 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
         struct TokenVisitor {
           std::ostringstream &oss;
 
-          TokenVisitor(std::ostringstream &oss) : oss(oss) {}
+          explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
 
           void operator()(tokenization::IdentProperties properties) {
             oss << properties.identifier;
@@ -482,7 +482,7 @@ void Generator::end_scope() noexcept {
   m_scopes.pop_back();
 }
 
-std::string Generator::create_label() const noexcept {
+std::string Generator::create_label() noexcept {
   static size_t label_count{0};
 
   std::ostringstream oss;

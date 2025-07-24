@@ -75,7 +75,7 @@ private:
 
   //! @brief Helper function to create unique assembly labels.
   //! @return std::string The new label
-  std::string create_label() const noexcept;
+  static std::string create_label() noexcept;
 
 private:
   //! @brief Helper struct for maintaining variables on the stack.
@@ -99,9 +99,9 @@ private:
   //! @brief The current stack size.
   size_t m_stack_size{0};
   //! @brief Current variables in use.
-  std::vector<Var> m_vars{};
+  std::vector<Var> m_vars;
   //! @brief Current scopes in use.
-  std::vector<size_t> m_scopes{};
+  std::vector<size_t> m_scopes;
 };
 
 } // namespace pimento::generation

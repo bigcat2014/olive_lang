@@ -25,7 +25,7 @@ void Lexer::tokenize() {
 
   while (m_stream) {
     m_stream.read(file_buffer.data(), file_buffer.size());
-    size_t n = static_cast<size_t>(m_stream.gcount());
+    auto n = static_cast<size_t>(m_stream.gcount());
     if (n <= 0) {
       break;
     }
@@ -78,7 +78,7 @@ void Lexer::tokenize() {
 
 [[nodiscard]] inline char Lexer::peek(size_t current_index,
                                       const char *const buffer, size_t size,
-                                      size_t lookahead) const noexcept {
+                                      size_t lookahead) noexcept {
   if (current_index + lookahead < size) {
     return buffer[current_index + lookahead];
   }
@@ -105,7 +105,7 @@ bool Lexer::try_parse_token(std::string &token_buffer,
       if (!std::isdigit(next)) {
         uint64_t value = std::stoull(token_buffer);
         m_tokens.push_back(
-            TokenFactory::create_token(TokenType::TT_INT_LITERAL, value));
+            TokenFactory::create_token(TokenType::NUMERIC_CONST, value));
         token_buffer.clear();
         return true;
       }
@@ -113,7 +113,7 @@ bool Lexer::try_parse_token(std::string &token_buffer,
     } else if (std::isalpha(token_buffer.back())) {
       if (!std::isalpha(next)) {
         m_tokens.push_back(
-            TokenFactory::create_token(TokenType::TT_IDENTIFIER, token_buffer));
+            TokenFactory::create_token(TokenType::IDENTIFIER, token_buffer));
         token_buffer.clear();
         return true;
       }

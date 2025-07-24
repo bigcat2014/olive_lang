@@ -22,7 +22,7 @@ struct TermExprNode {
 
   //! @brief Constructor for the Term Expression AST node.
   //! @param expression std::shared_ptr<ExprNode> The expression of this node.
-  TermExprNode(std::shared_ptr<ExprNode> expression) : expression(expression) {}
+  explicit TermExprNode(std::shared_ptr<ExprNode> expression) : expression(std::move(expression)) {}
 };
 
 //! @brief The Term Identifier AST node.
@@ -32,7 +32,7 @@ struct TermIdentNode {
 
   //! @brief Constructor for the Term Identifier AST node.
   //! @param token tokenization::Token The identifier token.
-  TermIdentNode(tokenization::Token token) : identifier_token(token) {}
+  explicit TermIdentNode(tokenization::Token token) : identifier_token(std::move(token)) {}
 };
 
 //! @brief The Term Int Literal AST node.
@@ -42,7 +42,7 @@ struct TermIntLitNode {
 
   //! @brief Constructor for the Term Int Literal AST node.
   //! @param token tokenization::Token The int literal token.
-  TermIntLitNode(tokenization::Token token) : int_lit_token(token) {}
+  explicit TermIntLitNode(tokenization::Token token) : int_lit_token(std::move(token)) {}
 };
 
 //! @brief The Binary Expression Less Than Comparison AST node.
@@ -59,7 +59,7 @@ struct BinExprLessThanNode {
   //! expression.
   BinExprLessThanNode(std::shared_ptr<ExprNode> left,
                       std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Greater Than Comparison AST node.
@@ -76,7 +76,7 @@ struct BinExprGreaterThanNode {
   //! expression.
   BinExprGreaterThanNode(std::shared_ptr<ExprNode> left,
                          std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Subtraction AST node.
@@ -92,7 +92,7 @@ struct BinExprMinusNode {
   //! expression.
   BinExprMinusNode(std::shared_ptr<ExprNode> left,
                    std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Addition AST node.
@@ -108,7 +108,7 @@ struct BinExprPlusNode {
   //! expression.
   BinExprPlusNode(std::shared_ptr<ExprNode> left,
                   std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Division AST node.
@@ -124,7 +124,7 @@ struct BinExprDivNode {
   //! expression.
   BinExprDivNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Multiplication AST node.
@@ -140,7 +140,7 @@ struct BinExprMulNode {
   //! expression.
   BinExprMulNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Modulus AST node.
@@ -156,7 +156,7 @@ struct BinExprModNode {
   //! expression.
   BinExprModNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The Binary Expression Exponentiation AST node.
@@ -172,7 +172,7 @@ struct BinExprPowerNode {
   //! expression.
   BinExprPowerNode(std::shared_ptr<ExprNode> left,
                    std::shared_ptr<ExprNode> right)
-      : left(left), right(right) {}
+      : left(std::move(left)), right(std::move(right)) {}
 };
 
 //! @brief The If Predicate Else AST node.
@@ -182,7 +182,7 @@ struct IfPredElseNode {
 
   //! @brief Constructor for the If Predicate Else AST node.
   //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
-  IfPredElseNode(std::shared_ptr<ScopeNode> scope) : scope(scope) {}
+  explicit IfPredElseNode(std::shared_ptr<ScopeNode> scope) : scope(std::move(scope)) {}
 };
 
 //! @brief The If Predicate Else If AST node.
@@ -202,7 +202,7 @@ struct IfPredElifNode {
   IfPredElifNode(std::shared_ptr<ExprNode> expression,
                  std::shared_ptr<ScopeNode> scope,
                  std::optional<std::shared_ptr<IfPredNode>> ifpred)
-      : expression(expression), scope(scope), ifpred(ifpred) {}
+      : expression(std::move(expression)), scope(std::move(scope)), ifpred(std::move(ifpred)) {}
 
   //! @brief Constructor for the If Predicate Else If AST node without a chained
   //! If Predicate.
@@ -210,7 +210,7 @@ struct IfPredElifNode {
   //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
   IfPredElifNode(std::shared_ptr<ExprNode> expression,
                  std::shared_ptr<ScopeNode> scope)
-      : expression(expression), scope(scope) {}
+      : expression(std::move(expression)), scope(std::move(scope)) {}
 };
 
 //! @brief The Statement Exit AST node.
@@ -220,7 +220,7 @@ struct StmtExitNode {
 
   //! @brief Constructor for the Statement Exit AST node.
   //! @param expression std::shared_ptr<ExprNode> The expression of this node.
-  StmtExitNode(std::shared_ptr<ExprNode> expression) : expression(expression) {}
+  explicit StmtExitNode(std::shared_ptr<ExprNode> expression) : expression(std::move(expression)) {}
 };
 
 //! @brief The Statement Let AST node.
@@ -235,7 +235,7 @@ struct StmtLetNode {
   //! @param expression std::shared_ptr<ExprNode> The expression of this node.
   StmtLetNode(tokenization::Token identifier,
               std::shared_ptr<ExprNode> expression)
-      : identifier(identifier), expression(expression) {}
+      : identifier(std::move(identifier)), expression(std::move(expression)) {}
 };
 
 //! @brief The Statement Assignment AST node.
@@ -250,7 +250,7 @@ struct StmtAssignNode {
   //! @param expression std::shared_ptr<ExprNode> The expression of this node.
   StmtAssignNode(tokenization::Token identifier,
                  std::shared_ptr<ExprNode> expression)
-      : identifier(identifier), expression(expression) {}
+      : identifier(std::move(identifier)), expression(std::move(expression)) {}
 };
 
 //! @brief The Statement If AST node.
@@ -270,7 +270,7 @@ struct StmtIfNode {
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope,
              std::optional<std::shared_ptr<IfPredNode>> ifpred)
-      : expression(expression), scope(scope), ifpred(ifpred) {}
+      : expression(std::move(expression)), scope(std::move(scope)), ifpred(std::move(ifpred)) {}
 
   //! @brief Constructor for the Statement If AST node without a chained If
   //! Predicate.
@@ -278,7 +278,7 @@ struct StmtIfNode {
   //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope)
-      : expression(expression), scope(scope) {}
+      : expression(std::move(expression)), scope(std::move(scope)) {}
 };
 
 //! @brief The Statement While AST node.
@@ -293,7 +293,7 @@ struct StmtWhileNode {
   //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
   StmtWhileNode(std::shared_ptr<ExprNode> expression,
                 std::shared_ptr<ScopeNode> scope)
-      : expression(expression), scope(scope) {}
+      : expression(std::move(expression)), scope(std::move(scope)) {}
 };
 
 //! @brief The Term AST node.
@@ -307,7 +307,7 @@ struct TermNode {
 
   //! @brief Constructor for the Term AST node.
   //! @param node TermVariant The variant of the Term in this node.
-  TermNode(TermVariant node) : node(node) {}
+  explicit TermNode(TermVariant node) : node(std::move(node)) {}
 };
 
 //! @brief The Binary Expression AST node.
@@ -325,7 +325,7 @@ struct BinExprNode {
   //! @brief Constructor for the Binary Expression AST node.
   //! @param node BinExprVariant The variant of the Binary Expression in this
   //! node.
-  BinExprNode(BinExprVariant node) : node(node) {}
+  explicit BinExprNode(BinExprVariant node) : node(std::move(node)) {}
 };
 
 //! @brief The Expression AST node.
@@ -338,7 +338,7 @@ struct ExprNode {
 
   //! @brief Constructor for the Expression AST node.
   //! @param node ExprVariant The variant of the Expression in this node.
-  ExprNode(ExprVariant node) : node(node) {}
+  explicit ExprNode(ExprVariant node) : node(std::move(node)) {}
 };
 
 //! @brief The If Predicate AST node.
@@ -351,7 +351,7 @@ struct IfPredNode {
 
   //! @brief Constructor for the If Predicate AST node.
   //! @param node IfPredVariant The variant of the If Predicate in this node.
-  IfPredNode(IfPredVariant node) : node(node) {}
+  explicit IfPredNode(IfPredVariant node) : node(std::move(node)) {}
 };
 
 //! @brief The Statement AST node.
@@ -366,7 +366,7 @@ struct StmtNode {
 
   //! @brief Constructor for the Statement AST node.
   //! @param node StmtVariant The variant of the Statement in this node.
-  StmtNode(StmtVariant node) : node(node) {}
+  explicit StmtNode(StmtVariant node) : node(std::move(node)) {}
 };
 
 //! @brief The Scope AST node.

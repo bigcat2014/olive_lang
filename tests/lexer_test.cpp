@@ -21,175 +21,175 @@ TEST(Lexer, EmptyStream) {
   EXPECT_TRUE(lexer.tokens().empty());
 }
 
-TEST(Lexer, TT_ELSE) {
+TEST(Lexer, ELSE) {
   std::istringstream iss{"else"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_ELSE);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELSE);
 }
 
-TEST(Lexer, TT_EXIT) {
+TEST(Lexer, EXIT) {
   std::istringstream iss{"exit"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_EXIT);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EXIT);
 }
 
-TEST(Lexer, TT_WHILE) {
+TEST(Lexer, WHILE) {
   std::istringstream iss{"while"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_WHILE);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::WHILE);
 }
 
-TEST(Lexer, TT_IF) {
+TEST(Lexer, IF) {
   std::istringstream iss{"if"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_IF);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::IF);
 }
 
-TEST(Lexer, TT_ELIF) {
+TEST(Lexer, ELIF) {
   std::istringstream iss{"elif"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_ELIF);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELIF);
 }
 
-TEST(Lexer, TT_LET) {
+TEST(Lexer, LET) {
   std::istringstream iss{"let"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_LET);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LET);
 }
 
-TEST(Lexer, TT_LEFT_CURLY) {
+TEST(Lexer, LEFT_CURLY) {
   std::istringstream iss{"{"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_LEFT_CURLY);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_CURLY);
 }
 
-TEST(Lexer, TT_LEFT_PAREN) {
+TEST(Lexer, LEFT_PAREN) {
   std::istringstream iss{"("};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_LEFT_PAREN);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_PAREN);
 }
 
-TEST(Lexer, TT_RIGHT_CURLY) {
+TEST(Lexer, RIGHT_CURLY) {
   std::istringstream iss{"}"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_RIGHT_CURLY);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_CURLY);
 }
 
-TEST(Lexer, TT_RIGHT_PAREN) {
+TEST(Lexer, RIGHT_PAREN) {
   std::istringstream iss{")"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_RIGHT_PAREN);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_PAREN);
 }
 
-TEST(Lexer, TT_DOUBLE_CARET) {
+TEST(Lexer, DOUBLE_CARET) {
   std::istringstream iss{"^^"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_DOUBLE_CARET, 3,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::DOUBLE_CARET, 3,
                        BinOpProperties::Associativity::RIGHT);
 }
 
-TEST(Lexer, TT_PERCENT) {
+TEST(Lexer, PERCENT) {
   std::istringstream iss{"%"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_PERCENT, 2,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::PERCENT, 2,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_STAR) {
+TEST(Lexer, STAR) {
   std::istringstream iss{"*"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_STAR, 2,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::STAR, 2,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_FORWARD_SLASH) {
+TEST(Lexer, FORWARD_SLASH) {
   std::istringstream iss{"/"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_FORWARD_SLASH, 2,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::FORWARD_SLASH, 2,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_MINUS) {
+TEST(Lexer, MINUS) {
   std::istringstream iss{"-"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_MINUS, 1,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::MINUS, 1,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_PLUS) {
+TEST(Lexer, PLUS) {
   std::istringstream iss{"+"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_PLUS, 1,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::PLUS, 1,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_LT) {
+TEST(Lexer, LT) {
   std::istringstream iss{"<"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_LT, 0,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::LT, 0,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_GT) {
+TEST(Lexer, GT) {
   std::istringstream iss{">"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_GT, 0,
+  TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::GT, 0,
                        BinOpProperties::Associativity::LEFT);
 }
 
-TEST(Lexer, TT_EQUAL) {
+TEST(Lexer, EQUAL) {
   std::istringstream iss{"="};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_EQUAL);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EQUAL);
 }
 
-TEST(Lexer, TT_SEMI) {
+TEST(Lexer, SEMI) {
   std::istringstream iss{";"};
   Lexer lexer(iss);
 
   ASSERT_EQ(lexer.tokens().size(), 1);
-  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_SEMI);
+  TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::SEMI);
 }
 
-TEST(Lexer, TT_INT_LITERAL) {
+TEST(Lexer, INT_LITERAL) {
   std::istringstream iss{"123456"};
   Lexer lexer(iss);
 
@@ -197,7 +197,7 @@ TEST(Lexer, TT_INT_LITERAL) {
   TEST_INT_LIT_TOKEN(lexer.tokens()[0], std::stoull(iss.str()));
 }
 
-TEST(Lexer, TT_IDENTIFIER) {
+TEST(Lexer, IDENTIFIER) {
   std::istringstream iss{"qwerty"};
   Lexer lexer(iss);
 

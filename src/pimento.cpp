@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
   auto &logger = pimento::utils::get_logger();
 
-  std::string in_file_str = program.get<std::string>("file");
+  auto in_file_str = program.get<std::string>("file");
   logger.debug("Input file path: {}", in_file_str);
 
   auto input_resolved_path = pimento::utils::sanitize_path(in_file_str);
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     pimento::generation::Generator generator(input_file, std::cout);
     generator.generate();
   } else {
-    std::string out_file_str = program.get<std::string>("output");
+    auto out_file_str = program.get<std::string>("output");
     logger.debug("Output file path: {}", out_file_str);
 
     auto output_resolved_path = pimento::utils::expand_vars(out_file_str);

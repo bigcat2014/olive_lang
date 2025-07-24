@@ -40,9 +40,9 @@ private:
   //! @param lookahead size_t Optional lookahead distance to peek.
   //! @return char The character at `lookahead` offset from the current index or
   //! 0 if attempting to peek out of bounds.
-  [[nodiscard]] inline char peek(size_t current_index, const char *const buffer,
+  [[nodiscard]] static inline char peek(size_t current_index, const char *const buffer,
                                  size_t size,
-                                 size_t lookahead = 0) const noexcept;
+                                 size_t lookahead = 0) noexcept;
 
   //! @brief Attmpt to parse a token from the buffer.
   //! @param token_buffer std::string The buffer from which to attempt to parse
