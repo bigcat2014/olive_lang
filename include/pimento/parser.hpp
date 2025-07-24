@@ -60,7 +60,8 @@ private:
 
   //! @brief Parse an Expression into the AST.
   //! @return std::shared_ptr<node::ExprNode> The Expression node of the AST.
-  static std::shared_ptr<node::ExprNode> parse_expression(uint8_t min_precedence = 0);
+  static std::shared_ptr<node::ExprNode>
+  parse_expression(uint8_t min_precedence = 0);
 
   //! @brief Parse a Scope into the AST.
   //! @return std::shared_ptr<node::ScopeNode> The Scope node of the AST.

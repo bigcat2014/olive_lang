@@ -22,7 +22,8 @@ struct TermExprNode {
 
   //! @brief Constructor for the Term Expression AST node.
   //! @param expression std::shared_ptr<ExprNode> The expression of this node.
-  explicit TermExprNode(std::shared_ptr<ExprNode> expression) : expression(std::move(expression)) {}
+  explicit TermExprNode(std::shared_ptr<ExprNode> expression)
+      : expression(std::move(expression)) {}
 };
 
 //! @brief The Term Identifier AST node.
@@ -32,7 +33,8 @@ struct TermIdentNode {
 
   //! @brief Constructor for the Term Identifier AST node.
   //! @param token tokenization::Token The identifier token.
-  explicit TermIdentNode(tokenization::Token token) : identifier_token(std::move(token)) {}
+  explicit TermIdentNode(tokenization::Token token)
+      : identifier_token(std::move(token)) {}
 };
 
 //! @brief The Term Int Literal AST node.
@@ -42,7 +44,8 @@ struct TermIntLitNode {
 
   //! @brief Constructor for the Term Int Literal AST node.
   //! @param token tokenization::Token The int literal token.
-  explicit TermIntLitNode(tokenization::Token token) : int_lit_token(std::move(token)) {}
+  explicit TermIntLitNode(tokenization::Token token)
+      : int_lit_token(std::move(token)) {}
 };
 
 //! @brief The Binary Expression Less Than Comparison AST node.
@@ -182,7 +185,8 @@ struct IfPredElseNode {
 
   //! @brief Constructor for the If Predicate Else AST node.
   //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
-  explicit IfPredElseNode(std::shared_ptr<ScopeNode> scope) : scope(std::move(scope)) {}
+  explicit IfPredElseNode(std::shared_ptr<ScopeNode> scope)
+      : scope(std::move(scope)) {}
 };
 
 //! @brief The If Predicate Else If AST node.
@@ -202,7 +206,8 @@ struct IfPredElifNode {
   IfPredElifNode(std::shared_ptr<ExprNode> expression,
                  std::shared_ptr<ScopeNode> scope,
                  std::optional<std::shared_ptr<IfPredNode>> ifpred)
-      : expression(std::move(expression)), scope(std::move(scope)), ifpred(std::move(ifpred)) {}
+      : expression(std::move(expression)), scope(std::move(scope)),
+        ifpred(std::move(ifpred)) {}
 
   //! @brief Constructor for the If Predicate Else If AST node without a chained
   //! If Predicate.
@@ -220,7 +225,8 @@ struct StmtExitNode {
 
   //! @brief Constructor for the Statement Exit AST node.
   //! @param expression std::shared_ptr<ExprNode> The expression of this node.
-  explicit StmtExitNode(std::shared_ptr<ExprNode> expression) : expression(std::move(expression)) {}
+  explicit StmtExitNode(std::shared_ptr<ExprNode> expression)
+      : expression(std::move(expression)) {}
 };
 
 //! @brief The Statement Let AST node.
@@ -270,7 +276,8 @@ struct StmtIfNode {
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope,
              std::optional<std::shared_ptr<IfPredNode>> ifpred)
-      : expression(std::move(expression)), scope(std::move(scope)), ifpred(std::move(ifpred)) {}
+      : expression(std::move(expression)), scope(std::move(scope)),
+        ifpred(std::move(ifpred)) {}
 
   //! @brief Constructor for the Statement If AST node without a chained If
   //! Predicate.

@@ -29,33 +29,35 @@ private:
   //! @brief Generate assembly for a Statement.
   //! @param node std::shared_ptr<ast::node::StmtNode> Input statement node for
   //! which to generate assembly.
-  void gen_statement(std::shared_ptr<ast::node::StmtNode> node) noexcept;
+  void gen_statement(const std::shared_ptr<ast::node::StmtNode> &node) noexcept;
 
   //! @brief Generate assembly for an Expression.
   //! @param node std::shared_ptr<ast::node::ExprNode> Input expression node for
   //! which to generate assembly.
-  void gen_expression(std::shared_ptr<ast::node::ExprNode> node) noexcept;
+  void
+  gen_expression(const std::shared_ptr<ast::node::ExprNode> &node) noexcept;
 
   //! @brief Generate assembly for a Scope.
   //! @param node std::shared_ptr<ast::node::Scope> Input scope node for which
   //! to generate assembly.
-  void gen_scope(std::shared_ptr<ast::node::ScopeNode> node) noexcept;
+  void gen_scope(const std::shared_ptr<ast::node::ScopeNode> &node) noexcept;
 
   //! @brief Generate assembly for an If Predicate.
   //! @param node std::shared_ptr<ast::node::IfPredNode> Input if predicate node
   //! for which to generate assembly.
-  void gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
+  void gen_ifpred(const std::shared_ptr<ast::node::IfPredNode> &node,
                   const std::string &end_label) noexcept;
 
   //! @brief Generate assembly for a Term.
   //! @param node std::shared_ptr<ast::node::TermNode> Input term node for
   //! which to generate assembly.
-  void gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept;
+  void gen_term(const std::shared_ptr<ast::node::TermNode> &node) noexcept;
 
   //! @brief Generate assembly for a Binary Expression.
   //! @param node std::shared_ptr<ast::node::BinExprNode> Input binary
   //! expression node for which to generate assembly.
-  void gen_bin_expr(std::shared_ptr<ast::node::BinExprNode> node) noexcept;
+  void
+  gen_bin_expr(const std::shared_ptr<ast::node::BinExprNode> &node) noexcept;
 
   //! @brief Helper function to push a value in a registry onto the stack.
   //! @param reg const std::string& The registry to push onto the stack.

@@ -18,11 +18,12 @@ void Generator::generate() noexcept {
 }
 
 void Generator::gen_statement(
-    std::shared_ptr<ast::node::StmtNode> node) noexcept {
+    const std::shared_ptr<ast::node::StmtNode> &node) noexcept {
   struct Visitor {
     Generator &gen;
 
-    void operator()(std::shared_ptr<ast::node::StmtExitNode> stmt) const {
+    void
+    operator()(const std::shared_ptr<ast::node::StmtExitNode> &stmt) const {
       gen.gen_expression(stmt->expression);
       gen.m_output << "    mov rax, 60\n";
       gen.pop("rdi");
@@ -39,7 +40,7 @@ void Generator::gen_statement(
               bool &match;
               const std::string &name;
 
-              void operator()(tokenization::IdentProperties properties) {
+              void operator()(const tokenization::IdentProperties &properties) {
                 match = properties.identifier == name;
               }
               void operator()(tokenization::BinOpProperties) { match = false; }
@@ -61,7 +62,7 @@ void Generator::gen_statement(
 
           explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
 
-          void operator()(tokenization::IdentProperties properties) {
+          void operator()(const tokenization::IdentProperties &properties) {
             oss << properties.identifier;
           }
           void operator()(tokenization::BinOpProperties) {}
@@ -84,7 +85,7 @@ void Generator::gen_statement(
         TokenVisitor(std::vector<Var> &vars, size_t stack_size)
             : vars(vars), stack_size(stack_size) {}
 
-        void operator()(tokenization::IdentProperties properties) {
+        void operator()(const tokenization::IdentProperties &properties) {
           vars.emplace_back(properties.identifier, stack_size);
         }
         void operator()(tokenization::BinOpProperties) {}
@@ -108,7 +109,7 @@ void Generator::gen_statement(
               bool &match;
               const std::string &name;
 
-              void operator()(tokenization::IdentProperties properties) {
+              void operator()(const tokenization::IdentProperties &properties) {
                 match = properties.identifier == name;
               }
               void operator()(tokenization::BinOpProperties) { match = false; }
@@ -130,7 +131,7 @@ void Generator::gen_statement(
 
           explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
 
-          void operator()(tokenization::IdentProperties properties) {
+          void operator()(const tokenization::IdentProperties &properties) {
             oss << properties.identifier;
           }
           void operator()(tokenization::BinOpProperties) {}
@@ -151,13 +152,13 @@ void Generator::gen_statement(
                    << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
     }
 
-    void operator()(std::shared_ptr<ast::node::ScopeNode> stmt) const {
+    void operator()(const std::shared_ptr<ast::node::ScopeNode> &stmt) const {
       gen.m_output << "    ;; scope\n";
-      gen.gen_scope(std::move(stmt));
+      gen.gen_scope(stmt);
       gen.m_output << "    ;; /scope\n";
     }
 
-    void operator()(std::shared_ptr<ast::node::StmtIfNode> stmt) const {
+    void operator()(const std::shared_ptr<ast::node::StmtIfNode> &stmt) const {
 
       gen.gen_expression(stmt->expression);
       gen.pop("rax");
@@ -178,7 +179,8 @@ void Generator::gen_statement(
       }
     }
 
-    void operator()(std::shared_ptr<ast::node::StmtWhileNode> stmt) const {
+    void
+    operator()(const std::shared_ptr<ast::node::StmtWhileNode> &stmt) const {
 
       const std::string loop_label = gen.create_label();
       const std::string end_label = gen.create_label();
@@ -198,23 +200,24 @@ void Generator::gen_statement(
 }
 
 void Generator::gen_expression(
-    std::shared_ptr<ast::node::ExprNode> node) noexcept {
+    const std::shared_ptr<ast::node::ExprNode> &node) noexcept {
   struct Visitor {
     Generator &gen;
 
-    void operator()(std::shared_ptr<ast::node::TermNode> expr) const {
-      gen.gen_term(std::move(expr));
+    void operator()(const std::shared_ptr<ast::node::TermNode> &expr) const {
+      gen.gen_term(expr);
     }
 
-    void operator()(std::shared_ptr<ast::node::BinExprNode> expr) const {
-      gen.gen_bin_expr(std::move(expr));
+    void operator()(const std::shared_ptr<ast::node::BinExprNode> &expr) const {
+      gen.gen_bin_expr(expr);
     }
   };
 
   std::visit(Visitor{.gen = *this}, node->node);
 }
 
-void Generator::gen_scope(std::shared_ptr<ast::node::ScopeNode> node) noexcept {
+void Generator::gen_scope(
+    const std::shared_ptr<ast::node::ScopeNode> &node) noexcept {
   for (const auto &stmt : node->statements) {
     begin_scope();
     gen_statement(stmt);
@@ -222,13 +225,14 @@ void Generator::gen_scope(std::shared_ptr<ast::node::ScopeNode> node) noexcept {
   }
 }
 
-void Generator::gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
+void Generator::gen_ifpred(const std::shared_ptr<ast::node::IfPredNode> &node,
                            const std::string &end_label) noexcept {
   struct Visitor {
     Generator &gen;
     const std::string &end_label;
 
-    void operator()(std::shared_ptr<ast::node::IfPredElifNode> ifpred) const {
+    void
+    operator()(const std::shared_ptr<ast::node::IfPredElifNode> &ifpred) const {
 
       gen.gen_expression(ifpred->expression);
       gen.pop("rax");
@@ -245,7 +249,8 @@ void Generator::gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
       }
     }
 
-    void operator()(std::shared_ptr<ast::node::IfPredElseNode> ifpred) const {
+    void
+    operator()(const std::shared_ptr<ast::node::IfPredElseNode> &ifpred) const {
       gen.gen_scope(ifpred->scope);
     }
   };
@@ -253,18 +258,20 @@ void Generator::gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
   std::visit(Visitor{.gen = *this, .end_label = end_label}, node->node);
 }
 
-void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
+void Generator::gen_term(
+    const std::shared_ptr<ast::node::TermNode> &node) noexcept {
   struct Visitor {
     Generator &gen;
 
-    void operator()(std::shared_ptr<ast::node::TermIntLitNode> term) const {
+    void
+    operator()(const std::shared_ptr<ast::node::TermIntLitNode> &term) const {
       // TODO(lthomas): Probably a cleaner way to do this... Refactor later
       struct TokenVisitor {
         Generator &gen;
 
         explicit TokenVisitor(Generator &gen) : gen(gen) {}
 
-        void operator()(tokenization::IdentProperties) {}
+        void operator()(const tokenization::IdentProperties &) {}
         void operator()(tokenization::BinOpProperties) {}
         void operator()(tokenization::IntLitProperties properties) {
           gen.m_output << "    mov rax, " << properties.value << "\n";
@@ -286,7 +293,7 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
               bool &match;
               const std::string &name;
 
-              void operator()(tokenization::IdentProperties properties) {
+              void operator()(const tokenization::IdentProperties &properties) {
                 match = properties.identifier == name;
               }
               void operator()(tokenization::BinOpProperties) { match = false; }
@@ -308,7 +315,7 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
 
           explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
 
-          void operator()(tokenization::IdentProperties properties) {
+          void operator()(const tokenization::IdentProperties &properties) {
             oss << properties.identifier;
           }
           void operator()(tokenization::BinOpProperties) {}
@@ -330,7 +337,8 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
       gen.push(offset.str());
     }
 
-    void operator()(std::shared_ptr<ast::node::TermExprNode> term) const {
+    void
+    operator()(const std::shared_ptr<ast::node::TermExprNode> &term) const {
       gen.gen_expression(term->expression);
     }
   };
@@ -339,12 +347,12 @@ void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
 }
 
 void Generator::gen_bin_expr(
-    std::shared_ptr<ast::node::BinExprNode> node) noexcept {
+    const std::shared_ptr<ast::node::BinExprNode> &node) noexcept {
   struct Visitor {
     Generator &gen;
 
-    void
-    operator()(std::shared_ptr<ast::node::BinExprPowerNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprPowerNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
 
@@ -367,7 +375,8 @@ void Generator::gen_bin_expr(
       gen.push("rax");
     }
 
-    void operator()(std::shared_ptr<ast::node::BinExprModNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprModNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
@@ -376,7 +385,8 @@ void Generator::gen_bin_expr(
       gen.push("rdx");
     }
 
-    void operator()(std::shared_ptr<ast::node::BinExprMulNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprMulNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
@@ -385,7 +395,8 @@ void Generator::gen_bin_expr(
       gen.push("rax");
     }
 
-    void operator()(std::shared_ptr<ast::node::BinExprDivNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprDivNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
@@ -394,8 +405,8 @@ void Generator::gen_bin_expr(
       gen.push("rax");
     }
 
-    void
-    operator()(std::shared_ptr<ast::node::BinExprPlusNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprPlusNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
@@ -404,8 +415,8 @@ void Generator::gen_bin_expr(
       gen.push("rax");
     }
 
-    void
-    operator()(std::shared_ptr<ast::node::BinExprMinusNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprMinusNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
       gen.pop("rax");
@@ -414,8 +425,8 @@ void Generator::gen_bin_expr(
       gen.push("rax");
     }
 
-    void
-    operator()(std::shared_ptr<ast::node::BinExprLessThanNode> bin_expr) const {
+    void operator()(
+        const std::shared_ptr<ast::node::BinExprLessThanNode> &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
 
@@ -434,8 +445,8 @@ void Generator::gen_bin_expr(
       gen.push("rax");
     }
 
-    void operator()(
-        std::shared_ptr<ast::node::BinExprGreaterThanNode> bin_expr) const {
+    void operator()(const std::shared_ptr<ast::node::BinExprGreaterThanNode>
+                        &bin_expr) const {
       gen.gen_expression(bin_expr->right);
       gen.gen_expression(bin_expr->left);
 

@@ -170,7 +170,8 @@ public:
   //! @param token std::string The parsed token for which to get the token type.
   //! @return TokenType The token type associated with the provided token
   //! string.
-  [[nodiscard]] static inline TokenType get_token_type(const std::string &token) {
+  [[nodiscard]] static inline TokenType
+  get_token_type(const std::string &token) {
     // Bubble up exceptions
     return get_token_bimap().left.at(token);
   }
