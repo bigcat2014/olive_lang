@@ -1,0 +1,131 @@
+\documentclass[]{article}
+
+%%%%%%%%%%%%%%%%%%%
+% Packages/Macros %
+%%%%%%%%%%%%%%%%%%%
+\usepackage{amsmath}     % Standard packages
+
+
+%%%%%%%%%%%
+% Margins %
+%%%%%%%%%%%
+\addtolength{\textwidth}{1.0in}
+\addtolength{\textheight}{1.00in}
+\addtolength{\evensidemargin}{-0.75in}
+\addtolength{\oddsidemargin}{-0.75in}
+\addtolength{\topmargin}{-.50in}
+
+\begin{document}
+\title{Lexical Grammar}
+\author{Logan Thomas}
+\maketitle
+\begin{samepage}
+\section{Regex Substitutions}
+\begin{align}
+    &L                                                                            &&:= &&[\text{a}-\text{z}]                                     \\
+    &U                                                                            &&:= &&[\text{A}-\text{Z}]                                     \\
+    &D                                                                            &&:= &&[\text{0}-\text{9}]                                     \\
+    &H                                                                            &&:= &&[\text{a}-\text{fA}-\text{F0}-\text{9}]                 \\
+    &O                                                                            &&:= &&[\text{0}-\text{7}]                                     \\
+    &B                                                                            &&:= &&[\text{01}]
+\end{align}
+
+\section{Identifiers, Constants, and Comments}
+\begin{align}
+    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                                  &&\to &&\text{IDENTIFIER}                                      \\
+    &U(?:L|U|D)*                                                                                               &&\to &&\text{TYPE\_IDENTIFIER}                                \\
+    &[\backslash+-]?D+                                                                                         &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Integer}             \\
+    &\text{0}[\text{xX}]H\{1,16\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Hex}                 \\
+    &\text{0}[\text{oO}]O\{1,32\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Octal}               \\
+    &\text{0}[\text{bB}]B\{1,64\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Binary}              \\
+    &[\backslash+-]?D+[\text{eE}][\backslash+-]?D+                                                             &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Scientific Notation} \\
+    &[\backslash+-]?(?:D+(?:[.]D*)?|[.]D+)                                                                     &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Float}               \\
+    &\text{r}?"((?:[\enspace\hat{}\enspace"\backslash\backslash\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                                 \\
+    &\#.*\backslash\text{n}\$                                                                                  &&\to &&\text{COMMENT}
+\end{align}
+
+\section{Symbols}
+\begin{align}
+    &,                                                                            &&\to &&\text{COMMA}                                           \\
+    &;                                                                            &&\to &&\text{SEMI}                                            \\
+    &(                                                                            &&\to &&\text{LEFT\_PAREN}                                     \\
+    &)                                                                            &&\to &&\text{RIGHT\_PAREN}                                    \\
+    &[                                                                            &&\to &&\text{LEFT\_SQUARE}                                    \\
+    &]                                                                            &&\to &&\text{RIGHT\_SQUARE}                                   \\
+    &\{                                                                           &&\to &&\text{LEFT\_CURLY}                                     \\
+    &\}                                                                           &&\to &&\text{RIGHT\_CURLY}
+\end{align}
+\end{samepage}
+
+\section{Keywords}
+\begin{align}
+    &\text{and}                                                                   &&\to &&\text{LOGICAL\_AND}                                    \\
+    &\text{bool}                                                                  &&\to &&\text{BOOL}                                            \\
+    &\text{break}                                                                 &&\to &&\text{BREAK}                                           \\
+    &\text{class}                                                                 &&\to &&\text{CLASS}                                           \\
+    &\text{elif}                                                                  &&\to &&\text{ELIF}                                            \\
+    &\text{else}                                                                  &&\to &&\text{ELSE}                                            \\
+    &\text{enum}                                                                  &&\to &&\text{ENUM}                                            \\
+    &\text{exit}                                                                  &&\to &&\text{EXIT}                                            \\
+    &\text{false}                                                                 &&\to &&\text{FALSE}                                           \\
+    &\text{float32}                                                               &&\to &&\text{FLOAT32}                                         \\
+    &\text{float64}                                                               &&\to &&\text{FLOAT64}                                         \\
+    &\text{for}                                                                   &&\to &&\text{FOR}                                             \\
+    &\text{func}                                                                  &&\to &&\text{FUNCTION}                                        \\
+    &\text{if}                                                                    &&\to &&\text{IF}                                              \\
+    &\text{iface}                                                                 &&\to &&\text{INTERFACE}                                       \\
+    &\text{in}                                                                    &&\to &&\text{IN}                                              \\
+    &\text{int16}                                                                 &&\to &&\text{INT16}                                           \\
+    &\text{int32}                                                                 &&\to &&\text{INT32}                                           \\
+    &\text{int64}                                                                 &&\to &&\text{INT64}                                           \\
+    &\text{int8}                                                                  &&\to &&\text{INT8}                                            \\
+    &\text{mut}                                                                   &&\to &&\text{MUTABLE}                                         \\
+    &\text{or}                                                                    &&\to &&\text{LOGICAL\_OR}                                     \\
+    &\text{private}                                                               &&\to &&\text{PRIVATE}                                         \\
+    &\text{public}                                                                &&\to &&\text{PUBLIC}                                          \\
+    &\text{string}                                                                &&\to &&\text{STRING}                                          \\
+    &\text{true}                                                                  &&\to &&\text{TRUE}                                            \\
+    &\text{uint16}                                                                &&\to &&\text{UINT16}                                          \\
+    &\text{uint32}                                                                &&\to &&\text{UINT32}                                          \\
+    &\text{uint64}                                                                &&\to &&\text{UINT64}                                          \\
+    &\text{uint8}                                                                 &&\to &&\text{UINT8}                                           \\
+    &\text{while}                                                                 &&\to &&\text{WHILE}
+\end{align}
+
+\section{Operators}
+\begin{align}
+    &\hat{}\enspace\hat{}=                                                        &&\to &&\text{EXPONENT\_ASSIGN}                                \\
+    &\hat{}\enspace\hat{}                                                         &&\to &&\text{EXPONENT}                                        \\
+    &\hat{}=                                                                      &&\to &&\text{XOR\_ASSIGN}                                     \\
+    &\hat{}                                                                       &&\to &&\text{XOR}                                             \\
+    &\%=                                                                          &&\to &&\text{MOD\_ASSIGN}                                     \\
+    &\%                                                                           &&\to &&\text{MOD}                                             \\
+    &*=                                                                           &&\to &&\text{MUL\_ASSIGN}                                     \\
+    &*                                                                            &&\to &&\text{MUL}                                             \\
+    &//=                                                                          &&\to &&\text{INTEGER\_DIV\_ASSIGN}                            \\
+    &//                                                                           &&\to &&\text{INTEGER\_DIV}                                    \\
+    &/=                                                                           &&\to &&\text{DIV\_ASSIGN}                                     \\
+    &/                                                                            &&\to &&\text{DIV}                                             \\
+    &++                                                                           &&\to &&\text{INC}                                             \\
+    &+=                                                                           &&\to &&\text{ADD\_ASSIGN}                                     \\
+    &+                                                                            &&\to &&\text{ADD}                                             \\
+    &--                                                                           &&\to &&\text{DEC}                                             \\
+    &-=                                                                           &&\to &&\text{SUB\_ASSIGN}                                     \\
+    &-                                                                            &&\to &&\text{SUB}                                             \\
+    &<<                                                                           &&\to &&\text{SHIFT\_LEFT}                                     \\
+    &<=                                                                           &&\to &&\text{LE\_OP}                                          \\
+    &<                                                                            &&\to &&\text{LT\_OP}                                          \\
+    &>>                                                                           &&\to &&\text{SHIFT\_RIGHT}                                    \\
+    &>=                                                                           &&\to &&\text{GE\_OP}                                          \\
+    &>                                                                            &&\to &&\text{GT\_OP}                                          \\
+    &!=                                                                           &&\to &&\text{NE\_OP}                                          \\
+    &==                                                                           &&\to &&\text{EQ\_OP}                                          \\
+    &=                                                                            &&\to &&\text{ASSIGN}                                          \\
+    &\&=                                                                          &&\to &&\text{AND\_ASSIGN}                                     \\
+    &\&                                                                           &&\to &&\text{AND}                                             \\
+    &|=                                                                           &&\to &&\text{OR\_ASSIGN}                                      \\
+    &|                                                                            &&\to &&\text{OR}                                              \\
+    &?                                                                            &&\to &&\text{TERNARY}                                         \\
+    &.                                                                            &&\to &&\text{DOT}
+\end{align}
+\end{document}
