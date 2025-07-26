@@ -41,7 +41,7 @@
     &\text{0}[\text{bB}]B\{1,64\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Binary}              \\
     &[\backslash+-]?D+[\text{eE}][\backslash+-]?D+                                                             &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Scientific Notation} \\
     &[\backslash+-]?(?:D+(?:[.]D*)?|[.]D+)                                                                     &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Float}               \\
-    &\text{r}?"((?:[\enspace\hat{}\enspace"\backslash\backslash\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                                 \\
+    &\text{r}?"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                                 \\
     &\#.*\backslash\text{n}\$                                                                                  &&\to &&\text{COMMENT}
 \end{align}
 
@@ -157,6 +157,9 @@
     &<comment> &&::=  && \enspace "\#" <comment\_text> \\
     &<comment\_text> &&::= && <comment\_char> <comment\_text> \\
     &<comment\_char> &&::= &&<lower> | <upper | <digit> | <symbol> | <non\_newline> \\
+    &<string\_literal> &&::= &&<r?> <quote> <content> <quote> \\
+    &<content> &&::= &&<char> <content> | \enspace \varepsilon \\
+    &<char> &&::= && <escaped\_quote> | <normal\_symbol> \\
     &<scientific> &&::= &&<sign?> <mantissa> <exponent> \\
     &<mantissa> &&::= &&<digits> \enspace "." \enspace <digits?> \\
     &&&&&| \enspace "." \enspace <digits> \\
@@ -169,12 +172,12 @@
     &&&&&| \enspace "0" \enspace "O" <os> \\
     &<binary\_const> &&::= &&\enspace "0" \enspace "b" <bs> \\
     &&&&&| \enspace "0" \enspace "B" <bs> \\
+\end{align}
+\begin{align}
     &<digits?> &&::= &&<digits> | \enspace \varepsilon \\
     &<digits> &&::= &&<digit> | <digit> <digits> \\
     &<sign?> &&::= &&<sign> | \enspace \varepsilon \\
     &<sign> &&::= &&"+" \enspace | \enspace "-" \enspace \\
-\end{align}
-\begin{align}
     \notag&<lower> &&::= &&\text{"a"}|\text{"b"}|\text{"c"}|\text{"d"}|\text{"e"}|\text{"f"}|\text{"g"}|\text{"h"}|\text{"i"}|\text{"j"}|\text{"k"}|\text{"l"}|\text{"m"}| \\
     &&&&&\text{"n"}|\text{"o"}|\text{"p"}|\text{"q"}|\text{"r"}|\text{"s"}|\text{"t"}|\text{"u"}|\text{"v"}|\text{"w"}|\text{"x"}|\text{"y"}|\text{"z"} \\
     \notag&<upper> &&::= &&\text{"A"}|\text{"B"}|\text{"C"}|\text{"D"}|\text{"E"}|\text{"F"}|\text{"G"}|\text{"H"}|\text{"I"}|\text{"J"}|\text{"K"}|\text{"L"}|\text{"M"}| \\
@@ -184,11 +187,16 @@
     &&&&&\text{"a"}|\text{"b"}|\text{"c"}|\text{"d"}|\text{"e"}|\text{"f"}|\text{"A"}|\text{"B"}|\text{"C"}|\text{"D"}|\text{"E"}|\text{"F"} \\
     &<octal> &&::= &&\text{"0"}|\text{"1"}|\text{"2"}|\text{"3"}|\text{"4"}|\text{"5"}|\text{"6"}|\text{"7"} \\
     &<binary> &&::= &&\text{"0"}|\text{"1"} \\
-    \notag&<symbols> &&::= &&\text{"!"}|\text{"""}|\text{"\#"}|\text{"\$"}|\text{"\%"}|\text{"\&"}|\text{"'"}|\text{"("}|\text{")"}|\text{"*"}|\text{"+"}|\text{","}|\text{"-"}|\text{"."}|\text{"/"}|\text{":"}|\text{";"}| \\
-    &&&&&\text{"}<\text{"}|\text{"="}|\text{"}>\text{"}|\text{"?"}|\text{"@"}|\text{"["}|\text{"}\backslash\text{"}|\text{"]"}|\text{"}\hat{}\text{"}|\text{"\_"}|\text{"`"}|\text{"\{"}|\text{"|"}|\text{"\}"}|\text{"~"} \\
-    &<whitespace> &&::= &&<non_newline> | <newline> \\
+    &<symbols> &&::= &&<normal\_symbol> | <quote> | <backslash> \\
+    \notag&<normal\_symbol> &&::= &&\text{"!"}|\text{"\#"}|\text{"\$"}|\text{"\%"}|\text{"\&"}|\text{"'"}|\text{"("}|\text{")"}|\text{"*"}|\text{"+"}|\text{","}|\text{"-"}|\text{"."}|\text{"/"}|\text{":"}|\text{";"}| \\
+    &&&&&\text{"}<\text{"}|\text{"="}|\text{"}>\text{"}|\text{"?"}|\text{"@"}|\text{"["}|\text{"]"}|\text{"}\hat{}\text{"}|\text{"\_"}|\text{"`"}|\text{"\{"}|\text{"|"}|\text{"\}"}|\text{"~"} \\
+    &<whitespace> &&::= &&<non\_newline> | <newline> \\
     &<non\_newline> &&::= &&\text{" "}|\text{"}\backslash\text{t}\text{"}|\text{"}\backslash\text{r}\text{"} \\
-    &<newline> &&::= &&\text{"}\backslash\text{n}\text{"}
+    &<newline> &&::= &&\text{"}\backslash\text{n}\text{"} \\
+    &<r?> &&::= &&\text{"r"} | \enspace \varepsilon \\
+    &<escaped\_quote> &&::= && <backslash> <quote> \\
+    &<backslash> &&::= &&\text{"}\backslash \text{"} \\
+    &<quote> &&::= &&\text{"""} \\
 \end{align}
 
 \begin{align}
