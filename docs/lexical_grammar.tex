@@ -171,7 +171,75 @@
     &<octal\_const> &&::= &&\enspace "0" \enspace "o" <os> \\
     &&&&&| \enspace "0" \enspace "O" <os> \\
     &<binary\_const> &&::= &&\enspace "0" \enspace "b" <bs> \\
-    &&&&&| \enspace "0" \enspace "B" <bs> \\
+    &&&&&| \enspace "0" \enspace "B" <bs>
+\end{align}
+\begin{align}
+    &<and>     &&::= &&\text{"a" "n" "d"}                 \\
+    &<bool>    &&::= &&\text{"b" "o" "o" "l"}             \\
+    &<break>   &&::= &&\text{"b" "r" "e" "a" "k"}         \\
+    &<class>   &&::= &&\text{"c" "l" "a" "s" "s"}         \\
+    &<elif>    &&::= &&\text{"e" "l" "i" "f"}             \\
+    &<else>    &&::= &&\text{"e" "l" "s" "e"}             \\
+    &<enum>    &&::= &&\text{"e" "n" "u" "m"}             \\
+    &<exit>    &&::= &&\text{"e" "x" "i" "t"}             \\
+    &<false>   &&::= &&\text{"f" "a" "l" "s" "e"}         \\
+    &<float32> &&::= &&\text{"f" "l" "o" "a" "t" "3" "2"} \\
+    &<float64> &&::= &&\text{"f" "l" "o" "a" "t" "6" "4"} \\
+    &<for>     &&::= &&\text{"f" "o" "r"}                 \\
+    &<func>    &&::= &&\text{"f" "u" "n" "c"}             \\
+    &<if>      &&::= &&\text{"i" "f"}                     \\
+    &<iface>   &&::= &&\text{"i" "f" "a" "c" "e"}         \\
+    &<in>      &&::= &&\text{"i" "n"}                     \\
+    &<int16>   &&::= &&\text{"i" "n" "t" "1" "6"}         \\
+    &<int32>   &&::= &&\text{"i" "n" "t" "3" "2"}         \\
+    &<int64>   &&::= &&\text{"i" "n" "t" "6" "4"}         \\
+    &<int8>    &&::= &&\text{"i" "n" "t" "8"}             \\
+    &<mut>     &&::= &&\text{"m" "u" "t"}                 \\
+    &<or>      &&::= &&\text{"o" "r"}                     \\
+    &<private> &&::= &&\text{"p" "r" "i" "v" "a" "t" "e"} \\
+    &<public>  &&::= &&\text{"p" "u" "b" "l" "i" "c"}     \\
+    &<string>  &&::= &&\text{"s" "t" "r" "i" "n" "g"}     \\
+    &<true>    &&::= &&\text{"t" "r" "u" "e"}             \\
+    &<uint16>  &&::= &&\text{"u" "i" "n" "t" "1" "6"}     \\
+    &<uint32>  &&::= &&\text{"u" "i" "n" "t" "3" "2"}     \\
+    &<uint64>  &&::= &&\text{"u" "i" "n" "t" "6" "4"}     \\
+    &<uint8>   &&::= &&\text{"u" "i" "n" "t" "8"}         \\
+    &<while>   &&::= &&\text{"w" "h" "i" "l" "e"} 
+\end{align}
+\begin{align}
+    &<exponent\_assign>     &&::= &&\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}=\text{"} \\
+    &<exponent>             &&::= &&\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}\enspace\hat{}\enspace\text{"}                          \\
+    &<xor\_assign>          &&::= &&\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}=\text{"}                                               \\
+    &<xor>                  &&::= &&\text{"}\enspace\hat{}\enspace\text{"}                                                                        \\
+    &<mod\_assign>          &&::= &&\text{"}\%\text{"}\enspace\text{"}=\text{"}                                                                   \\
+    &<mod>                  &&::= &&\text{"}\%\text{"}                                                                                            \\
+    &<mul\_assign>          &&::= &&\text{"}*\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<mul>                  &&::= &&\text{"}*\text{"}                                                                                             \\
+    &<integer\_div\_assign> &&::= &&\text{"}/\text{"}\enspace\text{"}/\text{"}\enspace\text{"}=\text{"}                                           \\
+    &<integer\_div>         &&::= &&\text{"}/\text{"}\enspace\text{"}/\text{"}                                                                    \\
+    &<div\_assign>          &&::= &&\text{"}/\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<div>                  &&::= &&\text{"}/\text{"}                                                                                             \\
+    &<inc>                  &&::= &&\text{"}+\text{"}\enspace\text{"}+\text{"}                                                                    \\
+    &<add\_assign>          &&::= &&\text{"}+\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<add>                  &&::= &&\text{"}+\text{"}                                                                                             \\
+    &<dec>                  &&::= &&\text{"}-\text{"}\enspace\text{"}-\text{"}                                                                    \\
+    &<sub\_assign>          &&::= &&\text{"}-\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<sub>                  &&::= &&\text{"}-\text{"}                                                                                             \\
+    &<shift\_left>          &&::= &&\text{"}<\text{"}\enspace\text{"}<\text{"}                                                                    \\
+    &<le\_op>               &&::= &&\text{"}<\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<lt\_op>               &&::= &&\text{"}<\text{"}                                                                                             \\
+    &<shift\_right>         &&::= &&\text{"}>\text{"}\enspace\text{"}>\text{"}                                                                    \\
+    &<ge\_op>               &&::= &&\text{"}>\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<gt\_op>               &&::= &&\text{"}>\text{"}                                                                                             \\
+    &<ne\_op>               &&::= &&\text{"}!\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<eq\_op>               &&::= &&\text{"}=\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<assign>               &&::= &&\text{"}=\text{"}                                                                                             \\
+    &<and\_assign>          &&::= &&\text{"}\&\text{"}\enspace\text{"}=\text{"}                                                                   \\
+    &<and>                  &&::= &&\text{"}\&\text{"}                                                                                            \\
+    &<or\_assign>           &&::= &&\text{"}|\text{"}\enspace\text{"}=\text{"}                                                                    \\
+    &<or>                   &&::= &&\text{"}|\text{"}                                                                                             \\
+    &<ternary>              &&::= &&\text{"}?\text{"}                                                                                             \\
+    &<dot>                  &&::= &&\text{"}.\text{"}
 \end{align}
 \begin{align}
     &<digits?> &&::= &&<digits> | \enspace \varepsilon \\
