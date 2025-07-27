@@ -19,252 +19,267 @@
 \title{Lexical Grammar}
 \author{Logan Thomas}
 \maketitle
-\begin{samepage}
+\section{Ambiguity}
+\paragraph{
+    Ambiguity is recognized between some of the regexes listed below.
+    This ambiguity is solved in the lexer by taking the longest match or through regex precedence.
+    The longest match is to pick the regex that matches the most characters (greedy matching),
+    while the precedence resolution is to define a precedence of regexes such that in the case where
+    two regexes match the same span one is preferred.
+}
+\subsection{Examples}
+\paragraph{Some examples of ambiguous matches include:}
+\begin{itemize}
+    \item "else" matches both \begin{math}<else>\end{math} and \begin{math}<ident>\end{math}. Solved with precedence.
+    \item "1.2e3" matches as either \begin{math}<float\_const>\end{math} followed by an \begin{math}<ident>\end{math} or as a \begin{math}<scientific>\end{math}. Solved with longest match.
+    \item "r\textbackslash"abc\textbackslash"" matches as either an \begin{math}<ident>\end{math} followed by a \begin{math}<string\_literal>\end{math} or as just a \begin{math}<string\_literal>\end{math}. Solved with longest match.
+\end{itemize}
 \section{Regex}
 \subsection{Substitutions}
 \begin{align}
-    &L                                                                            &&:= &&[\text{a}-\text{z}]                                     \\
-    &U                                                                            &&:= &&[\text{A}-\text{Z}]                                     \\
-    &D                                                                            &&:= &&[\text{0}-\text{9}]                                     \\
-    &H                                                                            &&:= &&[\text{a}-\text{fA}-\text{F0}-\text{9}]                 \\
-    &O                                                                            &&:= &&[\text{0}-\text{7}]                                     \\
-    &B                                                                            &&:= &&[\text{01}]
+    &L &&:= &&[\text{a}-\text{z}]                     \\
+    &U &&:= &&[\text{A}-\text{Z}]                     \\
+    &D &&:= &&[\text{0}-\text{9}]                     \\
+    &H &&:= &&[\text{a}-\text{fA}-\text{F0}-\text{9}] \\
+    &O &&:= &&[\text{0}-\text{7}]                     \\
+    &B &&:= &&[\text{01}]
 \end{align}
 
-\subsection{Identifiers, Constants, and Comments}
+\subsection{Identifiers, Literals, and Comments}
 \begin{align}
-    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                                  &&\to &&\text{IDENT}                                           \\
-    &U(?:L|U|D)*                                                                                               &&\to &&\text{TYPE\_IDENT}                                     \\
-    &[\backslash+-]?D+                                                                                         &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Integer}             \\
-    &\text{0}[\text{xX}]H\{1,16\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Hex}                 \\
-    &\text{0}[\text{oO}]O\{1,32\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Octal}               \\
-    &\text{0}[\text{bB}]B\{1,64\}                                                                              &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Binary}              \\
-    &[\backslash+-]?D+[\text{eE}][\backslash+-]?D+                                                             &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Scientific Notation} \\
-    &[\backslash+-]?(?:D+(?:[.]D*)?|[.]D+)                                                                     &&\to &&\text{NUMERIC\_CONST}   &&&&\text{Float}               \\
-    &\text{r}?"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                                 \\
-    &\#.*\backslash\text{n}\$                                                                                  &&\to &&\text{COMMENT}
+    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                &&\to &&\text{IDENT}                                 \\
+    &U(?:L|U|D)*                                                                             &&\to &&\text{TYPE\_IDENT}                           \\
+    &[\backslash+-]?D+                                                                       &&\to &&\text{INTEGER\_LITERAL}                      \\
+    &\text{0}[\text{xX}]H\{1,16\}                                                            &&\to &&\text{NUMERIC\_LITERAL}    &&&&\text{Hex}    \\
+    &\text{0}[\text{oO}]O\{1,22\}                                                            &&\to &&\text{NUMERIC\_LITERAL}    &&&&\text{Octal}  \\
+    &\text{0}[\text{bB}]B\{1,64\}                                                            &&\to &&\text{NUMERIC\_LITERAL}    &&&&\text{Binary} \\
+    &([\backslash+-]?(?:D+(?:\backslash.D*)?|\backslash.D+))[eE]([\backslash+-]?D+)          &&\to &&\text{SCIENTIFIC\_LITERAL}                   \\
+    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to &&\text{FLOAT\_LITERAL}                        \\
+    &(\text{r}?)"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                       \\
+    &\#.*\$                                                                                  &&\to &&\text{COMMENT}
 \end{align}
 
 \subsection{Symbols}
 \begin{align}
-    &,                                                                            &&\to &&\text{COMMA}                                           \\
-    &;                                                                            &&\to &&\text{SEMI}                                            \\
-    &(                                                                            &&\to &&\text{LEFT\_PAREN}                                     \\
-    &)                                                                            &&\to &&\text{RIGHT\_PAREN}                                    \\
-    &[                                                                            &&\to &&\text{LEFT\_SQUARE}                                    \\
-    &]                                                                            &&\to &&\text{RIGHT\_SQUARE}                                   \\
-    &\{                                                                           &&\to &&\text{LEFT\_CURLY}                                     \\
-    &\}                                                                           &&\to &&\text{RIGHT\_CURLY}
+    &,  &&\to &&\text{COMMA}         \\
+    &;  &&\to &&\text{SEMI}          \\
+    &(  &&\to &&\text{LEFT\_PAREN}   \\
+    &)  &&\to &&\text{RIGHT\_PAREN}  \\
+    &[  &&\to &&\text{LEFT\_SQUARE}  \\
+    &]  &&\to &&\text{RIGHT\_SQUARE} \\
+    &\{ &&\to &&\text{LEFT\_CURLY}   \\
+    &\} &&\to &&\text{RIGHT\_CURLY}
 \end{align}
-\end{samepage}
 
 \subsection{Keywords}
 \begin{align}
-    &\text{and}                                                                   &&\to &&\text{LOGICAL\_AND}                                    \\
-    &\text{bool}                                                                  &&\to &&\text{BOOL}                                            \\
-    &\text{break}                                                                 &&\to &&\text{BREAK}                                           \\
-    &\text{class}                                                                 &&\to &&\text{CLASS}                                           \\
-    &\text{elif}                                                                  &&\to &&\text{ELIF}                                            \\
-    &\text{else}                                                                  &&\to &&\text{ELSE}                                            \\
-    &\text{enum}                                                                  &&\to &&\text{ENUM}                                            \\
-    &\text{exit}                                                                  &&\to &&\text{EXIT}                                            \\
-    &\text{false}                                                                 &&\to &&\text{FALSE}                                           \\
-    &\text{float32}                                                               &&\to &&\text{FLOAT32}                                         \\
-    &\text{float64}                                                               &&\to &&\text{FLOAT64}                                         \\
-    &\text{for}                                                                   &&\to &&\text{FOR}                                             \\
-    &\text{func}                                                                  &&\to &&\text{FUNCTION}                                        \\
-    &\text{if}                                                                    &&\to &&\text{IF}                                              \\
-    &\text{iface}                                                                 &&\to &&\text{INTERFACE}                                       \\
-    &\text{in}                                                                    &&\to &&\text{IN}                                              \\
-    &\text{int16}                                                                 &&\to &&\text{INT16}                                           \\
-    &\text{int32}                                                                 &&\to &&\text{INT32}                                           \\
-    &\text{int64}                                                                 &&\to &&\text{INT64}                                           \\
-    &\text{int8}                                                                  &&\to &&\text{INT8}                                            \\
-    &\text{mut}                                                                   &&\to &&\text{MUTABLE}                                         \\
-    &\text{or}                                                                    &&\to &&\text{LOGICAL\_OR}                                     \\
-    &\text{private}                                                               &&\to &&\text{PRIVATE}                                         \\
-    &\text{public}                                                                &&\to &&\text{PUBLIC}                                          \\
-    &\text{string}                                                                &&\to &&\text{STRING}                                          \\
-    &\text{true}                                                                  &&\to &&\text{TRUE}                                            \\
-    &\text{uint16}                                                                &&\to &&\text{UINT16}                                          \\
-    &\text{uint32}                                                                &&\to &&\text{UINT32}                                          \\
-    &\text{uint64}                                                                &&\to &&\text{UINT64}                                          \\
-    &\text{uint8}                                                                 &&\to &&\text{UINT8}                                           \\
-    &\text{while}                                                                 &&\to &&\text{WHILE}
+    &\text{and}     &&\to &&\text{LOGICAL\_AND} \\
+    &\text{bool}    &&\to &&\text{BOOL}         \\
+    &\text{break}   &&\to &&\text{BREAK}        \\
+    &\text{class}   &&\to &&\text{CLASS}        \\
+    &\text{elif}    &&\to &&\text{ELIF}         \\
+    &\text{else}    &&\to &&\text{ELSE}         \\
+    &\text{enum}    &&\to &&\text{ENUM}         \\
+    &\text{exit}    &&\to &&\text{EXIT}         \\
+    &\text{false}   &&\to &&\text{FALSE}        \\
+    &\text{float32} &&\to &&\text{FLOAT32}      \\
+    &\text{float64} &&\to &&\text{FLOAT64}      \\
+    &\text{for}     &&\to &&\text{FOR}          \\
+    &\text{func}    &&\to &&\text{FUNCTION}     \\
+    &\text{if}      &&\to &&\text{IF}           \\
+    &\text{iface}   &&\to &&\text{INTERFACE}    \\
+    &\text{in}      &&\to &&\text{IN}           \\
+    &\text{int16}   &&\to &&\text{INT16}        \\
+    &\text{int32}   &&\to &&\text{INT32}        \\
+    &\text{int64}   &&\to &&\text{INT64}        \\
+    &\text{int8}    &&\to &&\text{INT8}         \\
+    &\text{mut}     &&\to &&\text{MUTABLE}      \\
+    &\text{or}      &&\to &&\text{LOGICAL\_OR}  \\
+    &\text{private} &&\to &&\text{PRIVATE}      \\
+    &\text{public}  &&\to &&\text{PUBLIC}       \\
+    &\text{string}  &&\to &&\text{STRING}       \\
+    &\text{true}    &&\to &&\text{TRUE}         \\
+    &\text{uint16}  &&\to &&\text{UINT16}       \\
+    &\text{uint32}  &&\to &&\text{UINT32}       \\
+    &\text{uint64}  &&\to &&\text{UINT64}       \\
+    &\text{uint8}   &&\to &&\text{UINT8}        \\
+    &\text{while}   &&\to &&\text{WHILE}
 \end{align}
 
 \subsection{Operators}
 \begin{align}
-    &\hat{}\enspace\hat{}=                                                        &&\to &&\text{EXPONENT\_ASSIGN}                                \\
-    &\hat{}\enspace\hat{}                                                         &&\to &&\text{EXPONENT}                                        \\
-    &\hat{}=                                                                      &&\to &&\text{XOR\_ASSIGN}                                     \\
-    &\hat{}                                                                       &&\to &&\text{XOR}                                             \\
-    &\%=                                                                          &&\to &&\text{MOD\_ASSIGN}                                     \\
-    &\%                                                                           &&\to &&\text{MOD}                                             \\
-    &*=                                                                           &&\to &&\text{MUL\_ASSIGN}                                     \\
-    &*                                                                            &&\to &&\text{MUL}                                             \\
-    &//=                                                                          &&\to &&\text{INTEGER\_DIV\_ASSIGN}                            \\
-    &//                                                                           &&\to &&\text{INTEGER\_DIV}                                    \\
-    &/=                                                                           &&\to &&\text{DIV\_ASSIGN}                                     \\
-    &/                                                                            &&\to &&\text{DIV}                                             \\
-    &++                                                                           &&\to &&\text{INC}                                             \\
-    &+=                                                                           &&\to &&\text{ADD\_ASSIGN}                                     \\
-    &+                                                                            &&\to &&\text{ADD}                                             \\
-    &--                                                                           &&\to &&\text{DEC}                                             \\
-    &-=                                                                           &&\to &&\text{SUB\_ASSIGN}                                     \\
-    &-                                                                            &&\to &&\text{SUB}                                             \\
-    &<<                                                                           &&\to &&\text{SHIFT\_LEFT}                                     \\
-    &<=                                                                           &&\to &&\text{LE\_OP}                                          \\
-    &<                                                                            &&\to &&\text{LT\_OP}                                          \\
-    &>>                                                                           &&\to &&\text{SHIFT\_RIGHT}                                    \\
-    &>=                                                                           &&\to &&\text{GE\_OP}                                          \\
-    &>                                                                            &&\to &&\text{GT\_OP}                                          \\
-    &!=                                                                           &&\to &&\text{NE\_OP}                                          \\
-    &==                                                                           &&\to &&\text{EQ\_OP}                                          \\
-    &=                                                                            &&\to &&\text{ASSIGN}                                          \\
-    &\&=                                                                          &&\to &&\text{AND\_ASSIGN}                                     \\
-    &\&                                                                           &&\to &&\text{AND}                                             \\
-    &|=                                                                           &&\to &&\text{OR\_ASSIGN}                                      \\
-    &|                                                                            &&\to &&\text{OR}                                              \\
-    &?                                                                            &&\to &&\text{TERNARY}                                         \\
-    &.                                                                            &&\to &&\text{DOT}
+    &\hat{}\enspace\hat{}= &&\to &&\text{EXPONENT\_ASSIGN}     \\
+    &\hat{}\enspace\hat{}  &&\to &&\text{EXPONENT}             \\
+    &\hat{}=               &&\to &&\text{XOR\_ASSIGN}          \\
+    &\hat{}                &&\to &&\text{XOR}                  \\
+    &\%=                   &&\to &&\text{MOD\_ASSIGN}          \\
+    &\%                    &&\to &&\text{MOD}                  \\
+    &*=                    &&\to &&\text{MUL\_ASSIGN}          \\
+    &*                     &&\to &&\text{MUL}                  \\
+    &//=                   &&\to &&\text{INTEGER\_DIV\_ASSIGN} \\
+    &//                    &&\to &&\text{INTEGER\_DIV}         \\
+    &/=                    &&\to &&\text{DIV\_ASSIGN}          \\
+    &/                     &&\to &&\text{DIV}                  \\
+    &++                    &&\to &&\text{INC}                  \\
+    &+=                    &&\to &&\text{ADD\_ASSIGN}          \\
+    &+                     &&\to &&\text{ADD}                  \\
+    &--                    &&\to &&\text{DEC}                  \\
+    &-=                    &&\to &&\text{SUB\_ASSIGN}          \\
+    &-                     &&\to &&\text{SUB}                  \\
+    &<<                    &&\to &&\text{SHIFT\_LEFT}          \\
+    &<=                    &&\to &&\text{LE\_OP}               \\
+    &<                     &&\to &&\text{LT\_OP}               \\
+    &>>                    &&\to &&\text{SHIFT\_RIGHT}         \\
+    &>=                    &&\to &&\text{GE\_OP}               \\
+    &>                     &&\to &&\text{GT\_OP}               \\
+    &!=                    &&\to &&\text{NE\_OP}               \\
+    &==                    &&\to &&\text{EQ\_OP}               \\
+    &=                     &&\to &&\text{ASSIGN}               \\
+    &\&=                   &&\to &&\text{AND\_ASSIGN}          \\
+    &\&                    &&\to &&\text{AND}                  \\
+    &|=                    &&\to &&\text{OR\_ASSIGN}           \\
+    &|                     &&\to &&\text{OR}                   \\
+    &?                     &&\to &&\text{TERNARY}              \\
+    &.                     &&\to &&\text{DOT}
 \end{align}
 
 \section{Backus-Naur Form}
 \begin{align}
-    &<ident> &&::= && <lower> \enspace <ident?> \enspace \\
-    &&&&&| \enspace "\_" \enspace <lower> \enspace <ident?> \\
-    &&&&&| \enspace "\_" \enspace "\_" \enspace <lower> \enspace <ident?> \\
-    &<ident?> &&::= &&<lower> \enspace <ident?> \\
-    &&&&&|<upper> \enspace <ident?> \\
-    &&&&&|<digit> \enspace <ident?> \\
-    &&&&&|\enspace "\_" \enspace <ident?> \\
-    &&&&&| \enspace \varepsilon \\
-    &<type\_ident> &&::= &&<upper> <type\_ident?> \\
-    &<type\_ident?> &&::= &&<lower> \enspace <type\_ident?> \\
-    &&&&&|<upper> \enspace <type\_ident?> \\
-    &&&&&|<digit> \enspace <type\_ident?> \\
-    &&&&&| \enspace \varepsilon \\
-    &<float\_const> &&::= &&<mantissa> \\
-    &&&&&| <hex\_const> \\
-    &&&&&| <octal\_const> \\
-    &&&&&| <binary\_const> \\
-    &&&&&| <scientific> \\
-    &<integer\_const> &&::= &&<decimal\_const> \\
-    &&&&&| <hex\_const> \\
-    &&&&&| <octal\_const> \\
-    &&&&&| <binary\_const> \\
-    &<comment> &&::=  && \enspace "\#" <comment\_text> \\
-    &<comment\_text> &&::= && <comment\_char> <comment\_text> \\
-    &<comment\_char> &&::= &&<lower> | <upper | <digit> | <symbol> | <non\_newline> \\
-    &<string\_literal> &&::= &&<r?> <quote> <content> <quote> \\
-    &<content> &&::= &&<char> <content> | \enspace \varepsilon \\
-    &<char> &&::= && <escaped\_quote> | <normal\_symbol> \\
-    &<scientific> &&::= &&<sign?> <mantissa> <exponent> \\
-    &<mantissa> &&::= &&<digits> \enspace "." \enspace <digits?> \\
-    &&&&&| \enspace "." \enspace <digits> \\
-    &&&&&| <digits> \\
-    &<exponent> &&::= &&"e" \enspace <decimal\_const> \\
-    &<decimal\_const> &&::= &&<sign?> <digits> \\
-    &<hex\_const> &&:= &&\enspace "0" \enspace "x" <hs> \\
-    &&&&&| \enspace "0" \enspace "X" <hs> \\
-    &<octal\_const> &&::= &&\enspace "0" \enspace "o" <os> \\
-    &&&&&| \enspace "0" \enspace "O" <os> \\
-    &<binary\_const> &&::= &&\enspace "0" \enspace "b" <bs> \\
-    &&&&&| \enspace "0" \enspace "B" <bs>
+    &<ident>           &&::=  &&<lower> \enspace <ident?> \enspace                                  \\
+                              &&&&&| \enspace "\_" \enspace <lower> \enspace <ident?>               \\
+                              &&&&&| \enspace "\_" \enspace "\_" \enspace <lower> \enspace <ident?> \\
+    &<ident?>          &&::=  &&<lower> \enspace <ident?>                                           \\
+                              &&&&&| <upper> \enspace <ident?>                                      \\
+                              &&&&&| <digit> \enspace <ident?>                                      \\
+                              &&&&&| \enspace "\_" \enspace <ident?>                                \\
+                              &&&&&| \enspace \varepsilon                                           \\
+    &<type\_ident>     &&::=  &&<upper> <type\_ident?>                                              \\
+    &<type\_ident?>    &&::=  &&<type\_ident>                                                       \\
+                              &&&&&| <lower> \enspace <type\_ident?>                                \\
+                              &&&&&| <digit> \enspace <type\_ident?>                                \\
+                              &&&&&| \enspace \varepsilon                                           \\
+    &<float\_const>    &&::=  &&<scientific>                                                        \\
+                              &&&&&| <mantissa>                                                     \\
+                              &&&&&| <decimal\_const>                                               \\
+                              &&&&&| <hex\_const>                                                   \\
+                              &&&&&| <octal\_const>                                                 \\
+                              &&&&&| <binary\_const>                                                \\
+    &<integer\_const>  &&::=  &&<decimal\_const>                                                    \\
+                              &&&&&| <hex\_const>                                                   \\
+                              &&&&&| <octal\_const>                                                 \\
+                              &&&&&| <binary\_const>                                                \\
+    &<comment>         &&::=  &&\enspace "\#" <comment\_text>                                       \\
+    &<comment\_text>   &&::=  &&<comment\_char> <comment\_text>                                     \\
+    &<comment\_char>   &&::=  &&<lower> | <upper | <digit> | <symbol> | <non\_newline>              \\
+    &<string\_literal> &&::=  &&<r?> <quote> <content> <quote>                                      \\
+    &<content>         &&::=  &&<char> <content> | \enspace \varepsilon                             \\
+    &<char>            &&::=  &&<escaped\_quote> | <normal\_symbol>                                 \\
+    &<scientific>      &&::=  &&<mantissa> <exponent>                                               \\
+                              &&&&&| <decimal\_const> <exponent>                                    \\
+    &<mantissa>        &&::=  &&<sign?> <digits> \enspace "." \enspace <digits?>                    \\
+                              &&&&&| <sign?> \enspace "." \enspace <digits>                         \\
+    &<exponent>        &&::=  &&\enspace "e" \enspace <decimal\_const>                              \\
+    &<decimal\_const>  &&::=  &&<sign?> <digits>                                                    \\
+    &<hex\_const>      &&::=  &&\enspace "0" \enspace "x" <hs>                                      \\
+                              &&&&&| \enspace "0" \enspace "X" <hs>                                 \\
+    &<octal\_const>    &&::=  &&\enspace "0" \enspace "o" <os>                                      \\
+                              &&&&&| \enspace "0" \enspace "O" <os>                                 \\
+    &<binary\_const>   &&::=  &&\enspace "0" \enspace "b" <bs>                                      \\
+                              &&&&&| \enspace "0" \enspace "B" <bs>
 \end{align}
 \begin{align}
-    &<and>     &&::= &&\text{"a" "n" "d"}                 \\
-    &<bool>    &&::= &&\text{"b" "o" "o" "l"}             \\
-    &<break>   &&::= &&\text{"b" "r" "e" "a" "k"}         \\
-    &<class>   &&::= &&\text{"c" "l" "a" "s" "s"}         \\
-    &<elif>    &&::= &&\text{"e" "l" "i" "f"}             \\
-    &<else>    &&::= &&\text{"e" "l" "s" "e"}             \\
-    &<enum>    &&::= &&\text{"e" "n" "u" "m"}             \\
-    &<exit>    &&::= &&\text{"e" "x" "i" "t"}             \\
-    &<false>   &&::= &&\text{"f" "a" "l" "s" "e"}         \\
-    &<float32> &&::= &&\text{"f" "l" "o" "a" "t" "3" "2"} \\
-    &<float64> &&::= &&\text{"f" "l" "o" "a" "t" "6" "4"} \\
-    &<for>     &&::= &&\text{"f" "o" "r"}                 \\
-    &<func>    &&::= &&\text{"f" "u" "n" "c"}             \\
-    &<if>      &&::= &&\text{"i" "f"}                     \\
-    &<iface>   &&::= &&\text{"i" "f" "a" "c" "e"}         \\
-    &<in>      &&::= &&\text{"i" "n"}                     \\
-    &<int16>   &&::= &&\text{"i" "n" "t" "1" "6"}         \\
-    &<int32>   &&::= &&\text{"i" "n" "t" "3" "2"}         \\
-    &<int64>   &&::= &&\text{"i" "n" "t" "6" "4"}         \\
-    &<int8>    &&::= &&\text{"i" "n" "t" "8"}             \\
-    &<mut>     &&::= &&\text{"m" "u" "t"}                 \\
-    &<or>      &&::= &&\text{"o" "r"}                     \\
-    &<private> &&::= &&\text{"p" "r" "i" "v" "a" "t" "e"} \\
-    &<public>  &&::= &&\text{"p" "u" "b" "l" "i" "c"}     \\
-    &<string>  &&::= &&\text{"s" "t" "r" "i" "n" "g"}     \\
-    &<true>    &&::= &&\text{"t" "r" "u" "e"}             \\
-    &<uint16>  &&::= &&\text{"u" "i" "n" "t" "1" "6"}     \\
-    &<uint32>  &&::= &&\text{"u" "i" "n" "t" "3" "2"}     \\
-    &<uint64>  &&::= &&\text{"u" "i" "n" "t" "6" "4"}     \\
-    &<uint8>   &&::= &&\text{"u" "i" "n" "t" "8"}         \\
-    &<while>   &&::= &&\text{"w" "h" "i" "l" "e"} 
+    &<and>     &&::= &&"a" "n" "d"                 \\
+    &<bool>    &&::= &&"b" "o" "o" "l"             \\
+    &<break>   &&::= &&"b" "r" "e" "a" "k"         \\
+    &<class>   &&::= &&"c" "l" "a" "s" "s"         \\
+    &<elif>    &&::= &&"e" "l" "i" "f"             \\
+    &<else>    &&::= &&"e" "l" "s" "e"             \\
+    &<enum>    &&::= &&"e" "n" "u" "m"             \\
+    &<exit>    &&::= &&"e" "x" "i" "t"             \\
+    &<false>   &&::= &&"f" "a" "l" "s" "e"         \\
+    &<float32> &&::= &&"f" "l" "o" "a" "t" "3" "2" \\
+    &<float64> &&::= &&"f" "l" "o" "a" "t" "6" "4" \\
+    &<for>     &&::= &&"f" "o" "r"                 \\
+    &<func>    &&::= &&"f" "u" "n" "c"             \\
+    &<if>      &&::= &&"i" "f"                     \\
+    &<iface>   &&::= &&"i" "f" "a" "c" "e"         \\
+    &<in>      &&::= &&"i" "n"                     \\
+    &<int16>   &&::= &&"i" "n" "t" "1" "6"         \\
+    &<int32>   &&::= &&"i" "n" "t" "3" "2"         \\
+    &<int64>   &&::= &&"i" "n" "t" "6" "4"         \\
+    &<int8>    &&::= &&"i" "n" "t" "8"             \\
+    &<mut>     &&::= &&"m" "u" "t"                 \\
+    &<or>      &&::= &&"o" "r"                     \\
+    &<private> &&::= &&"p" "r" "i" "v" "a" "t" "e" \\
+    &<public>  &&::= &&"p" "u" "b" "l" "i" "c"     \\
+    &<string>  &&::= &&"s" "t" "r" "i" "n" "g"     \\
+    &<true>    &&::= &&"t" "r" "u" "e"             \\
+    &<uint16>  &&::= &&"u" "i" "n" "t" "1" "6"     \\
+    &<uint32>  &&::= &&"u" "i" "n" "t" "3" "2"     \\
+    &<uint64>  &&::= &&"u" "i" "n" "t" "6" "4"     \\
+    &<uint8>   &&::= &&"u" "i" "n" "t" "8"         \\
+    &<while>   &&::= &&"w" "h" "i" "l" "e"
 \end{align}
 \begin{align}
-    &<exponent\_assign>     &&::= &&\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}=\text{"} \\
-    &<exponent>             &&::= &&\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}\enspace\hat{}\enspace\text{"}                          \\
-    &<xor\_assign>          &&::= &&\text{"}\enspace\hat{}\enspace\text{"}\enspace\text{"}=\text{"}                                               \\
-    &<xor>                  &&::= &&\text{"}\enspace\hat{}\enspace\text{"}                                                                        \\
-    &<mod\_assign>          &&::= &&\text{"}\%\text{"}\enspace\text{"}=\text{"}                                                                   \\
-    &<mod>                  &&::= &&\text{"}\%\text{"}                                                                                            \\
-    &<mul\_assign>          &&::= &&\text{"}*\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<mul>                  &&::= &&\text{"}*\text{"}                                                                                             \\
-    &<integer\_div\_assign> &&::= &&\text{"}/\text{"}\enspace\text{"}/\text{"}\enspace\text{"}=\text{"}                                           \\
-    &<integer\_div>         &&::= &&\text{"}/\text{"}\enspace\text{"}/\text{"}                                                                    \\
-    &<div\_assign>          &&::= &&\text{"}/\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<div>                  &&::= &&\text{"}/\text{"}                                                                                             \\
-    &<inc>                  &&::= &&\text{"}+\text{"}\enspace\text{"}+\text{"}                                                                    \\
-    &<add\_assign>          &&::= &&\text{"}+\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<add>                  &&::= &&\text{"}+\text{"}                                                                                             \\
-    &<dec>                  &&::= &&\text{"}-\text{"}\enspace\text{"}-\text{"}                                                                    \\
-    &<sub\_assign>          &&::= &&\text{"}-\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<sub>                  &&::= &&\text{"}-\text{"}                                                                                             \\
-    &<shift\_left>          &&::= &&\text{"}<\text{"}\enspace\text{"}<\text{"}                                                                    \\
-    &<le\_op>               &&::= &&\text{"}<\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<lt\_op>               &&::= &&\text{"}<\text{"}                                                                                             \\
-    &<shift\_right>         &&::= &&\text{"}>\text{"}\enspace\text{"}>\text{"}                                                                    \\
-    &<ge\_op>               &&::= &&\text{"}>\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<gt\_op>               &&::= &&\text{"}>\text{"}                                                                                             \\
-    &<ne\_op>               &&::= &&\text{"}!\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<eq\_op>               &&::= &&\text{"}=\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<assign>               &&::= &&\text{"}=\text{"}                                                                                             \\
-    &<and\_assign>          &&::= &&\text{"}\&\text{"}\enspace\text{"}=\text{"}                                                                   \\
-    &<and>                  &&::= &&\text{"}\&\text{"}                                                                                            \\
-    &<or\_assign>           &&::= &&\text{"}|\text{"}\enspace\text{"}=\text{"}                                                                    \\
-    &<or>                   &&::= &&\text{"}|\text{"}                                                                                             \\
-    &<ternary>              &&::= &&\text{"}?\text{"}                                                                                             \\
-    &<dot>                  &&::= &&\text{"}.\text{"}
+    &<exponent\_assign>     &&::= &&" \enspace \hat{} \enspace " \enspace " \enspace \hat{} \enspace " \enspace "=" \\
+    &<exponent>             &&::= &&" \enspace \hat{} \enspace " \enspace " \enspace \hat{} \enspace "              \\
+    &<xor\_assign>          &&::= &&" \enspace \hat{} \enspace " \enspace "="                                       \\
+    &<xor>                  &&::= &&" \enspace \hat{} \enspace "                                                    \\
+    &<mod\_assign>          &&::= &&"\%" \enspace "="                                                               \\
+    &<mod>                  &&::= &&"\%"                                                                            \\
+    &<mul\_assign>          &&::= &&"*" \enspace "="                                                                \\
+    &<mul>                  &&::= &&"*"                                                                             \\
+    &<integer\_div\_assign> &&::= &&"/" \enspace "/" \enspace "="                                                   \\
+    &<integer\_div>         &&::= &&"/" \enspace "/"                                                                \\
+    &<div\_assign>          &&::= &&"/" \enspace "="                                                                \\
+    &<div>                  &&::= &&"/"                                                                             \\
+    &<inc>                  &&::= &&"+" \enspace "+"                                                                \\
+    &<add\_assign>          &&::= &&"+" \enspace "="                                                                \\
+    &<add>                  &&::= &&"+"                                                                             \\
+    &<dec>                  &&::= &&"-" \enspace "-"                                                                \\
+    &<sub\_assign>          &&::= &&"-" \enspace "="                                                                \\
+    &<sub>                  &&::= &&"-"                                                                             \\
+    &<shift\_left>          &&::= &&"<" \enspace "<"                                                                \\
+    &<le\_op>               &&::= &&"<" \enspace "="                                                                \\
+    &<lt\_op>               &&::= &&"<"                                                                             \\
+    &<shift\_right>         &&::= &&">" \enspace ">"                                                                \\
+    &<ge\_op>               &&::= &&">" \enspace "="                                                                \\
+    &<gt\_op>               &&::= &&">"                                                                             \\
+    &<ne\_op>               &&::= &&"!" \enspace "="                                                                \\
+    &<eq\_op>               &&::= &&"=" \enspace "="                                                                \\
+    &<assign>               &&::= &&"="                                                                             \\
+    &<and\_assign>          &&::= &&"\&" \enspace "="                                                               \\
+    &<and>                  &&::= &&"\&"                                                                            \\
+    &<or\_assign>           &&::= &&"|" \enspace "="                                                                \\
+    &<or>                   &&::= &&"|"                                                                             \\
+    &<ternary>              &&::= &&"?"                                                                             \\
+    &<dot>                  &&::= &&"."
 \end{align}
 \begin{align}
-    &<digits?> &&::= &&<digits> | \enspace \varepsilon \\
-    &<digits> &&::= &&<digit> | <digit> <digits> \\
-    &<sign?> &&::= &&<sign> | \enspace \varepsilon \\
-    &<sign> &&::= &&"+" \enspace | \enspace "-" \enspace \\
-    \notag&<lower> &&::= &&\text{"a"}|\text{"b"}|\text{"c"}|\text{"d"}|\text{"e"}|\text{"f"}|\text{"g"}|\text{"h"}|\text{"i"}|\text{"j"}|\text{"k"}|\text{"l"}|\text{"m"}| \\
-    &&&&&\text{"n"}|\text{"o"}|\text{"p"}|\text{"q"}|\text{"r"}|\text{"s"}|\text{"t"}|\text{"u"}|\text{"v"}|\text{"w"}|\text{"x"}|\text{"y"}|\text{"z"} \\
-    \notag&<upper> &&::= &&\text{"A"}|\text{"B"}|\text{"C"}|\text{"D"}|\text{"E"}|\text{"F"}|\text{"G"}|\text{"H"}|\text{"I"}|\text{"J"}|\text{"K"}|\text{"L"}|\text{"M"}| \\
-    &&&&&\text{"N"}|\text{"O"}|\text{"P"}|\text{"Q"}|\text{"R"}|\text{"S"}|\text{"T"}|\text{"U"}|\text{"V"}|\text{"W"}|\text{"X"}|\text{"Y"}|\text{"Z"} \\
-    &<digit> &&::= &&\text{"0"}|\text{"1"}|\text{"2"}|\text{"3"}|\text{"4"}|\text{"5"}|\text{"6"}|\text{"7"}|\text{"8"}|\text{"9"} \\
-    \notag&<hex> &&::= &&\text{"0"}|\text{"1"}|\text{"2"}|\text{"3"}|\text{"4"}|\text{"5"}|\text{"6"}|\text{"7"}|\text{"8"}|\text{"9"}| \\
-    &&&&&\text{"a"}|\text{"b"}|\text{"c"}|\text{"d"}|\text{"e"}|\text{"f"}|\text{"A"}|\text{"B"}|\text{"C"}|\text{"D"}|\text{"E"}|\text{"F"} \\
-    &<octal> &&::= &&\text{"0"}|\text{"1"}|\text{"2"}|\text{"3"}|\text{"4"}|\text{"5"}|\text{"6"}|\text{"7"} \\
-    &<binary> &&::= &&\text{"0"}|\text{"1"} \\
-    &<symbols> &&::= &&<normal\_symbol> | <quote> | <backslash> \\
-    \notag&<normal\_symbol> &&::= &&\text{"!"}|\text{"\#"}|\text{"\$"}|\text{"\%"}|\text{"\&"}|\text{"'"}|\text{"("}|\text{")"}|\text{"*"}|\text{"+"}|\text{","}|\text{"-"}|\text{"."}|\text{"/"}|\text{":"}|\text{";"}| \\
-    &&&&&\text{"}<\text{"}|\text{"="}|\text{"}>\text{"}|\text{"?"}|\text{"@"}|\text{"["}|\text{"]"}|\text{"}\hat{}\text{"}|\text{"\_"}|\text{"`"}|\text{"\{"}|\text{"|"}|\text{"\}"}|\text{"~"} \\
-    &<whitespace> &&::= &&<non\_newline> | <newline> \\
-    &<non\_newline> &&::= &&\text{" "}|\text{"}\backslash\text{t}\text{"}|\text{"}\backslash\text{r}\text{"} \\
-    &<newline> &&::= &&\text{"}\backslash\text{n}\text{"} \\
-    &<r?> &&::= &&\text{"r"} | \enspace \varepsilon \\
-    &<escaped\_quote> &&::= && <backslash> <quote> \\
-    &<backslash> &&::= &&\text{"}\backslash \text{"} \\
-    &<quote> &&::= &&\text{"""} \\
+    &<digits?>              &&::= && <digits> | \enspace \varepsilon \\
+    &<digits>               &&::= && <digit> | <digit> <digits> \\
+    &<sign?>                &&::= && <sign> | \enspace \varepsilon \\
+    &<sign>                 &&::= && "+" \enspace | \enspace "-" \enspace \\
+    \notag&<lower>          &&::= && "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" |  \\
+                            &&&&&"n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" \\
+    \notag&<upper>          &&::= &&"A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" |  \\
+                            &&&&&"N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" \\
+    &<digit>                &&::= &&"0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" \\
+    \notag&<hex>            &&::= &&"0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" |  \\
+                            &&&&&"a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F" \\
+    &<octal>                &&::= &&"0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" \\
+    &<binary>               &&::= &&"0" | "1" \\
+    &<symbols>              &&::= &&<normal\_symbol> | <quote> | <backslash> \\
+    \notag&<normal\_symbol> &&::= &&"!" | "\#" | "\$" | "\%" | "\&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | \\
+    \notag                  &&&&&"/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "\hat{}" | "\_" | "`" | \\
+                            &&&&&"\{" | "|" | "\}" | "~" \\
+    &<whitespace>           &&::= &&<non\_newline> | <newline> \\
+    &<non\_newline>         &&::= &&" " | "\backslash t" | "\backslash r" \\
+    &<newline>              &&::= &&"\backslash n" \\
+    &<r?>                   &&::= &&"r" | \enspace \varepsilon \\
+    &<escaped\_quote>       &&::= && <backslash> <quote> \\
+    &<backslash>            &&::= &&"\backslash" \\
+    &<quote>                &&::= &&""" \\
 \end{align}
 
 \begin{align}
@@ -340,32 +355,10 @@
     &<os18> &&::= &&<octal> \\
     &&&&&| <octal> <os19> \\
     &<os19> &&::= &&<octal> \\
-    &&&&&| <octal> <os20>
-\end{align}
-\begin{align}
+    &&&&&| <octal> <os20> \\
     &<os20> &&::= &&<octal> \\
     &&&&&| <octal> <os21> \\
-    &<os21> &&::= &&<octal> \\
-    &&&&&| <octal> <os22> \\
-    &<os22> &&::= &&<octal> \\
-    &&&&&| <octal> <os23> \\
-    &<os23> &&::= &&<octal> \\
-    &&&&&| <octal> <os24> \\
-    &<os24> &&::= &&<octal> \\
-    &&&&&| <octal> <os25> \\
-    &<os25> &&::= &&<octal> \\
-    &&&&&| <octal> <os26> \\
-    &<os26> &&::= &&<octal> \\
-    &&&&&| <octal> <os27> \\
-    &<os27> &&::= &&<octal> \\
-    &&&&&| <octal> <os28> \\
-    &<os28> &&::= &&<octal> \\
-    &&&&&| <octal> <os29> \\
-    &<os29> &&::= &&<octal> \\
-    &&&&&| <octal> <os30> \\
-    &<os30> &&::= &&<octal> \\
-    &&&&&| <octal> <os31> \\
-    &<os31> &&::= &&<octal>
+    &<os21> &&::= &&<octal>
 \end{align}
 \begin{align}
     &<bs> &&::= &&<binary> \\
