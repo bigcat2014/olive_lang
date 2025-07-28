@@ -116,6 +116,8 @@ struct IdentProperties {
 struct Token {
   //! @brief  @brief The type of this token.
   TokenType token_type;
+  // TODO(lthomas): Placeholder code. Will need updating for token type
+  double value;
 
   //! @brief The properties associated with this token.
   std::variant<BinOpProperties, IntLitProperties, IdentProperties,

@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   logger.debug("Sanitized input file path: {}",
                input_resolved_path.value().string());
 
-  std::fstream input_file{input_resolved_path.value(), std::ios::in};
+  std::ifstream input_file{input_resolved_path.value()};
   if (!input_file) {
     throw std::runtime_error("cannot open " +
                              input_resolved_path.value().string());
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     logger.debug("Sanitized output file path: {}",
                  output_resolved_path.string());
 
-    std::fstream output_file{output_resolved_path, std::ios::out};
+    std::ofstream output_file{output_resolved_path};
     if (!output_file) {
       throw std::runtime_error("cannot open " + output_resolved_path.string());
     }

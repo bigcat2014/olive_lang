@@ -48,12 +48,6 @@ _deps
 # Assembly files
 *.asm
 
-# Build, install, and output
-build
-install
-output
-out
-
 # LaTeX
 *.acn
 *.acr
@@ -100,3 +94,10 @@ out
 *blx.bib
 .bak 
 .mtc
+
+# Build, install, and output
+build
+install
+output
+out
+test_settings.hpp

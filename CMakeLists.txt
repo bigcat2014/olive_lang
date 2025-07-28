@@ -87,6 +87,40 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 if (BUILD_TESTING)
     enable_testing()
 
+    # Test Settings
+    get_filename_component(${PROJECT_NAME}_TESTS_DIR
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests ABSOLUTE)
+    get_filename_component(${PROJECT_NAME}_TEST_RESOURCES_DIR
+        ${${PROJECT_NAME}_TESTS_DIR}/resources ABSOLUTE)
+    get_filename_component(
+        FLOAT_PASS_PATH
+        ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/float_pass.csv
+        ABSOLUTE)
+    get_filename_component(
+        INTEGER_PASS_PATH
+        ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/integer_pass.csv
+        ABSOLUTE)
+    get_filename_component(
+        SCIENTIFIC_PASS_PATH
+        ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/scientific_pass.csv
+        ABSOLUTE)
+    get_filename_component(
+        FLOAT_FAIL_PATH
+        ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/float_fail.txt
+        ABSOLUTE)
+    get_filename_component(
+        INTEGER_FAIL_PATH
+        ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/integer_fail.txt
+        ABSOLUTE)
+    get_filename_component(
+        SCIENTIFIC_FAIL_PATH
+        ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/scientific_fail.txt
+        ABSOLUTE)
+    configure_file(
+        ${${PROJECT_NAME}_TESTS_DIR}/cmake/test_settings.hpp.in
+        ${${PROJECT_NAME}_TESTS_DIR}/test_settings.hpp
+        @ONLY)
+
     # GTest
     ## Lexer
     find_package(GTest REQUIRED)
@@ -181,8 +215,6 @@ if (BUILD_TESTING)
 
     # Valgrind Memcheck Tests
     # TODO(lthomas): Refactor this into a function
-    set(${PROJECT_NAME}_TEST_RESOURCES_DIR
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/resources)
     add_test(NAME ${PROJECT_NAME}_valgrind_file
         COMMAND valgrind
         --error-exitcode=1
