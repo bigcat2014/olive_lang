@@ -47,15 +47,15 @@
 
 \subsection{Identifiers, Literals, and Comments}
 \begin{align}
-    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                &&\to &&\text{IDENT}                                 \\
-    &U(?:L|U|D)*                                                                             &&\to &&\text{TYPE\_IDENT}                           \\
-    &[\backslash+-]?D+                                                                       &&\to &&\text{INTEGER\_LITERAL}                      \\
-    &\text{0}[\text{xX}]H\{1,16\}                                                            &&\to &&\text{NUMERIC\_LITERAL}    &&&&\text{Hex}    \\
-    &\text{0}[\text{oO}]O\{1,22\}                                                            &&\to &&\text{NUMERIC\_LITERAL}    &&&&\text{Octal}  \\
-    &\text{0}[\text{bB}]B\{1,64\}                                                            &&\to &&\text{NUMERIC\_LITERAL}    &&&&\text{Binary} \\
-    &([\backslash+-]?(?:D+(?:\backslash.D*)?|\backslash.D+))[eE]([\backslash+-]?D+)          &&\to &&\text{SCIENTIFIC\_LITERAL}                   \\
-    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to &&\text{FLOAT\_LITERAL}                        \\
-    &(\text{r}?)"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                       \\
+    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                &&\to &&\text{IDENT}                                   \\
+    &U(?:L|U|D)*                                                                             &&\to &&\text{TYPE\_IDENT}                             \\
+    &[\backslash+-]?D+                                                                       &&\to &&\text{NUMERIC\_CONST}                          \\
+    &\text{0}[\text{xX}](H\{1,16\})                                                          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Hex}        \\
+    &\text{0}[\text{oO}](1O\{21\}|O\{1,21\})                                                 &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Octal}      \\
+    &\text{0}[\text{bB}](B\{1,64\})                                                          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Binary}     \\
+    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Float}      \\
+    &([\backslash+-]?(?:D+(?:\backslash.D*)?|\backslash.D+))[eE]([\backslash+-]?D+)          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Scientific} \\
+    &(\text{r}?)"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                         \\
     &\#.*\$                                                                                  &&\to &&\text{COMMENT}
 \end{align}
 
