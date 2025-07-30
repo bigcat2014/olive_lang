@@ -13,45 +13,41 @@
 
 namespace pimento::tokenization {
 
-// TODO(lthomas): This tokenization method breaks down when there are tokens
-// that are just double versions of another token; i.e. `==` and `=`. May need
-// to parse these as their single version and handle doubles in the parser.
 //! @brief Supported token types.
 enum class TokenType : uint8_t {
   BEGIN = 0,
-  EXIT,
-  IF,
+  LOGICAL_AND,
+  BOOL,
+  BREAK,
+  CLASS,
   ELIF,
   ELSE,
-  WHILE,
+  ENUM,
+  EXIT,
+  FALSE,
+  FLOAT32,
+  FLOAT64,
   FOR,
+  FUNCTION,
+  IF,
+  INTERFACE,
   IN,
-  BREAK,
-  UINT8,
-  UINT16,
-  UINT32,
-  UINT64,
-  INT8,
   INT16,
   INT32,
   INT64,
-  FLOAT,
-  STRING,
-  BOOL,
-  TRUE,
-  FALSE,
-  FUNCTION,
-  CLASS,
-  ENUM,
-  INTERFACE,
+  INT8,
   MUTABLE,
-  LEFT_CURLY,
-  LEFT_PAREN,
-  LEFT_SQUARE,
-  RIGHT_CURLY,
-  RIGHT_PAREN,
-  RIGHT_SQUARE,
-  SEMI,
+  LOGICAL_OR,
+  PRIVATE,
+  PUBLIC,
+  RETURN,
+  STRING,
+  TRUE,
+  UINT16,
+  UINT32,
+  UINT64,
+  UINT8,
+  WHILE,
   EXPONENT_ASSIGN,
   EXPONENT,
   XOR_ASSIGN,
@@ -76,19 +72,32 @@ enum class TokenType : uint8_t {
   SHIFT_RIGHT,
   GE_OP,
   GT_OP,
+  NE_OP,
   EQ_OP,
   ASSIGN,
-  LOGICAL_AND,
+  BIT_NOT_ASSIGN,
+  BIT_NOT,
   AND_ASSIGN,
   AND,
-  LOGICAL_OR,
   OR_ASSIGN,
   OR,
+  TERNARY,
   DOT,
-  COMMENT,
-  IDENTIFIER,
+  COMMA,
+  SEMI,
+  LEFT_PAREN,
+  RIGHT_PAREN,
+  LEFT_SQUARE,
+  RIGHT_SQUARE,
+  LEFT_CURLY,
+  RIGHT_CURLY,
+  IDENT,
+  TYPE_IDENT,
+  INTEGER_CONST,
   NUMERIC_CONST,
+  FLOAT_CONST,
   STRING_LITERAL,
+  COMMENT,
   NUM_TOKENS
 };
 
@@ -112,17 +121,112 @@ struct IdentProperties {
   std::string identifier;
 };
 
+#if defined(_MSC_VER)
+    #define PACKED_STRUCT(name) __pragma(pack(push, 1)) struct name __pragma(pack(pop))
+#else
+    #define PACKED_STRUCT(name) struct __attribute__((packed)) name
+#endif
+
+//! @brief 64-bit integers with the 32-bit, 16-bit, and 8-bit representations packed.
+union NumericConst
+{
+  //! @brief Get the value as a double precision float.
+  //! @return double The value as a double precision float.
+  [[nodiscard]] inline double   as_float64() { return float64; }
+  //! @brief Get the value as a single precision float.
+  //! @return float The value as a single precision float.
+  [[nodiscard]] inline float    as_float32() { return static_cast<float>(float64); }
+
+  //! @brief Get the value as a double precision float assuming the value was stored as an integer.
+  //! @return double The value as a double precision float.
+  [[nodiscard]] inline double   as_float64_from_int() { return static_cast<double>(uint64); }
+  //! @brief Get the value as a single precision float assuming the value was stored as an integer.
+  //! @return float The value as a single precision float.
+  [[nodiscard]] inline float    as_float32_from_int() { return static_cast<float>(uint64); }
+
+  //! @brief Get the value as a 64-bit unsigned integer.
+  //! @return uint64_t The value as a 64-bit unsigned integer.
+  [[nodiscard]] inline uint64_t as_uint64()  { return uint64; }
+  //! @brief Get the value as a 64-bit signed integer.
+  //! @return uint64_t The value as a 64-bit signed integer.
+  [[nodiscard]] inline int64_t  as_int64()   { return reinterpret_cast<int64_t&>(uint64); }
+
+  //! @brief Get the value as a 32-bit unsigned integer.
+  //! @return uint32_t The value as a 32-bit unsigned integer.
+  [[nodiscard]] inline uint32_t as_uint32()  { return uint32_view.value; }
+  //! @brief Get the value as a 32-bit signed integer.
+  //! @return uint32_t The value as a 32-bit signed integer.
+  [[nodiscard]] inline int32_t  as_int32()   { return reinterpret_cast<int32_t&>(uint32_view.value); }
+
+  //! @brief Get the value as a 16-bit unsigned integer.
+  //! @return uint16_t The value as a 16-bit unsigned integer.
+  [[nodiscard]] inline uint16_t as_uint16()  { return uint16_view.value; }
+  //! @brief Get the value as a 16-bit signed integer.
+  //! @return uint16_t The value as a 16-bit signed integer.
+  [[nodiscard]] inline int16_t  as_int16()   { return reinterpret_cast<int16_t&>(uint16_view.value);}
+
+  //! @brief Get the value as an 8-bit unsigned integer.
+  //! @return uint8_t The value as an 8-bit unsigned integer.
+  [[nodiscard]] inline uint8_t  as_uint8()   { return uint8_view.value; }
+  //! @brief Get the value as an 8-bit signed integer.
+  //! @return uint8_t The value as an 8-bit signed integer.
+  [[nodiscard]] inline int8_t   as_int8()    { return reinterpret_cast<int8_t&>(uint8_view.value); }
+
+  // Explicit overloads to make use of C++ built-in sign extension
+  void operator=(double                 value) { float64 = value; }
+  void operator=(float                  value) { float64 = value; }
+  void operator=(long long unsigned int value) { uint64  = value; }
+  void operator=(long unsigned int      value) { uint64  = value; }
+  void operator=(unsigned int           value) { uint64  = value; }
+  void operator=(unsigned short         value) { uint64  = value; }
+  void operator=(unsigned char          value) { uint64  = value; }
+  void operator=(long long signed int   value) { uint64  = value; }
+  void operator=(long signed int        value) { uint64  = value; }
+  void operator=(signed int             value) { uint64  = value; }
+  void operator=(signed short           value) { uint64  = value; }
+  void operator=(signed char            value) { uint64  = value; }
+
+private:
+  uint64_t uint64;
+  double   float64;
+
+  PACKED_STRUCT(uint32Struct) {
+    uint32_t value;
+  } uint32_view;
+
+  PACKED_STRUCT(uint16Struct) {
+    uint16_t value;
+  } uint16_view;
+
+  PACKED_STRUCT(uint8Struct) {
+    uint8_t value;
+  } uint8_view;
+
+  PACKED_STRUCT(float32Struct) {
+    float value;
+  } float32_view;
+};
+
 //! @brief Parsed token.
 struct Token {
-  //! @brief  @brief The type of this token.
+  //! @brief The type of this token.
   TokenType token_type;
-  // TODO(lthomas): Placeholder code. Will need updating for token type
-  double value;
+  //! @brief The literal string parsed to get the token.
+  std::string lexeme;
+  //! @brief The line and column number of the token.
+  std::pair<unsigned, unsigned> source_span;
+};
 
-  //! @brief The properties associated with this token.
-  std::variant<BinOpProperties, IntLitProperties, IdentProperties,
-               std::monostate>
-      properties;
+//! @brief Token for representing numeric constants.
+struct NumConstToken : public Token {
+  //! @brief The value of the floating point number.
+  NumericConst value;
+};
+
+//! @brief Token for representing string values.
+//! This could be string literals, identifiers, or type identifiers.
+struct StringToken : public Token {
+  std::string value;
 };
 
 //! @brief Static utility class for interacting with token types.
@@ -228,39 +332,38 @@ private:
   [[nodiscard]] static TokenStrMap get_token_str_map() noexcept {
     // clang-format off
     static const TokenStrMap token_str{
-        {TokenType::EXIT,               "EXIT"},
-        {TokenType::IF,                 "IF"},
+        {TokenType::LOGICAL_AND,        "LOGICAL_AND"},
+        {TokenType::BOOL,               "BOOL"},
+        {TokenType::BREAK,              "BREAK"},
+        {TokenType::CLASS,              "CLASS"},
         {TokenType::ELIF,               "ELIF"},
         {TokenType::ELSE,               "ELSE"},
-        {TokenType::WHILE,              "WHILE"},
+        {TokenType::ENUM,               "ENUM"},
+        {TokenType::EXIT,               "EXIT"},
+        {TokenType::FALSE,              "FALSE"},
+        {TokenType::FLOAT32,            "FLOAT32"},
+        {TokenType::FLOAT64,            "FLOAT64"},
         {TokenType::FOR,                "FOR"},
+        {TokenType::FUNCTION,           "FUNCTION"},
+        {TokenType::IF,                 "IF"},
+        {TokenType::INTERFACE,          "INTERFACE"},
         {TokenType::IN,                 "IN"},
-        {TokenType::BREAK,              "BREAK"},
-        {TokenType::UINT8,              "UINT8"},
-        {TokenType::UINT16,             "UINT16"},
-        {TokenType::UINT32,             "UINT32"},
-        {TokenType::UINT64,             "UINT64"},
-        {TokenType::INT8,               "INT8"},
         {TokenType::INT16,              "INT16"},
         {TokenType::INT32,              "INT32"},
         {TokenType::INT64,              "INT64"},
-        {TokenType::FLOAT,              "FLOAT"},
-        {TokenType::STRING,             "STRING"},
-        {TokenType::BOOL,               "BOOL"},
-        {TokenType::TRUE,               "TRUE"},
-        {TokenType::FALSE,              "FALSE"},
-        {TokenType::FUNCTION,           "FUNCTION"},
-        {TokenType::CLASS,              "CLASS"},
-        {TokenType::ENUM,               "ENUM"},
-        {TokenType::INTERFACE,          "INTERFACE"},
+        {TokenType::INT8,               "INT8"},
         {TokenType::MUTABLE,            "MUTABLE"},
-        {TokenType::LEFT_CURLY,         "LEFT_CURLY"},
-        {TokenType::LEFT_PAREN,         "LEFT_PAREN"},
-        {TokenType::LEFT_SQUARE,        "LEFT_SQUARE"},
-        {TokenType::RIGHT_CURLY,        "RIGHT_CURLY"},
-        {TokenType::RIGHT_PAREN,        "RIGHT_PAREN"},
-        {TokenType::RIGHT_SQUARE,       "RIGHT_SQUARE"},
-        {TokenType::SEMI,               "SEMI"},
+        {TokenType::LOGICAL_OR,         "LOGICAL_OR"},
+        {TokenType::PRIVATE,            "PRIVATE"},
+        {TokenType::PUBLIC,             "PUBLIC"},
+        {TokenType::RETURN,             "RETURN"},
+        {TokenType::STRING,             "STRING"},
+        {TokenType::TRUE,               "TRUE"},
+        {TokenType::UINT16,             "UINT16"},
+        {TokenType::UINT32,             "UINT32"},
+        {TokenType::UINT64,             "UINT64"},
+        {TokenType::UINT8,              "UINT8"},
+        {TokenType::WHILE,              "WHILE"},
         {TokenType::EXPONENT_ASSIGN,    "EXPONENT_ASSIGN"},
         {TokenType::EXPONENT,           "EXPONENT"},
         {TokenType::XOR_ASSIGN,         "XOR_ASSIGN"},
@@ -285,19 +388,32 @@ private:
         {TokenType::SHIFT_RIGHT,        "SHIFT_RIGHT"},
         {TokenType::GE_OP,              "GE_OP"},
         {TokenType::GT_OP,              "GT_OP"},
+        {TokenType::NE_OP,              "NE_OP"},
         {TokenType::EQ_OP,              "EQ_OP"},
         {TokenType::ASSIGN,             "ASSIGN"},
-        {TokenType::LOGICAL_AND,        "LOGICAL_AND"},
+        {TokenType::BIT_NOT_ASSIGN,     "BIT_NOT_ASSIGN"},
+        {TokenType::BIT_NOT,            "BIT_NOT"},
         {TokenType::AND_ASSIGN,         "AND_ASSIGN"},
         {TokenType::AND,                "AND"},
-        {TokenType::LOGICAL_OR,         "LOGICAL_OR"},
         {TokenType::OR_ASSIGN,          "OR_ASSIGN"},
         {TokenType::OR,                 "OR"},
+        {TokenType::TERNARY,            "TERNARY"},
         {TokenType::DOT,                "DOT"},
-        {TokenType::COMMENT,            "COMMENT"},
-        {TokenType::IDENTIFIER,         "IDENTIFIER"},
+        {TokenType::COMMA,              "COMMA"},
+        {TokenType::SEMI,               "SEMI"},
+        {TokenType::LEFT_PAREN,         "LEFT_PAREN"},
+        {TokenType::RIGHT_PAREN,        "RIGHT_PAREN"},
+        {TokenType::LEFT_SQUARE,        "LEFT_SQUARE"},
+        {TokenType::RIGHT_SQUARE,       "RIGHT_SQUARE"},
+        {TokenType::LEFT_CURLY,         "LEFT_CURLY"},
+        {TokenType::RIGHT_CURLY,        "RIGHT_CURLY"},
+        {TokenType::IDENT,              "IDENT"},
+        {TokenType::TYPE_IDENT,         "TYPE_IDENT"},
+        {TokenType::INTEGER_CONST,      "INTEGER_CONST"},
         {TokenType::NUMERIC_CONST,      "NUMERIC_CONST"},
+        {TokenType::FLOAT_CONST,        "FLOAT_CONST"},
         {TokenType::STRING_LITERAL,     "STRING_LITERAL"},
+        {TokenType::COMMENT,            "COMMENT"}
     };
     // clang-format on
 
@@ -310,85 +426,90 @@ private:
     // clang-format off
     static const TokenBimap token_lookup =
         make_bimap<std::string, TokenType>({
-          {"exit",                                TokenType::EXIT},
-          {"if",                                  TokenType::IF},
-          {"elif",                                TokenType::ELIF},
-          {"else",                                TokenType::ELSE},
-          {"while",                               TokenType::WHILE},
-          {"for",                                 TokenType::FOR},
-          {"in",                                  TokenType::IN},
-          {"break",                               TokenType::BREAK},
-          {"uint8",                               TokenType::UINT8},
-          {"uint16",                              TokenType::UINT16},
-          {"uint32",                              TokenType::UINT32},
-          {"uint64",                              TokenType::UINT64},
-          {"int8",                                TokenType::INT8},
-          {"int16",                               TokenType::INT16},
-          {"int32",                               TokenType::INT32},
-          {"int64",                               TokenType::INT64},
-          {"float",                               TokenType::FLOAT},
-          {"string",                              TokenType::STRING},
-          {"bool",                                TokenType::BOOL},
-          {"true",                                TokenType::TRUE},
-          {"false",                               TokenType::FALSE},
-          {"func",                                TokenType::FUNCTION},
-          {"class",                               TokenType::CLASS},
-          {"enum",                                TokenType::ENUM},
-          {"iface",                               TokenType::INTERFACE},
-          {"mut",                                 TokenType::MUTABLE},
-          {"{",                                   TokenType::LEFT_CURLY},
-          {"(",                                   TokenType::LEFT_PAREN},
-          {"[",                                   TokenType::LEFT_SQUARE},
-          {"}",                                   TokenType::RIGHT_CURLY},
-          {")",                                   TokenType::RIGHT_PAREN},
-          {"]",                                   TokenType::RIGHT_SQUARE},
-          {";",                                   TokenType::SEMI},
-          {"^^=",                                 TokenType::EXPONENT_ASSIGN},
-          {"^^",                                  TokenType::EXPONENT},
-          {"^=",                                  TokenType::XOR_ASSIGN},
-          {"^",                                   TokenType::XOR},
-          {"%=",                                  TokenType::MOD_ASSIGN},
-          {"%",                                   TokenType::MOD},
-          {"*=",                                  TokenType::MUL_ASSIGN},
-          {"*",                                   TokenType::MUL},
-          {"//=",                                 TokenType::INTEGER_DIV_ASSIGN},
-          {"//",                                  TokenType::INTEGER_DIV},
-          {"/=",                                  TokenType::DIV_ASSIGN},
-          {"/",                                   TokenType::DIV},
-          {"++",                                  TokenType::INC},
-          {"+=",                                  TokenType::ADD_ASSIGN},
-          {"+",                                   TokenType::ADD},
-          {"--",                                  TokenType::DEC},
-          {"-=",                                  TokenType::SUB_ASSIGN},
-          {"-",                                   TokenType::SUB},
-          {"<<",                                  TokenType::SHIFT_LEFT},
-          {"<=",                                  TokenType::LE_OP},
-          {"<",                                   TokenType::LT_OP},
-          {">>",                                  TokenType::SHIFT_RIGHT},
-          {">=",                                  TokenType::GE_OP},
-          {">",                                   TokenType::GT_OP},
-          {"==",                                  TokenType::EQ_OP},
-          {"=",                                   TokenType::ASSIGN},
-          {"&&",                                  TokenType::LOGICAL_AND},
-          {"&=",                                  TokenType::AND_ASSIGN},
-          {"&",                                   TokenType::AND},
-          {"||",                                  TokenType::LOGICAL_OR},
-          {"|=",                                  TokenType::OR_ASSIGN},
-          {"|",                                   TokenType::OR},
-          {".",                                   TokenType::DOT},
-          // TODO(lthomas): These can't be regexes here
-          {"#.*\n",                               TokenType::COMMENT},
-          {"[a-zA-Z_][a-zA-Z0-9_]*",              TokenType::IDENTIFIER},
-          {"[+-]?[0-9]+",                         TokenType::NUMERIC_CONST},
-          {"0[xX][a-fA-F0-9]+",                   TokenType::NUMERIC_CONST},
-          {"0[oO][0-7]+",                         TokenType::NUMERIC_CONST},
-          {"0[bB][01]+",                          TokenType::NUMERIC_CONST},
-          {"[+-]?[0-9]+[Ee][+-]?[0-9]+",          TokenType::NUMERIC_CONST},
-          {"[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)", TokenType::NUMERIC_CONST},
-          {"\".*\"",                              TokenType::STRING_LITERAL},
-          });
+          {"and",     TokenType::LOGICAL_AND},
+          {"bool",    TokenType::BOOL},
+          {"break",   TokenType::BREAK},
+          {"class",   TokenType::CLASS},
+          {"elif",    TokenType::ELIF},
+          {"else",    TokenType::ELSE},
+          {"enum",    TokenType::ENUM},
+          {"exit",    TokenType::EXIT},
+          {"false",   TokenType::FALSE},
+          {"float32", TokenType::FLOAT32},
+          {"float64", TokenType::FLOAT64},
+          {"for",     TokenType::FOR},
+          {"func",    TokenType::FUNCTION},
+          {"if",      TokenType::IF},
+          {"iface",   TokenType::INTERFACE},
+          {"in",      TokenType::IN},
+          {"int16",   TokenType::INT16},
+          {"int32",   TokenType::INT32},
+          {"int64",   TokenType::INT64},
+          {"int8",    TokenType::INT8},
+          {"mut",     TokenType::MUTABLE},
+          {"or",      TokenType::LOGICAL_OR},
+          {"private", TokenType::PRIVATE},
+          {"public",  TokenType::PUBLIC},
+          {"return",  TokenType::RETURN},
+          {"string",  TokenType::STRING},
+          {"true",    TokenType::TRUE},
+          {"uint16",  TokenType::UINT16},
+          {"uint32",  TokenType::UINT32},
+          {"uint64",  TokenType::UINT64},
+          {"uint8",   TokenType::UINT8},
+          {"while",   TokenType::WHILE},
+          {"^^=",     TokenType::EXPONENT_ASSIGN},
+          {"^^",      TokenType::EXPONENT},
+          {"^=",      TokenType::XOR_ASSIGN},
+          {"^",       TokenType::XOR},
+          {"%=",      TokenType::MOD_ASSIGN},
+          {"%",       TokenType::MOD},
+          {"*=",      TokenType::MUL_ASSIGN},
+          {"*",       TokenType::MUL},
+          {"//=",     TokenType::INTEGER_DIV_ASSIGN},
+          {"//",      TokenType::INTEGER_DIV},
+          {"/=",      TokenType::DIV_ASSIGN},
+          {"/",       TokenType::DIV},
+          {"++",      TokenType::INC},
+          {"+=",      TokenType::ADD_ASSIGN},
+          {"+",       TokenType::ADD},
+          {"--",      TokenType::DEC},
+          {"-=",      TokenType::SUB_ASSIGN},
+          {"-",       TokenType::SUB},
+          {"<<",      TokenType::SHIFT_LEFT},
+          {"<=",      TokenType::LE_OP},
+          {"<",       TokenType::LT_OP},
+          {">>",      TokenType::SHIFT_RIGHT},
+          {">=",      TokenType::GE_OP},
+          {">",       TokenType::GT_OP},
+          {"!=",      TokenType::NE_OP},
+          {"==",      TokenType::EQ_OP},
+          {"=",       TokenType::ASSIGN},
+          {"~=",      TokenType::BIT_NOT_ASSIGN},
+          {"~",       TokenType::BIT_NOT},
+          {"&=",      TokenType::AND_ASSIGN},
+          {"&",       TokenType::AND},
+          {"|=",      TokenType::OR_ASSIGN},
+          {"|",       TokenType::OR},
+          {"?",       TokenType::TERNARY},
+          {".",       TokenType::DOT},
+          {",",       TokenType::COMMA},
+          {";",       TokenType::SEMI},
+          {"(",       TokenType::LEFT_PAREN},
+          {")",       TokenType::RIGHT_PAREN},
+          {"[",       TokenType::LEFT_SQUARE},
+          {"]",       TokenType::RIGHT_SQUARE},
+          {"{",       TokenType::LEFT_CURLY},
+          {"}",       TokenType::RIGHT_CURLY},
+          {"",        TokenType::IDENT},
+          {"",        TokenType::TYPE_IDENT},
+          {"",        TokenType::INTEGER_CONST},
+          {"",        TokenType::NUMERIC_CONST},
+          {"",        TokenType::FLOAT_CONST},
+          {"",        TokenType::STRING_LITERAL},
+          {"",        TokenType::COMMENT}
+        });
     // clang-format on
-
     return token_lookup;
   }
 

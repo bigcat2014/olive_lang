@@ -67,7 +67,7 @@ TEST(Lexer, FloatPass) {
     std::istringstream input{std::move(parsed[0])};
     Lexer lexer{input};
     for (const auto &token : lexer.tokens()) {
-      EXPECT_EQ(token.token_type, TokenType::FLOAT);
+      EXPECT_EQ(token.token_type, TokenType::NUMERIC_CONST);
       // TODO(lthomas): Placeholder code. Will need updating for token type
       EXPECT_EQ(token.value, std::stod(parsed[1]));
     }
@@ -119,7 +119,7 @@ TEST(Lexer, FloatFail) {
     Lexer lexer{token_stream};
 
     for (const auto &token : lexer.tokens()) {
-      EXPECT_NE(token.token_type, TokenType::FLOAT);
+      EXPECT_NE(token.token_type, TokenType::NUMERIC_CONST);
     }
   }
 }

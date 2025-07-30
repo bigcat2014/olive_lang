@@ -96,8 +96,8 @@ std::shared_ptr<node::StmtNode> Parser::parse_statement() {
   //   break;
   // }
   // Parse format ident = [Expr];
-  case tokenization::TokenType::IDENTIFIER: {
-    try_consume(tokenization::TokenType::IDENTIFIER);
+  case tokenization::TokenType::IDENT: {
+    try_consume(tokenization::TokenType::IDENT);
     // try_consume(tokenization::TokenType::EQUAL);
 
     std::shared_ptr<node::ExprNode> expression = parse_expression();
@@ -444,7 +444,7 @@ std::shared_ptr<node::TermNode> Parser::parse_term() {
 
   switch (current_token.token_type) {
   // Parse format ident;
-  case tokenization::TokenType::IDENTIFIER: {
+  case tokenization::TokenType::IDENT: {
     term = std::make_shared<node::TermNode>(
         std::make_shared<node::TermIdentNode>(current_token));
     break;
