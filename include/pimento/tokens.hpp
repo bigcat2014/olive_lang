@@ -16,7 +16,6 @@ namespace pimento::tokenization {
 //! @brief Supported token types.
 enum class TokenType : uint8_t {
   BEGIN = 0,
-  LOGICAL_AND,
   BOOL,
   BREAK,
   CLASS,
@@ -25,28 +24,52 @@ enum class TokenType : uint8_t {
   ENUM,
   EXIT,
   FALSE,
-  FLOAT32,
-  FLOAT64,
+  FLOAT_NAN,
+  FLOAT32_T_MAX,
+  FLOAT32_T_MIN,
+  FLOAT32_T,
+  FLOAT64_T_MAX,
+  FLOAT64_T_MIN,
+  FLOAT64_T,
   FOR,
   FUNCTION,
   IF,
-  INTERFACE,
   IN,
-  INT16,
-  INT32,
-  INT64,
-  INT8,
-  MUTABLE,
+  INT16_T_MAX,
+  INT16_T_MIN,
+  INT16_T,
+  INT32_T_MAX,
+  INT32_T_MIN,
+  INT32_T,
+  INT64_T_MAX,
+  INT64_T_MIN,
+  INT64_T,
+  INT8_T_MAX,
+  INT8_T_MIN,
+  INT8_T,
+  INTERFACE,
+  LOGICAL_AND,
   LOGICAL_OR,
+  MUTABLE,
+  NEG_INF,
+  POS_INF,
   PRIVATE,
   PUBLIC,
   RETURN,
   STRING,
   TRUE,
-  UINT16,
-  UINT32,
-  UINT64,
-  UINT8,
+  UINT16_T_MAX,
+  UINT16_T_MIN,
+  UINT16_T,
+  UINT32_T_MAX,
+  UINT32_T_MIN,
+  UINT32_T,
+  UINT64_T_MAX,
+  UINT64_T_MIN,
+  UINT64_T,
+  UINT8_T_MAX,
+  UINT8_T_MIN,
+  UINT8_T,
   WHILE,
   EXPONENT_ASSIGN,
   EXPONENT,
@@ -99,26 +122,6 @@ enum class TokenType : uint8_t {
   STRING_LITERAL,
   COMMENT,
   NUM_TOKENS
-};
-
-//! @brief Properties of a Binary Operator token.
-struct BinOpProperties {
-  //! @brief Associativity of binary operators.
-  enum class Associativity : uint8_t { LEFT = 0, RIGHT };
-
-  uint8_t precedence;
-  Associativity associativity;
-};
-
-//! @brief Properties of an Int Literal token.
-struct IntLitProperties {
-  // TODO(lthomas): Only supports 64 bit ints for now.
-  uint64_t value;
-};
-
-//! @brief Properties of an Idenfier token.
-struct IdentProperties {
-  std::string identifier;
 };
 
 #if defined(_MSC_VER)
@@ -201,10 +204,6 @@ private:
   PACKED_STRUCT(uint8Struct) {
     uint8_t value;
   } uint8_view;
-
-  PACKED_STRUCT(float32Struct) {
-    float value;
-  } float32_view;
 };
 
 //! @brief Parsed token.

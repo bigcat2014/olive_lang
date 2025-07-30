@@ -73,37 +73,62 @@
 
 \subsection{Keywords}
 \begin{align}
-    &\text{and}     &&\to &&\text{LOGICAL\_AND} \\
-    &\text{bool}    &&\to &&\text{BOOL}         \\
-    &\text{break}   &&\to &&\text{BREAK}        \\
-    &\text{class}   &&\to &&\text{CLASS}        \\
-    &\text{elif}    &&\to &&\text{ELIF}         \\
-    &\text{else}    &&\to &&\text{ELSE}         \\
-    &\text{enum}    &&\to &&\text{ENUM}         \\
-    &\text{exit}    &&\to &&\text{EXIT}         \\
-    &\text{false}   &&\to &&\text{FALSE}        \\
-    &\text{float32} &&\to &&\text{FLOAT32}      \\
-    &\text{float64} &&\to &&\text{FLOAT64}      \\
-    &\text{for}     &&\to &&\text{FOR}          \\
-    &\text{func}    &&\to &&\text{FUNCTION}     \\
-    &\text{if}      &&\to &&\text{IF}           \\
-    &\text{iface}   &&\to &&\text{INTERFACE}    \\
-    &\text{in}      &&\to &&\text{IN}           \\
-    &\text{int16}   &&\to &&\text{INT16}        \\
-    &\text{int32}   &&\to &&\text{INT32}        \\
-    &\text{int64}   &&\to &&\text{INT64}        \\
-    &\text{int8}    &&\to &&\text{INT8}         \\
-    &\text{mut}     &&\to &&\text{MUTABLE}      \\
-    &\text{or}      &&\to &&\text{LOGICAL\_OR}  \\
-    &\text{private} &&\to &&\text{PRIVATE}      \\
-    &\text{public}  &&\to &&\text{PUBLIC}       \\
-    &\text{string}  &&\to &&\text{STRING}       \\
-    &\text{true}    &&\to &&\text{TRUE}         \\
-    &\text{uint16}  &&\to &&\text{UINT16}       \\
-    &\text{uint32}  &&\to &&\text{UINT32}       \\
-    &\text{uint64}  &&\to &&\text{UINT64}       \\
-    &\text{uint8}   &&\to &&\text{UINT8}        \\
-    &\text{while}   &&\to &&\text{WHILE}
+    &\text{bool}         &&\to &&\text{BOOL}            \\
+    &\text{break}        &&\to &&\text{BREAK}           \\
+    &\text{class}        &&\to &&\text{CLASS}           \\
+    &\text{elif}         &&\to &&\text{ELIF}            \\
+    &\text{else}         &&\to &&\text{ELSE}            \\
+    &\text{enum}         &&\to &&\text{ENUM}            \\
+    &\text{exit}         &&\to &&\text{EXIT}            \\
+    &\text{false}        &&\to &&\text{FALSE}           \\
+    &\text{NaN}          &&\to &&\text{FLOAT\_NAN}      \\
+    &\text{FLOAT32\_MAX} &&\to &&\text{FLOAT32\_T\_MAX} \\
+    &\text{FLOAT32\_MIN} &&\to &&\text{FLOAT32\_T\_MIN} \\
+    &\text{float32}      &&\to &&\text{FLOAT32\_T}      \\
+    &\text{FLOAT64\_MAX} &&\to &&\text{FLOAT64\_T\_MAX} \\
+    &\text{FLOAT64\_MIN} &&\to &&\text{FLOAT64\_T\_MIN} \\
+    &\text{float64}      &&\to &&\text{FLOAT64\_T}      \\
+    &\text{for}          &&\to &&\text{FOR}             \\
+    &\text{func}         &&\to &&\text{FUNCTION}        \\
+    &\text{if}           &&\to &&\text{IF}              \\
+    &\text{iface}        &&\to &&\text{INTERFACE}       \\
+    &\text{in}           &&\to &&\text{IN}              \\
+    &\text{INT16\_MAX}   &&\to &&\text{INT16\_MAX}      \\
+    &\text{INT16\_MIN}   &&\to &&\text{INT16\_MIN}      \\
+    &\text{int16}        &&\to &&\text{INT16}           \\
+    &\text{INT32\_MAX}   &&\to &&\text{INT32\_MAX}      \\
+    &\text{INT32\_MIN}   &&\to &&\text{INT32\_MIN}      \\
+    &\text{int32}        &&\to &&\text{INT32}           \\
+    &\text{INT64\_MAX}   &&\to &&\text{INT64\_MAX}      \\
+    &\text{INT64\_MIN}   &&\to &&\text{INT64\_MIN}      \\
+    &\text{int64}        &&\to &&\text{INT64}           \\
+    &\text{INT8\_MAX}    &&\to &&\text{INT8\_MAX}       \\
+    &\text{INT8\_MIN}    &&\to &&\text{INT8\_MIN}       \\
+    &\text{int8}         &&\to &&\text{INT8}            \\
+    &\text{and}          &&\to &&\text{LOGICAL\_AND}    \\
+    &\text{or}           &&\to &&\text{LOGICAL\_OR}     \\
+    &\text{mut}          &&\to &&\text{MUTABLE}         \\
+    &\text{NINF}         &&\to &&\text{NEG\_INF}        \\
+    &\text{INF}          &&\to &&\text{POS\_INF}        \\
+    &\text{private}      &&\to &&\text{PRIVATE}         \\
+    &\text{public}       &&\to &&\text{PUBLIC}          \\
+    &\text{string}       &&\to &&\text{STRING}          \\
+\end{align}
+\begin{align}
+    &\text{true}         &&\to &&\text{TRUE}            \\
+    &\text{UINT16\_MAX}  &&\to &&\text{UINT16\_MAX}     \\
+    &\text{UINT16\_MIN}  &&\to &&\text{UINT16\_MIN}     \\
+    &\text{uint16}       &&\to &&\text{UINT16}          \\
+    &\text{UINT32\_MAX}  &&\to &&\text{UINT32\_MAX}     \\
+    &\text{UINT32\_MIN}  &&\to &&\text{UINT32\_MIN}     \\
+    &\text{uint32}       &&\to &&\text{UINT32}          \\
+    &\text{UINT64\_MAX}  &&\to &&\text{UINT64\_MAX}     \\
+    &\text{UINT64\_MIN}  &&\to &&\text{UINT64\_MIN}     \\
+    &\text{uint64}       &&\to &&\text{UINT64}          \\
+    &\text{UINT8\_MAX}   &&\to &&\text{UINT8\_MAX}      \\
+    &\text{UINT8\_MIN}   &&\to &&\text{UINT8\_MIN}      \\
+    &\text{uint8}        &&\to &&\text{UINT8}           \\
+    &\text{while}        &&\to &&\text{WHILE}
 \end{align}
 
 \subsection{Operators}
