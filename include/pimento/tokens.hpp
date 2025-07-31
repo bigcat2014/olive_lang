@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <bit>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -16,14 +17,29 @@ namespace pimento::tokenization {
 //! @brief Supported token types.
 enum class TokenType : uint8_t {
   BEGIN = 0,
+  AMP_EQUAL,
+  AMP,
+  AND,
   BOOL,
   BREAK,
+  CARET_CARET_EQUAL,
+  CARET_CARET,
+  CARET_EQUAL,
+  CARET,
   CLASS,
+  COLON,
+  COMMA,
+  COMMENT,
+  DOT,
   ELIF,
   ELSE,
   ENUM,
+  EQUAL_EQUAL,
+  EQUAL,
+  EXCLAIM_EQUAL,
   EXIT,
   FALSE,
+  FLOAT_CONST,
   FLOAT_NAN,
   FLOAT32_T_MAX,
   FLOAT32_T_MIN,
@@ -32,7 +48,12 @@ enum class TokenType : uint8_t {
   FLOAT64_T_MIN,
   FLOAT64_T,
   FOR,
+  FSLASH_EQUAL,
+  FSLASH_FSLASH_EQUAL,
+  FSLASH_FSLASH,
+  FSLASH,
   FUNCTION,
+  IDENT,
   IF,
   IN,
   INT16_T_MAX,
@@ -47,17 +68,49 @@ enum class TokenType : uint8_t {
   INT8_T_MAX,
   INT8_T_MIN,
   INT8_T,
+  INTEGER_CONST,
   INTERFACE,
-  LOGICAL_AND,
-  LOGICAL_OR,
+  LANGLE_EQUAL,
+  LANGLE_LANGLE,
+  LANGLE,
+  LEFT_CURLY,
+  LEFT_PAREN,
+  LEFT_SQUARE,
+  MINUS_EQUAL,
+  MINUS_MINUS,
+  MINUS,
   MUTABLE,
   NEG_INF,
+  NOT,
+  NUMERIC_CONST,
+  OR,
+  PERCENT_EQUAL,
+  PERCENT,
+  PIPE_EQUAL,
+  PIPE,
+  PLUS_EQUAL,
+  PLUS_PLUS,
+  PLUS,
   POS_INF,
   PRIVATE,
   PUBLIC,
+  QUESTION,
+  RANGLE_EQUAL,
+  RANGLE_RANGLE,
+  RANGLE,
   RETURN,
+  RIGHT_CURLY,
+  RIGHT_PAREN,
+  RIGHT_SQUARE,
+  SEMI,
+  STAR_EQUAL,
+  STAR,
+  STRING_LITERAL,
   STRING,
+  TILDE_EQUAL,
+  TILDE,
   TRUE,
+  TYPE_IDENT,
   UINT16_T_MAX,
   UINT16_T_MIN,
   UINT16_T,
@@ -71,56 +124,6 @@ enum class TokenType : uint8_t {
   UINT8_T_MIN,
   UINT8_T,
   WHILE,
-  EXPONENT_ASSIGN,
-  EXPONENT,
-  XOR_ASSIGN,
-  XOR,
-  MOD_ASSIGN,
-  MOD,
-  MUL_ASSIGN,
-  MUL,
-  INTEGER_DIV_ASSIGN,
-  INTEGER_DIV,
-  DIV_ASSIGN,
-  DIV,
-  INC,
-  ADD_ASSIGN,
-  ADD,
-  DEC,
-  SUB_ASSIGN,
-  SUB,
-  SHIFT_LEFT,
-  LE_OP,
-  LT_OP,
-  SHIFT_RIGHT,
-  GE_OP,
-  GT_OP,
-  NE_OP,
-  EQ_OP,
-  ASSIGN,
-  BIT_NOT_ASSIGN,
-  BIT_NOT,
-  AND_ASSIGN,
-  AND,
-  OR_ASSIGN,
-  OR,
-  TERNARY,
-  DOT,
-  COMMA,
-  SEMI,
-  LEFT_PAREN,
-  RIGHT_PAREN,
-  LEFT_SQUARE,
-  RIGHT_SQUARE,
-  LEFT_CURLY,
-  RIGHT_CURLY,
-  IDENT,
-  TYPE_IDENT,
-  INTEGER_CONST,
-  NUMERIC_CONST,
-  FLOAT_CONST,
-  STRING_LITERAL,
-  COMMENT,
   NUM_TOKENS
 };
 
@@ -131,67 +134,51 @@ enum class TokenType : uint8_t {
 #endif
 
 //! @brief 64-bit integers with the 32-bit, 16-bit, and 8-bit representations packed.
-union NumericConst
-{
-  //! @brief Get the value as a double precision float.
-  //! @return double The value as a double precision float.
-  [[nodiscard]] inline double   as_float64() { return float64; }
-  //! @brief Get the value as a single precision float.
-  //! @return float The value as a single precision float.
-  [[nodiscard]] inline float    as_float32() { return static_cast<float>(float64); }
-
-  //! @brief Get the value as a double precision float assuming the value was stored as an integer.
-  //! @return double The value as a double precision float.
-  [[nodiscard]] inline double   as_float64_from_int() { return static_cast<double>(uint64); }
-  //! @brief Get the value as a single precision float assuming the value was stored as an integer.
-  //! @return float The value as a single precision float.
-  [[nodiscard]] inline float    as_float32_from_int() { return static_cast<float>(uint64); }
-
+union IntegerConst {
   //! @brief Get the value as a 64-bit unsigned integer.
   //! @return uint64_t The value as a 64-bit unsigned integer.
   [[nodiscard]] inline uint64_t as_uint64()  { return uint64; }
   //! @brief Get the value as a 64-bit signed integer.
   //! @return uint64_t The value as a 64-bit signed integer.
-  [[nodiscard]] inline int64_t  as_int64()   { return reinterpret_cast<int64_t&>(uint64); }
+  [[nodiscard]] inline int64_t  as_int64()   { return std::bit_cast<int64_t>(uint64); }
 
   //! @brief Get the value as a 32-bit unsigned integer.
   //! @return uint32_t The value as a 32-bit unsigned integer.
   [[nodiscard]] inline uint32_t as_uint32()  { return uint32_view.value; }
   //! @brief Get the value as a 32-bit signed integer.
   //! @return uint32_t The value as a 32-bit signed integer.
-  [[nodiscard]] inline int32_t  as_int32()   { return reinterpret_cast<int32_t&>(uint32_view.value); }
+  [[nodiscard]] inline int32_t  as_int32()   { return std::bit_cast<int32_t>(uint32_view.value); }
 
   //! @brief Get the value as a 16-bit unsigned integer.
   //! @return uint16_t The value as a 16-bit unsigned integer.
   [[nodiscard]] inline uint16_t as_uint16()  { return uint16_view.value; }
   //! @brief Get the value as a 16-bit signed integer.
   //! @return uint16_t The value as a 16-bit signed integer.
-  [[nodiscard]] inline int16_t  as_int16()   { return reinterpret_cast<int16_t&>(uint16_view.value);}
+  [[nodiscard]] inline int16_t  as_int16()   { return std::bit_cast<int16_t>(uint16_view.value);}
 
   //! @brief Get the value as an 8-bit unsigned integer.
   //! @return uint8_t The value as an 8-bit unsigned integer.
   [[nodiscard]] inline uint8_t  as_uint8()   { return uint8_view.value; }
   //! @brief Get the value as an 8-bit signed integer.
   //! @return uint8_t The value as an 8-bit signed integer.
-  [[nodiscard]] inline int8_t   as_int8()    { return reinterpret_cast<int8_t&>(uint8_view.value); }
+  [[nodiscard]] inline int8_t   as_int8()    { return std::bit_cast<int8_t>(uint8_view.value); }
 
   // Explicit overloads to make use of C++ built-in sign extension
-  void operator=(double                 value) { float64 = value; }
-  void operator=(float                  value) { float64 = value; }
-  void operator=(long long unsigned int value) { uint64  = value; }
-  void operator=(long unsigned int      value) { uint64  = value; }
-  void operator=(unsigned int           value) { uint64  = value; }
-  void operator=(unsigned short         value) { uint64  = value; }
-  void operator=(unsigned char          value) { uint64  = value; }
-  void operator=(long long signed int   value) { uint64  = value; }
-  void operator=(long signed int        value) { uint64  = value; }
-  void operator=(signed int             value) { uint64  = value; }
-  void operator=(signed short           value) { uint64  = value; }
-  void operator=(signed char            value) { uint64  = value; }
+  void operator=(double                 value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(float                  value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(long long unsigned int value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(long unsigned int      value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(unsigned int           value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(unsigned short         value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(unsigned char          value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(long long signed int   value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(long signed int        value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(signed int             value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(signed short           value) { uint64 = static_cast<uint64_t>(value); }
+  void operator=(signed char            value) { uint64 = static_cast<uint64_t>(value); }
 
 private:
   uint64_t uint64;
-  double   float64;
 
   PACKED_STRUCT(uint32Struct) {
     uint32_t value;
@@ -204,6 +191,224 @@ private:
   PACKED_STRUCT(uint8Struct) {
     uint8_t value;
   } uint8_view;
+};
+
+template<typename T>
+class FloatConst {
+public:
+  FloatConst(T value, InputType type){
+    switch (type)
+    {
+    case InputType::RAW:
+      float64 = reinterpret_cast<double&>(value);
+      float32 = reinterpret_cast<float&>(value);
+      break;
+    case InputType::CAST:
+      float64 = static_cast<double>(value);
+      float32 = static_cast<float>(value);
+      break;
+    default:
+      break;
+    }
+  }
+
+  //! @brief Get the value as a double precision float.
+  //! @return double The value as a double precision float.
+  [[nodiscard]] inline double as_float64() { return float64; }
+  //! @brief Get the value as a single precision float.
+  //! @return float The value as a single precision float.
+  [[nodiscard]] inline float  as_float32() { return float32; }
+
+  void operator=(double value) {
+    float64 = value;
+    float32 = static_cast<float>(value);
+  }
+  void operator=(float value) {
+    float64 = static_cast<double>(value);
+    float32 = value;
+  }
+
+
+  // // Explicit overloads to make use of C++ built-in sign extension
+  // void operator=(double value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(float value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(long long unsigned int value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(long unsigned int value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(unsigned int value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(unsigned short value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(unsigned char value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(long long signed int value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(long signed int value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(signed int value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(signed short value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+  // void operator=(signed char value) {
+  //   float64 = static_cast<double>(value);
+  //   float32 = static_cast<float>(value);
+  // }
+
+public:
+  enum class InputType {
+    CAST,
+    RAW,
+  };
+
+private:
+  double float64;
+  float  float32;
+};
+
+struct NumericConst {
+  //! @brief Get the value as a double precision float assuming the value was stored as an integer.
+  //! @return double The value as a double precision float.
+  [[nodiscard]] inline double   as_float64() { return float64; }
+  //! @brief Get the value as a single precision float assuming the value was stored as an integer.
+  //! @return float The value as a single precision float.
+  [[nodiscard]] inline float    as_float32() { return float32; }
+
+  //! @brief Get the value as a double precision float assuming the value was stored as an integer.
+  //! @return double The value as a double precision float.
+  [[nodiscard]] inline double   as_float64_from_int() { uint64_t val = uint64.as_uint64(); return reinterpret_cast<double&>(val); }
+  //! @brief Get the value as a single precision float assuming the value was stored as an integer.
+  //! @return float The value as a single precision float.
+  [[nodiscard]] inline float    as_float32_from_int() { uint32_t val = uint64.as_uint32(); return reinterpret_cast<float&>(val); }
+
+  //! @brief Get the value as a 64-bit unsigned integer.
+  //! @return uint64_t The value as a 64-bit unsigned integer.
+  [[nodiscard]] inline uint64_t as_uint64()  { return uint64.as_uint64(); }
+  //! @brief Get the value as a 64-bit signed integer.
+  //! @return uint64_t The value as a 64-bit signed integer.
+  [[nodiscard]] inline int64_t  as_int64()   { return uint64.as_int64(); }
+
+  //! @brief Get the value as a 32-bit unsigned integer.
+  //! @return uint32_t The value as a 32-bit unsigned integer.
+  [[nodiscard]] inline uint32_t as_uint32()  { return uint64.as_uint32(); }
+  //! @brief Get the value as a 32-bit signed integer.
+  //! @return uint32_t The value as a 32-bit signed integer.
+  [[nodiscard]] inline int32_t  as_int32()   { return uint64.as_uint32(); }
+
+  //! @brief Get the value as a 16-bit unsigned integer.
+  //! @return uint16_t The value as a 16-bit unsigned integer.
+  [[nodiscard]] inline uint16_t as_uint16()  { return uint64.as_uint16(); }
+  //! @brief Get the value as a 16-bit signed integer.
+  //! @return uint16_t The value as a 16-bit signed integer.
+  [[nodiscard]] inline int16_t  as_int16()   { return uint64.as_uint16();}
+
+  //! @brief Get the value as an 8-bit unsigned integer.
+  //! @return uint8_t The value as an 8-bit unsigned integer.
+  [[nodiscard]] inline uint8_t  as_uint8()   { return uint64.as_uint8(); }
+  //! @brief Get the value as an 8-bit signed integer.
+  //! @return uint8_t The value as an 8-bit signed integer.
+  [[nodiscard]] inline int8_t   as_int8()    { return uint64.as_uint8(); }
+
+  void operator=(double value) {
+    std::cout << "operator= for double" << std::endl;
+    float64 = value;
+    float32 = value;
+    uint64 = static_cast<uint64_t>(value);
+  }
+  void operator=(float value) {
+    std::cout << "operator= for float" << std::endl;
+    float64 = value;
+    float32 = value;
+    uint64 = static_cast<uint64_t>(value);
+  }
+  void operator=(long long unsigned int value) {
+    std::cout << "operator= for long long unsigned int" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(long unsigned int value) {
+    std::cout << "operator= for long unsigned int" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(unsigned int value) {
+    std::cout << "operator= for unsigned int" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(unsigned short value) {
+    std::cout << "operator= for unsigned short" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(unsigned char value) {
+    std::cout << "operator= for unsigned char" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(long long signed int value) {
+    std::cout << "operator= for long long signed int" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(long signed int value) {
+    std::cout << "operator= for long signed int" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(signed int value) {
+    std::cout << "operator= for signed int" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(signed short value) {
+    std::cout << "operator= for signed short" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+  void operator=(signed char value) {
+    std::cout << "operator= for signed char" << std::endl;
+    uint64  = value;
+    float64 = static_cast<double>(value);
+    float32 = static_cast<double>(value);
+  }
+private:
+  IntegerConst uint64;
+  double float64;
+  float float32;
 };
 
 //! @brief Parsed token.

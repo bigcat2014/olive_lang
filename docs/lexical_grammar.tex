@@ -49,11 +49,11 @@
 \begin{align}
     &\_\{0, 2\}L(?:L|U|D|\_)*                                                                &&\to &&\text{IDENT}                                   \\
     &U(?:L|U|D)*                                                                             &&\to &&\text{TYPE\_IDENT}                             \\
-    &[\backslash+-]?D+                                                                       &&\to &&\text{NUMERIC\_CONST}                          \\
+    &[\backslash+-]?D+                                                                       &&\to &&\text{INTEGER\_CONST}                          \\
     &\text{0}[\text{xX}](H\{1,16\})                                                          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Hex}        \\
     &\text{0}[\text{oO}](1O\{21\}|O\{1,21\})                                                 &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Octal}      \\
     &\text{0}[\text{bB}](B\{1,64\})                                                          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Binary}     \\
-    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Float}      \\
+    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to &&\text{FLOAT\_CONST}      &&&&\text{Float}      \\
     &([\backslash+-]?(?:D+(?:\backslash.D*)?|\backslash.D+))[eE]([\backslash+-]?D+)          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Scientific} \\
     &(\text{r}?)"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                         \\
     &\#.*\$                                                                                  &&\to &&\text{COMMENT}
@@ -61,18 +61,20 @@
 
 \subsection{Symbols}
 \begin{align}
+    &:  &&\to &&\text{COLON}         \\
     &,  &&\to &&\text{COMMA}         \\
-    &;  &&\to &&\text{SEMI}          \\
-    &(  &&\to &&\text{LEFT\_PAREN}   \\
-    &)  &&\to &&\text{RIGHT\_PAREN}  \\
-    &[  &&\to &&\text{LEFT\_SQUARE}  \\
-    &]  &&\to &&\text{RIGHT\_SQUARE} \\
     &\{ &&\to &&\text{LEFT\_CURLY}   \\
-    &\} &&\to &&\text{RIGHT\_CURLY}
+    &(  &&\to &&\text{LEFT\_PAREN}   \\
+    &[  &&\to &&\text{LEFT\_SQUARE}  \\
+    &\} &&\to &&\text{RIGHT\_CURLY}  \\
+    &)  &&\to &&\text{RIGHT\_PAREN}  \\
+    &]  &&\to &&\text{RIGHT\_SQUARE} \\
+    &;  &&\to &&\text{SEMI}
 \end{align}
 
 \subsection{Keywords}
 \begin{align}
+    &\text{and}          &&\to &&\text{AND}             \\
     &\text{bool}         &&\to &&\text{BOOL}            \\
     &\text{break}        &&\to &&\text{BREAK}           \\
     &\text{class}        &&\to &&\text{CLASS}           \\
@@ -81,18 +83,16 @@
     &\text{enum}         &&\to &&\text{ENUM}            \\
     &\text{exit}         &&\to &&\text{EXIT}            \\
     &\text{false}        &&\to &&\text{FALSE}           \\
-    &\text{NaN}          &&\to &&\text{FLOAT\_NAN}      \\
     &\text{FLOAT32\_MAX} &&\to &&\text{FLOAT32\_T\_MAX} \\
     &\text{FLOAT32\_MIN} &&\to &&\text{FLOAT32\_T\_MIN} \\
     &\text{float32}      &&\to &&\text{FLOAT32\_T}      \\
     &\text{FLOAT64\_MAX} &&\to &&\text{FLOAT64\_T\_MAX} \\
     &\text{FLOAT64\_MIN} &&\to &&\text{FLOAT64\_T\_MIN} \\
     &\text{float64}      &&\to &&\text{FLOAT64\_T}      \\
+    &\text{NaN}          &&\to &&\text{FLOAT\_NAN}      \\
     &\text{for}          &&\to &&\text{FOR}             \\
     &\text{func}         &&\to &&\text{FUNCTION}        \\
     &\text{if}           &&\to &&\text{IF}              \\
-    &\text{iface}        &&\to &&\text{INTERFACE}       \\
-    &\text{in}           &&\to &&\text{IN}              \\
     &\text{INT16\_MAX}   &&\to &&\text{INT16\_MAX}      \\
     &\text{INT16\_MIN}   &&\to &&\text{INT16\_MIN}      \\
     &\text{int16}        &&\to &&\text{INT16}           \\
@@ -105,14 +105,17 @@
     &\text{INT8\_MAX}    &&\to &&\text{INT8\_MAX}       \\
     &\text{INT8\_MIN}    &&\to &&\text{INT8\_MIN}       \\
     &\text{int8}         &&\to &&\text{INT8}            \\
-    &\text{and}          &&\to &&\text{LOGICAL\_AND}    \\
-    &\text{or}           &&\to &&\text{LOGICAL\_OR}     \\
+    &\text{iface}        &&\to &&\text{INTERFACE}       \\
+    &\text{in}           &&\to &&\text{IN}              \\
     &\text{mut}          &&\to &&\text{MUTABLE}         \\
     &\text{NINF}         &&\to &&\text{NEG\_INF}        \\
+    &\text{not}          &&\to &&\text{NOT}             \\
+    &\text{or}           &&\to &&\text{OR}              \\
     &\text{INF}          &&\to &&\text{POS\_INF}        \\
     &\text{private}      &&\to &&\text{PRIVATE}         \\
     &\text{public}       &&\to &&\text{PUBLIC}          \\
-    &\text{string}       &&\to &&\text{STRING}          \\
+    &\text{return}       &&\to &&\text{RETURN}          \\
+    &\text{string}       &&\to &&\text{STRING}
 \end{align}
 \begin{align}
     &\text{true}         &&\to &&\text{TRUE}            \\
@@ -133,39 +136,41 @@
 
 \subsection{Operators}
 \begin{align}
-    &\hat{}\enspace\hat{}= &&\to &&\text{EXPONENT\_ASSIGN}     \\
-    &\hat{}\enspace\hat{}  &&\to &&\text{EXPONENT}             \\
-    &\hat{}=               &&\to &&\text{XOR\_ASSIGN}          \\
-    &\hat{}                &&\to &&\text{XOR}                  \\
-    &\%=                   &&\to &&\text{MOD\_ASSIGN}          \\
-    &\%                    &&\to &&\text{MOD}                  \\
-    &*=                    &&\to &&\text{MUL\_ASSIGN}          \\
-    &*                     &&\to &&\text{MUL}                  \\
-    &//=                   &&\to &&\text{INTEGER\_DIV\_ASSIGN} \\
-    &//                    &&\to &&\text{INTEGER\_DIV}         \\
-    &/=                    &&\to &&\text{DIV\_ASSIGN}          \\
-    &/                     &&\to &&\text{DIV}                  \\
-    &++                    &&\to &&\text{INC}                  \\
-    &+=                    &&\to &&\text{ADD\_ASSIGN}          \\
-    &+                     &&\to &&\text{ADD}                  \\
-    &--                    &&\to &&\text{DEC}                  \\
-    &-=                    &&\to &&\text{SUB\_ASSIGN}          \\
-    &-                     &&\to &&\text{SUB}                  \\
-    &<<                    &&\to &&\text{SHIFT\_LEFT}          \\
-    &<=                    &&\to &&\text{LE\_OP}               \\
-    &<                     &&\to &&\text{LT\_OP}               \\
-    &>>                    &&\to &&\text{SHIFT\_RIGHT}         \\
-    &>=                    &&\to &&\text{GE\_OP}               \\
-    &>                     &&\to &&\text{GT\_OP}               \\
-    &!=                    &&\to &&\text{NE\_OP}               \\
-    &==                    &&\to &&\text{EQ\_OP}               \\
-    &=                     &&\to &&\text{ASSIGN}               \\
-    &\&=                   &&\to &&\text{AND\_ASSIGN}          \\
-    &\&                    &&\to &&\text{AND}                  \\
-    &|=                    &&\to &&\text{OR\_ASSIGN}           \\
-    &|                     &&\to &&\text{OR}                   \\
-    &?                     &&\to &&\text{TERNARY}              \\
-    &.                     &&\to &&\text{DOT}
+    &\&=                   &&\to &&\text{AMP\_EQUAL}            \\
+    &\&                    &&\to &&\text{AMP}                   \\
+    &\hat{}\enspace\hat{}= &&\to &&\text{CARET\_CARET\_EQUAL}   \\
+    &\hat{}\enspace\hat{}  &&\to &&\text{CARET\_CARET}          \\
+    &\hat{}=               &&\to &&\text{CARET\_EQUAL}          \\
+    &\hat{}                &&\to &&\text{CARET}                 \\
+    &.                     &&\to &&\text{DOT}                   \\
+    &==                    &&\to &&\text{EQUAL\_EQUAL}          \\
+    &=                     &&\to &&\text{EQUAL}                 \\
+    &!=                    &&\to &&\text{EXCLAIM\_EQUAL}        \\
+    &/=                    &&\to &&\text{FSLASH\_EQUAL}         \\
+    &//=                   &&\to &&\text{FSLASH\_FSLASH\_EQUAL} \\
+    &//                    &&\to &&\text{FSLASH\_FSLASH}        \\
+    &/                     &&\to &&\text{FSLASH}                \\
+    &<=                    &&\to &&\text{LANGLE\_EQUAL}         \\
+    &<<                    &&\to &&\text{LANGLE\_LANGLE}        \\
+    &<                     &&\to &&\text{LANGLE}                \\
+    &-=                    &&\to &&\text{MINUS\_EQUAL}          \\
+    &--                    &&\to &&\text{MINUS\_MINUS}          \\
+    &-                     &&\to &&\text{MINUS}                 \\
+    &\%=                   &&\to &&\text{PERCENT\_EQUAL}        \\
+    &\%                    &&\to &&\text{PERCENT}               \\
+    &|=                    &&\to &&\text{PIPE\_EQUAL}           \\
+    &|                     &&\to &&\text{PIPE}                  \\
+    &+=                    &&\to &&\text{PLUS\_EQUAL}           \\
+    &++                    &&\to &&\text{PLUS\_PLUS}            \\
+    &+                     &&\to &&\text{PLUS}                  \\
+    &?                     &&\to &&\text{QUESTION}              \\
+    &>=                    &&\to &&\text{RANGLE\_EQUAL}         \\
+    &>>                    &&\to &&\text{RANGLE\_RANGLE}        \\
+    &>                     &&\to &&\text{RANGLE}                \\
+    &*=                    &&\to &&\text{STAR\_EQUAL}           \\
+    &*                     &&\to &&\text{STAR}                  \\
+    &\sim=                 &&\to &&\text{TILDE\_EQUAL}          \\
+    &\sim                  &&\to &&\text{TILDE}
 \end{align}
 
 \section{Backus-Naur Form}
@@ -297,7 +302,7 @@
     &<symbols>              &&::= &&<normal\_symbol> | <quote> | <backslash> \\
     \notag&<normal\_symbol> &&::= &&"!" | "\#" | "\$" | "\%" | "\&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | \\
     \notag                  &&&&&"/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "]" | "\hat{}" | "\_" | "`" | \\
-                            &&&&&"\{" | "|" | "\}" | "~" \\
+                            &&&&&"\{" | "|" | "\}" | "\sim" \\
     &<whitespace>           &&::= &&<non\_newline> | <newline> \\
     &<non\_newline>         &&::= &&" " | "\backslash t" | "\backslash r" \\
     &<newline>              &&::= &&"\backslash n" \\
