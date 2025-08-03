@@ -2,8 +2,8 @@
 //! @brief Pimento lexer unit tests
 //! @author Logan Thomas
 
-#include <memory>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -20,23 +20,23 @@ using namespace pimento::tokenization;
 
 class TestingFile {
 public:
-  TestingFile(const std::string_view &file_path_sv):
-    m_input_file(std::string(file_path_sv))
-  {
+  TestingFile(const std::string_view &file_path_sv)
+      : m_input_file(std::string(file_path_sv)) {
     if (!m_input_file) {
       throw std::runtime_error("cannot open " + std::string(file_path_sv));
     }
   }
 
-  virtual ~TestingFile(){}
+  virtual ~TestingFile() {}
 
   inline bool advance() {
     m_token.clear();
     return (bool)std::getline(m_input_file, m_token);
-
   }
 
-  [[nodiscard]] inline std::string get_token() const noexcept { return m_token; }
+  [[nodiscard]] inline std::string get_token() const noexcept {
+    return m_token;
+  }
 
 private:
   std::ifstream m_input_file;
@@ -56,7 +56,7 @@ std::vector<std::string> parse_csv_row(std::istringstream &input) {
 TEST(Lexer, FloatPass) {
   TestingFile testing_file{FLOAT_PASS_PATH};
 
-  while(testing_file.advance()) {
+  while (testing_file.advance()) {
     std::istringstream test_stream{std::move(testing_file.get_token())};
     std::vector<std::string> parsed = parse_csv_row(test_stream);
     ASSERT_GE(parsed.size(), 2);
@@ -74,7 +74,7 @@ TEST(Lexer, FloatPass) {
 TEST(Lexer, IntegerPass) {
   TestingFile testing_file{INTEGER_PASS_PATH};
 
-  while(testing_file.advance()) {
+  while (testing_file.advance()) {
     std::istringstream test_stream{std::move(testing_file.get_token())};
     std::vector<std::string> parsed = parse_csv_row(test_stream);
     ASSERT_GE(parsed.size(), 2);
@@ -92,7 +92,7 @@ TEST(Lexer, IntegerPass) {
 TEST(Lexer, ScientificPass) {
   TestingFile testing_file{SCIENTIFIC_PASS_PATH};
 
-  while(testing_file.advance()) {
+  while (testing_file.advance()) {
     std::istringstream test_stream{std::move(testing_file.get_token())};
     std::vector<std::string> parsed = parse_csv_row(test_stream);
     ASSERT_GE(parsed.size(), 3);
@@ -111,7 +111,7 @@ TEST(Lexer, ScientificPass) {
 TEST(Lexer, FloatFail) {
   TestingFile testing_file{FLOAT_FAIL_PATH};
 
-  while(testing_file.advance()) {
+  while (testing_file.advance()) {
     std::istringstream token_stream{testing_file.get_token()};
     Lexer lexer{token_stream};
 
@@ -124,7 +124,7 @@ TEST(Lexer, FloatFail) {
 TEST(Lexer, IntegerFail) {
   TestingFile testing_file{INTEGER_FAIL_PATH};
 
-  while(testing_file.advance()) {
+  while (testing_file.advance()) {
     std::istringstream token_stream{testing_file.get_token()};
     Lexer lexer{token_stream};
 
@@ -138,7 +138,7 @@ TEST(Lexer, IntegerFail) {
 TEST(Lexer, ScientificFail) {
   TestingFile testing_file{SCIENTIFIC_FAIL_PATH};
 
-  while(testing_file.advance()) {
+  while (testing_file.advance()) {
     std::istringstream token_stream{testing_file.get_token()};
     Lexer lexer{token_stream};
 

@@ -40,7 +40,7 @@ TEST(Parser, StmtExit) {
       std::get<std::shared_ptr<node::TermNode>>(
           stmt_exit_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 }
 
 TEST(Parser, StmtLet) {
@@ -56,7 +56,7 @@ TEST(Parser, StmtLet) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
@@ -65,7 +65,7 @@ TEST(Parser, StmtLet) {
       std::get<std::shared_ptr<node::TermNode>>(
           stmt_let_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 1);
+  //   TEST_INT_LIT_TERM(term_node->node, 1);
 }
 
 TEST(Parser, StmtAssign) {
@@ -81,7 +81,7 @@ TEST(Parser, StmtAssign) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_assign_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_assign_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
@@ -90,7 +90,7 @@ TEST(Parser, StmtAssign) {
       std::get<std::shared_ptr<node::TermNode>>(
           stmt_assign_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 1);
+  //   TEST_INT_LIT_TERM(term_node->node, 1);
 }
 
 TEST(Parser, StmtWhile) {
@@ -112,7 +112,7 @@ TEST(Parser, StmtWhile) {
       std::get<std::shared_ptr<node::TermNode>>(
           stmt_while_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_while_node->scope->statements.size(), 1);
 }
@@ -138,7 +138,7 @@ TEST(Parser, Scope) {
           scope_node->statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
@@ -147,7 +147,7 @@ TEST(Parser, Scope) {
       std::get<std::shared_ptr<node::TermNode>>(
           stmt_let_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 1);
+  //   TEST_INT_LIT_TERM(term_node->node, 1);
 }
 
 TEST(Parser, StmtIf) {
@@ -168,7 +168,7 @@ TEST(Parser, StmtIf) {
   std::shared_ptr<node::TermNode> term_node =
       std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
   EXPECT_FALSE(stmt_if_node->ifpred.has_value());
@@ -193,7 +193,7 @@ TEST(Parser, IfPredElif) {
   std::shared_ptr<node::TermNode> term_node =
       std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
 
@@ -210,7 +210,7 @@ TEST(Parser, IfPredElif) {
       std::get<std::shared_ptr<node::TermNode>>(
           ifpred_elif_node->expression->node);
 
-//   TEST_INT_LIT_TERM(elif_term_node->node, 2);
+  //   TEST_INT_LIT_TERM(elif_term_node->node, 2);
 
   EXPECT_EQ(ifpred_elif_node->scope->statements.size(), 1);
 
@@ -235,7 +235,7 @@ TEST(Parser, IfPredElse) {
   std::shared_ptr<node::TermNode> term_node =
       std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
 
@@ -268,7 +268,7 @@ TEST(Parser, IfPredElifElse) {
   std::shared_ptr<node::TermNode> term_node =
       std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
 
@@ -285,7 +285,7 @@ TEST(Parser, IfPredElifElse) {
       std::get<std::shared_ptr<node::TermNode>>(
           ifpred_elif_node->expression->node);
 
-//   TEST_INT_LIT_TERM(elif_term_node->node, 2);
+  //   TEST_INT_LIT_TERM(elif_term_node->node, 2);
 
   EXPECT_EQ(ifpred_elif_node->scope->statements.size(), 1);
 
@@ -318,7 +318,7 @@ TEST(Parser, IfPredElifElif) {
   std::shared_ptr<node::TermNode> term_node =
       std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
 
@@ -335,7 +335,7 @@ TEST(Parser, IfPredElifElif) {
       std::get<std::shared_ptr<node::TermNode>>(
           ifpred_elif_node1->expression->node);
 
-//   TEST_INT_LIT_TERM(elif_term_node1->node, 2);
+  //   TEST_INT_LIT_TERM(elif_term_node1->node, 2);
 
   EXPECT_EQ(ifpred_elif_node1->scope->statements.size(), 1);
 
@@ -352,7 +352,7 @@ TEST(Parser, IfPredElifElif) {
       std::get<std::shared_ptr<node::TermNode>>(
           ifpred_elif_node2->expression->node);
 
-//   TEST_INT_LIT_TERM(elif_term_node2->node, 4);
+  //   TEST_INT_LIT_TERM(elif_term_node2->node, 4);
 
   EXPECT_EQ(ifpred_elif_node2->scope->statements.size(), 1);
   EXPECT_FALSE(ifpred_elif_node2->ifpred.has_value());
@@ -378,7 +378,7 @@ TEST(Parser, IfPredElifElifElse) {
   std::shared_ptr<node::TermNode> term_node =
       std::get<std::shared_ptr<node::TermNode>>(stmt_if_node->expression->node);
 
-//   TEST_INT_LIT_TERM(term_node->node, 0);
+  //   TEST_INT_LIT_TERM(term_node->node, 0);
 
   EXPECT_EQ(stmt_if_node->scope->statements.size(), 1);
 
@@ -395,7 +395,7 @@ TEST(Parser, IfPredElifElifElse) {
       std::get<std::shared_ptr<node::TermNode>>(
           ifpred_elif_node1->expression->node);
 
-//   TEST_INT_LIT_TERM(elif_term_node1->node, 2);
+  //   TEST_INT_LIT_TERM(elif_term_node1->node, 2);
 
   EXPECT_EQ(ifpred_elif_node1->scope->statements.size(), 1);
 
@@ -412,7 +412,7 @@ TEST(Parser, IfPredElifElifElse) {
       std::get<std::shared_ptr<node::TermNode>>(
           ifpred_elif_node2->expression->node);
 
-//   TEST_INT_LIT_TERM(elif_term_node2->node, 4);
+  //   TEST_INT_LIT_TERM(elif_term_node2->node, 4);
 
   EXPECT_EQ(ifpred_elif_node2->scope->statements.size(), 1);
 
@@ -439,7 +439,7 @@ TEST(Parser, TermIdent) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::TermNode>>(
@@ -448,7 +448,7 @@ TEST(Parser, TermIdent) {
       std::get<std::shared_ptr<node::TermNode>>(
           stmt_let_node->expression->node);
 
-//   TEST_IDENTIFIER_TERM(term_node->node, "y");
+  //   TEST_IDENTIFIER_TERM(term_node->node, "y");
 }
 
 TEST(Parser, BinExprPower) {
@@ -464,7 +464,7 @@ TEST(Parser, BinExprPower) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -489,8 +489,8 @@ TEST(Parser, BinExprPower) {
       std::get<std::shared_ptr<node::TermNode>>(
           binexpr_power_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprMod) {
@@ -506,7 +506,7 @@ TEST(Parser, BinExprMod) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -530,8 +530,8 @@ TEST(Parser, BinExprMod) {
   std::shared_ptr<node::TermNode> right_term =
       std::get<std::shared_ptr<node::TermNode>>(binexpr_mod_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprDiv) {
@@ -547,7 +547,7 @@ TEST(Parser, BinExprDiv) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -571,8 +571,8 @@ TEST(Parser, BinExprDiv) {
   std::shared_ptr<node::TermNode> right_term =
       std::get<std::shared_ptr<node::TermNode>>(binexpr_div_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprMul) {
@@ -588,7 +588,7 @@ TEST(Parser, BinExprMul) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -612,8 +612,8 @@ TEST(Parser, BinExprMul) {
   std::shared_ptr<node::TermNode> right_term =
       std::get<std::shared_ptr<node::TermNode>>(binexpr_mul_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprPlus) {
@@ -629,7 +629,7 @@ TEST(Parser, BinExprPlus) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -653,8 +653,8 @@ TEST(Parser, BinExprPlus) {
   std::shared_ptr<node::TermNode> right_term =
       std::get<std::shared_ptr<node::TermNode>>(binexpr_plus_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprMinus) {
@@ -670,7 +670,7 @@ TEST(Parser, BinExprMinus) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -695,8 +695,8 @@ TEST(Parser, BinExprMinus) {
       std::get<std::shared_ptr<node::TermNode>>(
           binexpr_minus_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprGT) {
@@ -712,7 +712,7 @@ TEST(Parser, BinExprGT) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -738,8 +738,8 @@ TEST(Parser, BinExprGT) {
   std::shared_ptr<node::TermNode> right_term =
       std::get<std::shared_ptr<node::TermNode>>(binexpr_gt_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }
 
 TEST(Parser, BinExprLT) {
@@ -755,7 +755,7 @@ TEST(Parser, BinExprLT) {
           parser.get_program().statements[0]->node);
 
   // Check the token type and properties are correct
-//   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
+  //   TEST_IDENTIFIER_TOKEN(stmt_let_node->identifier, "x");
 
   // Check that the expression is correct
   ASSERT_TRUE(std::holds_alternative<std::shared_ptr<node::BinExprNode>>(
@@ -780,6 +780,6 @@ TEST(Parser, BinExprLT) {
   std::shared_ptr<node::TermNode> right_term =
       std::get<std::shared_ptr<node::TermNode>>(binexpr_lt_node->right->node);
 
-//   TEST_INT_LIT_TERM(left_term->node, 2);
-//   TEST_INT_LIT_TERM(right_term->node, 3);
+  //   TEST_INT_LIT_TERM(left_term->node, 2);
+  //   TEST_INT_LIT_TERM(right_term->node, 3);
 }

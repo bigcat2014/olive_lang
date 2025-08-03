@@ -33,7 +33,7 @@
     __typeof__(IDENTIFIER_TOKEN) __identifier_token = (IDENTIFIER_TOKEN);      \
     __typeof__(IDENTIFIER) __identifier = (IDENTIFIER);                        \
     EXPECT_EQ(__identifier_token.token_type,                                   \
-              pimento::tokenization::TokenType::IDENTIFIER);                \
+              pimento::tokenization::TokenType::IDENTIFIER);                   \
     ASSERT_TRUE(                                                               \
         std::holds_alternative<pimento::tokenization::IdentProperties>(        \
             __identifier_token.properties));                                   \
@@ -48,7 +48,7 @@
     __typeof__(INT_LIT_TOKEN) __int_lit_token = (INT_LIT_TOKEN);               \
     __typeof__(INT_LIT) __int_lit = (INT_LIT);                                 \
     EXPECT_EQ(__int_lit_token.token_type,                                      \
-              pimento::tokenization::TokenType::INT_LITERAL);               \
+              pimento::tokenization::TokenType::INT_LITERAL);                  \
     ASSERT_TRUE(                                                               \
         std::holds_alternative<pimento::tokenization::IntLitProperties>(       \
             __int_lit_token.properties));                                      \
