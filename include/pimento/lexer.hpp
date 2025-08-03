@@ -62,29 +62,6 @@ private:
   double_from_scientific(std::string &mantissa_str,
                          const std::string &exponent_str);
 
-  //! @brief Token visitor for logging trace output.
-  struct TraceTokenVisitor {
-    //! @brief Output string stream for building a trace string based on the
-    //! token properties.
-    std::ostringstream &output;
-
-    //! @brief Handle BinOpProperties variant.
-    //! @param properties BinOpProperties The properties of the binary operator.
-    void operator()(const BinOpProperties &properties) const noexcept;
-
-    //! @brief Handle IntLitProperties variant.
-    //! @param properties IntLitProperties The properties of the int literal.
-    void operator()(const IntLitProperties &properties) const noexcept;
-
-    //! @brief Handle IdentProperties variant.
-    //! @param properties IdentProperties The properties of the identifier.
-    void operator()(const IdentProperties &properties) const noexcept;
-
-    //! @brief Handle std::monostate variant.
-    //! @param Unused std::monostate
-    void operator()(const std::monostate &) const noexcept;
-  };
-
 private:
   //! @brief The size in bytes of the chunks to read from the input stream.
   constexpr static size_t BUFFER_SIZE = 4096;

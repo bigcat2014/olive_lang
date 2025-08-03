@@ -51,22 +51,9 @@ void Lexer::tokenize() {
       const char next = peek(i, file_buffer.data(), n, 1);
       bool token_added = try_parse_token(token_buffer, next);
 
-      if (logger.level() == spdlog::level::trace) {
-        if (!m_tokens.empty() && token_added) {
-          Token token = m_tokens.back();
-          try {
-            std::ostringstream trace_output;
-            trace_output << "Got token `"
-                         << TokenTypeUtil::get_type_as_str(token.token_type)
-                         << "`";
-            std::visit(TraceTokenVisitor{.output = trace_output},
-                       token.properties);
-            logger.trace(trace_output.str());
-          } catch (const std::out_of_range &) {
-            logger.trace("Invalid token");
-          }
-        }
-      }
+      // TODO(lthomas): Implement logging
+      // if (logger.level() == spdlog::level::trace) {
+      // }
     }
 
     logger.trace("Finished chunk {}", total_chunks++);
@@ -93,32 +80,7 @@ bool Lexer::try_parse_token(std::string &token_buffer,
     return false;
   }
 
-  try {
-    TokenType token_type = TokenTypeUtil::get_token_type(token_buffer);
-    Token token = TokenFactory::create_token(token_type);
-    m_tokens.push_back(token);
-    token_buffer.clear();
-    return true;
-  } catch (const std::out_of_range &) {
-    // Int literal special case
-    if (std::isdigit(token_buffer.back())) {
-      if (!std::isdigit(next)) {
-        uint64_t value = std::stoull(token_buffer);
-        m_tokens.push_back(
-            TokenFactory::create_token(TokenType::NUMERIC_CONST, value));
-        token_buffer.clear();
-        return true;
-      }
-      // Identifier special case
-    } else if (std::isalpha(token_buffer.back())) {
-      if (!std::isalpha(next)) {
-        m_tokens.push_back(
-            TokenFactory::create_token(TokenType::IDENT, token_buffer));
-        token_buffer.clear();
-        return true;
-      }
-    }
-  }
+  // TODO(lthomas): Implement token parsing.
 
   return false;
 }
@@ -174,28 +136,6 @@ Lexer::double_from_scientific(std::string &mantissa_str,
 
   return FloatConst(mantissa, exponent, negative,
                     FloatConst::Precision::FLOAT64);
-}
-
-void Lexer::TraceTokenVisitor::operator()(
-    const BinOpProperties &properties) const noexcept {
-  output << "; Binary operator with prec: "
-         << std::to_string(properties.precedence) << " and associativity: "
-         << TokenTypeUtil::get_associativity_str(properties.associativity);
-}
-
-void Lexer::TraceTokenVisitor::operator()(
-    const IntLitProperties &properties) const noexcept {
-  output << "; Int literal with value: " << properties.value;
-}
-
-void Lexer::TraceTokenVisitor::operator()(
-    const IdentProperties &properties) const noexcept {
-  output << "; Identifier: " << properties.identifier;
-}
-
-void Lexer::TraceTokenVisitor::operator()(
-    const std::monostate &) const noexcept {
-  // No-op
 }
 
 } // namespace pimento::tokenization
