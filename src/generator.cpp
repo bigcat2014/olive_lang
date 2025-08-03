@@ -31,125 +31,11 @@ void Generator::gen_statement(
     }
 
     void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt) const {
-      const auto it =
-          std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var &var) {
-            bool match{false};
-            // TODO(lthomas): Probably a cleaner way to do this... Refactor
-            // later
-            struct TokenVisitor {
-              bool &match;
-              const std::string &name;
-
-              void operator()(const tokenization::IdentProperties &properties) {
-                match = properties.identifier == name;
-              }
-              void operator()(tokenization::BinOpProperties) { match = false; }
-              void operator()(tokenization::IntLitProperties) { match = false; }
-              void operator()(std::monostate) { match = false; }
-            };
-
-            std::visit(TokenVisitor{.match = match, .name = var.name},
-                       stmt->identifier.properties);
-            return match;
-          });
-
-      if (it != gen.m_vars.cend()) {
-        std::ostringstream oss;
-        oss << "Identifier already used: ";
-        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-        struct TokenVisitor {
-          std::ostringstream &oss;
-
-          explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
-
-          void operator()(const tokenization::IdentProperties &properties) {
-            oss << properties.identifier;
-          }
-          void operator()(tokenization::BinOpProperties) {}
-          void operator()(tokenization::IntLitProperties) {}
-          void operator()(std::monostate) {}
-        };
-
-        std::visit(TokenVisitor(oss), stmt->identifier.properties);
-
-        auto &logger = utils::get_logger();
-        logger.error(oss.str());
-        exit(EXIT_FAILURE);
-      }
-
-      // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-      struct TokenVisitor {
-        std::vector<Var> &vars;
-        size_t stack_size;
-
-        TokenVisitor(std::vector<Var> &vars, size_t stack_size)
-            : vars(vars), stack_size(stack_size) {}
-
-        void operator()(const tokenization::IdentProperties &properties) {
-          vars.emplace_back(properties.identifier, stack_size);
-        }
-        void operator()(tokenization::BinOpProperties) {}
-        void operator()(tokenization::IntLitProperties) {}
-        void operator()(std::monostate) {}
-      };
-
-      std::visit(TokenVisitor(gen.m_vars, gen.m_stack_size),
-                 stmt->identifier.properties);
-
-      gen.gen_expression(stmt->expression);
+      // TODO(lthomas): Not implemented
     }
 
     void operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt) const {
-      const auto it =
-          std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var &var) {
-            bool match{false};
-            // TODO(lthomas): Probably a cleaner way to do this... Refactor
-            // later
-            struct TokenVisitor {
-              bool &match;
-              const std::string &name;
-
-              void operator()(const tokenization::IdentProperties &properties) {
-                match = properties.identifier == name;
-              }
-              void operator()(tokenization::BinOpProperties) { match = false; }
-              void operator()(tokenization::IntLitProperties) { match = false; }
-              void operator()(std::monostate) { match = false; }
-            };
-
-            std::visit(TokenVisitor{.match = match, .name = var.name},
-                       stmt->identifier.properties);
-            return match;
-          });
-
-      if (it == gen.m_vars.cend()) {
-        std::ostringstream oss;
-        oss << "Undeclared identifier: ";
-        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-        struct TokenVisitor {
-          std::ostringstream &oss;
-
-          explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
-
-          void operator()(const tokenization::IdentProperties &properties) {
-            oss << properties.identifier;
-          }
-          void operator()(tokenization::BinOpProperties) {}
-          void operator()(tokenization::IntLitProperties) {}
-          void operator()(std::monostate) {}
-        };
-
-        std::visit(TokenVisitor(oss), stmt->identifier.properties);
-
-        auto &logger = utils::get_logger();
-        logger.error(oss.str());
-        exit(EXIT_FAILURE);
-      }
-
-      gen.gen_expression(stmt->expression);
-      gen.pop("rax");
-      gen.m_output << "    mov [rsp + "
-                   << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
+      // TODO(lthomas): Not implemented
     }
 
     void operator()(const std::shared_ptr<ast::node::ScopeNode> &stmt) const {
@@ -159,7 +45,6 @@ void Generator::gen_statement(
     }
 
     void operator()(const std::shared_ptr<ast::node::StmtIfNode> &stmt) const {
-
       gen.gen_expression(stmt->expression);
       gen.pop("rax");
       const std::string label = gen.create_label();
@@ -181,7 +66,6 @@ void Generator::gen_statement(
 
     void
     operator()(const std::shared_ptr<ast::node::StmtWhileNode> &stmt) const {
-
       const std::string loop_label = gen.create_label();
       const std::string end_label = gen.create_label();
 
@@ -265,76 +149,11 @@ void Generator::gen_term(
 
     void
     operator()(const std::shared_ptr<ast::node::TermIntLitNode> &term) const {
-      // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-      struct TokenVisitor {
-        Generator &gen;
-
-        explicit TokenVisitor(Generator &gen) : gen(gen) {}
-
-        void operator()(const tokenization::IdentProperties &) {}
-        void operator()(tokenization::BinOpProperties) {}
-        void operator()(tokenization::IntLitProperties properties) {
-          gen.m_output << "    mov rax, " << properties.value << "\n";
-          gen.push("rax");
-        }
-        void operator()(std::monostate) {}
-      };
-
-      std::visit(TokenVisitor(gen), term->int_lit_token.properties);
+      // TODO(lthomas): Not implemented
     }
 
     void operator()(std::shared_ptr<ast::node::TermIdentNode> term) const {
-      const auto it =
-          std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var &var) {
-            bool match = false;
-            // TODO(lthomas): Probably a cleaner way to do this... Refactor
-            // later
-            struct TokenVisitor {
-              bool &match;
-              const std::string &name;
-
-              void operator()(const tokenization::IdentProperties &properties) {
-                match = properties.identifier == name;
-              }
-              void operator()(tokenization::BinOpProperties) { match = false; }
-              void operator()(tokenization::IntLitProperties) { match = false; }
-              void operator()(std::monostate) { match = false; }
-            };
-
-            std::visit(TokenVisitor{.match = match, .name = var.name},
-                       term->identifier_token.properties);
-            return match;
-          });
-
-      if (it == gen.m_vars.cend()) {
-        std::ostringstream oss;
-        oss << "Undeclared identifier: ";
-        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-        struct TokenVisitor {
-          std::ostringstream &oss;
-
-          explicit TokenVisitor(std::ostringstream &oss) : oss(oss) {}
-
-          void operator()(const tokenization::IdentProperties &properties) {
-            oss << properties.identifier;
-          }
-          void operator()(tokenization::BinOpProperties) {}
-          void operator()(tokenization::IntLitProperties) {}
-          void operator()(std::monostate) {}
-        };
-
-        std::visit(TokenVisitor(oss), term->identifier_token.properties);
-
-        auto &logger = utils::get_logger();
-        logger.error(oss.str());
-        exit(EXIT_FAILURE);
-      }
-
-      std::ostringstream offset;
-      // TODO(lthomas): Multiplying by 8 bytes for 64 bit sytem
-      offset << "QWORD [rsp + " << (gen.m_stack_size - it->stack_loc - 1) * 8
-             << "]";
-      gen.push(offset.str());
+      // TODO(lthomas): Not implemented
     }
 
     void

@@ -44,8 +44,7 @@ Parser::try_consume(tokenization::TokenType token_type) noexcept {
   if (!next.has_value() || next.value().token_type != token_type) {
     // TODO(lthomas): I don't know if I want to log and exit here
     auto &logger = utils::get_logger();
-    logger.error("Expected `{}` at TODO Line & Column number",
-                 tokenization::TokenTypeUtil::get_token_str(token_type));
+    // TODO(lthomas): Implement logging
     exit(EXIT_FAILURE);
   }
   return next.value();

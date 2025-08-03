@@ -7,6 +7,7 @@
 #include <array>
 #include <istream>
 #include <sstream>
+#include <vector>
 
 #include <pimento/tokens.hpp>
 

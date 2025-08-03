@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 #include <variant>
 
 namespace pimento::tokenization {
@@ -360,8 +361,9 @@ public:
     requires std::is_integral_v<T>
   explicit NumericConst(T value) : m_value(IntConst(value)) {}
 
-  // TODO(lthomas): Not sure if I should always be creating these as float64
-  // precision, I think this has the potential for a double round error.
+  // TODO(lthomas): Not sure if I should always be creating these as
+  // double-precision float, I think this has the potential for a double round
+  // error.
   //! @brief NumericConst Constructor for floating point value represented in
   //! scientific notation.
   //! @param mantissa uint64_t The mantissa of the floating point value.
