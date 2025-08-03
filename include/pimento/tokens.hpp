@@ -7,14 +7,8 @@
 #include <bit>
 #include <cmath>
 #include <cstdint>
-#include <optional>
-#include <ranges>
 #include <string>
 #include <variant>
-
-#include <iostream>
-
-#include <boost/bimap.hpp>
 
 namespace pimento::tokenization {
 
@@ -642,339 +636,125 @@ public:
     }
   }
 
-  //! @brief Get the token string that needs to be parsed in order to get a
-  //! particular token type.
-  //! @param token_type TokenType The token type for which to return the string
-  //! representation.
-  //! @return std::string The string representation of the token for parsing.
-  [[nodiscard]] static inline std::string get_token_str(TokenType token_type) {
-    try {
-      return get_token_bimap().right.at(token_type);
-    } catch (const std::out_of_range &) {
-      return "UNKNOWN_TOKEN";
-    }
-  }
-
-  //! @brief Get the human-readable string representing the associativity.
-  //! @param assoc BinOpProperties::Associativity The Associativity for which to
-  //! return the string.
-  //! @return std::string The human-readable string representation of the token.
-  [[nodiscard]] static inline std::string
-  get_associativity_str(BinOpProperties::Associativity assoc) {
-    try {
-      return get_associativity_str_map().at(assoc);
-    } catch (const std::out_of_range &) {
-      return "UNKNOWN_ASSOCIATIVITY";
-    }
-  }
-
-  //! @brief Get the token type associated with a parsed string.
-  //! @param token std::string The parsed token for which to get the token type.
-  //! @return TokenType The token type associated with the provided token
-  //! string.
-  [[nodiscard]] static inline TokenType
-  get_token_type(const std::string &token) {
-    // Bubble up exceptions
-    return get_token_bimap().left.at(token);
-  }
-
-  //! @brief Get the binary operator properties of a particular token type.
-  //! @param token The token type for which to get the binary operator
-  //! properties.
-  //! @return std::pair<uint8_t, BinOpProperties::Associativity> The precedence
-  //! and associativity of the specified binary operator.
-  [[nodiscard]] static inline std::pair<uint8_t, BinOpProperties::Associativity>
-  get_bin_expr_properties(TokenType token) {
-    // Bubble up exceptions
-    return get_bin_expr_properties_map().at(token);
-  }
-
 private:
-  //! @brief Create a boost::bimap from an initializer list.
-  //! @tparam L The type of the left side of the boost::bimap to initialize.
-  //! @tparam R The type of the right side of the boost::bimap to initialize.
-  //! @param list std::initializer_list<typename boost::bimap<L, R>::value_type>
-  //! The initializer list from which to initialize the boost::bimap.
-  //! @return boost::bimap<L, R> The boost::bimap initialized with the provided
-  //! initializer list.
-  template <typename L, typename R>
-  [[nodiscard]] static inline boost::bimap<L, R> make_bimap(
-      std::initializer_list<typename boost::bimap<L, R>::value_type> list) {
-    return boost::bimap<L, R>(list.begin(), list.end());
-  }
-
-private:
-  using AssociativityMap =
-      std::unordered_map<BinOpProperties::Associativity, std::string>;
   using TokenStrMap = std::unordered_map<TokenType, std::string>;
-  using TokenBimap = boost::bimap<std::string, TokenType>;
-  using BinExprMap =
-      std::unordered_map<TokenType,
-                         std::pair<uint8_t, BinOpProperties::Associativity>>;
-
-  //! @brief Get the map from associtivity types to human-readable strings.
-  [[nodiscard]] static AssociativityMap get_associativity_str_map() noexcept {
-    // clang-format off
-    static const AssociativityMap associativity_str{
-        {BinOpProperties::Associativity::LEFT,  "LEFT"},
-        {BinOpProperties::Associativity::RIGHT, "RIGHT"}
-    };
-    // clang-format on
-
-    return associativity_str;
-  }
 
   //! @brief Get the map from token types to human-readable strings.
   [[nodiscard]] static TokenStrMap get_token_str_map() noexcept {
     // clang-format off
     static const TokenStrMap token_str{
-        {TokenType::LOGICAL_AND,        "LOGICAL_AND"},
-        {TokenType::BOOL,               "BOOL"},
-        {TokenType::BREAK,              "BREAK"},
-        {TokenType::CLASS,              "CLASS"},
-        {TokenType::ELIF,               "ELIF"},
-        {TokenType::ELSE,               "ELSE"},
-        {TokenType::ENUM,               "ENUM"},
-        {TokenType::EXIT,               "EXIT"},
-        {TokenType::FALSE,              "FALSE"},
-        {TokenType::FLOAT32,            "FLOAT32"},
-        {TokenType::FLOAT64,            "FLOAT64"},
-        {TokenType::FOR,                "FOR"},
-        {TokenType::FUNCTION,           "FUNCTION"},
-        {TokenType::IF,                 "IF"},
-        {TokenType::INTERFACE,          "INTERFACE"},
-        {TokenType::IN,                 "IN"},
-        {TokenType::INT16,              "INT16"},
-        {TokenType::INT32,              "INT32"},
-        {TokenType::INT64,              "INT64"},
-        {TokenType::INT8,               "INT8"},
-        {TokenType::MUTABLE,            "MUTABLE"},
-        {TokenType::LOGICAL_OR,         "LOGICAL_OR"},
-        {TokenType::PRIVATE,            "PRIVATE"},
-        {TokenType::PUBLIC,             "PUBLIC"},
-        {TokenType::RETURN,             "RETURN"},
-        {TokenType::STRING,             "STRING"},
-        {TokenType::TRUE,               "TRUE"},
-        {TokenType::UINT16,             "UINT16"},
-        {TokenType::UINT32,             "UINT32"},
-        {TokenType::UINT64,             "UINT64"},
-        {TokenType::UINT8,              "UINT8"},
-        {TokenType::WHILE,              "WHILE"},
-        {TokenType::EXPONENT_ASSIGN,    "EXPONENT_ASSIGN"},
-        {TokenType::EXPONENT,           "EXPONENT"},
-        {TokenType::XOR_ASSIGN,         "XOR_ASSIGN"},
-        {TokenType::XOR,                "XOR"},
-        {TokenType::MOD_ASSIGN,         "MOD_ASSIGN"},
-        {TokenType::MOD,                "MOD"},
-        {TokenType::MUL_ASSIGN,         "MUL_ASSIGN"},
-        {TokenType::MUL,                "MUL"},
-        {TokenType::INTEGER_DIV_ASSIGN, "INTEGER_DIV_ASSIGN"},
-        {TokenType::INTEGER_DIV,        "INTEGER_DIV"},
-        {TokenType::DIV_ASSIGN,         "DIV_ASSIGN"},
-        {TokenType::DIV,                "DIV"},
-        {TokenType::INC,                "INC"},
-        {TokenType::ADD_ASSIGN,         "ADD_ASSIGN"},
-        {TokenType::ADD,                "ADD"},
-        {TokenType::DEC,                "DEC"},
-        {TokenType::SUB_ASSIGN,         "SUB_ASSIGN"},
-        {TokenType::SUB,                "SUB"},
-        {TokenType::SHIFT_LEFT,         "SHIFT_LEFT"},
-        {TokenType::LE_OP,              "LE_OP"},
-        {TokenType::LT_OP,              "LT_OP"},
-        {TokenType::SHIFT_RIGHT,        "SHIFT_RIGHT"},
-        {TokenType::GE_OP,              "GE_OP"},
-        {TokenType::GT_OP,              "GT_OP"},
-        {TokenType::NE_OP,              "NE_OP"},
-        {TokenType::EQ_OP,              "EQ_OP"},
-        {TokenType::ASSIGN,             "ASSIGN"},
-        {TokenType::BIT_NOT_ASSIGN,     "BIT_NOT_ASSIGN"},
-        {TokenType::BIT_NOT,            "BIT_NOT"},
-        {TokenType::AND_ASSIGN,         "AND_ASSIGN"},
-        {TokenType::AND,                "AND"},
-        {TokenType::OR_ASSIGN,          "OR_ASSIGN"},
-        {TokenType::OR,                 "OR"},
-        {TokenType::TERNARY,            "TERNARY"},
-        {TokenType::DOT,                "DOT"},
-        {TokenType::COMMA,              "COMMA"},
-        {TokenType::SEMI,               "SEMI"},
-        {TokenType::LEFT_PAREN,         "LEFT_PAREN"},
-        {TokenType::RIGHT_PAREN,        "RIGHT_PAREN"},
-        {TokenType::LEFT_SQUARE,        "LEFT_SQUARE"},
-        {TokenType::RIGHT_SQUARE,       "RIGHT_SQUARE"},
-        {TokenType::LEFT_CURLY,         "LEFT_CURLY"},
-        {TokenType::RIGHT_CURLY,        "RIGHT_CURLY"},
-        {TokenType::IDENT,              "IDENT"},
-        {TokenType::TYPE_IDENT,         "TYPE_IDENT"},
-        {TokenType::INTEGER_CONST,      "INTEGER_CONST"},
-        {TokenType::NUMERIC_CONST,      "NUMERIC_CONST"},
-        {TokenType::FLOAT_CONST,        "FLOAT_CONST"},
-        {TokenType::STRING_LITERAL,     "STRING_LITERAL"},
-        {TokenType::COMMENT,            "COMMENT"}
+      {TokenType::AMP_EQUAL,           "AMP_EQUAL"},
+      {TokenType::AMP,                 "AMP"},
+      {TokenType::AND,                 "AND"},
+      {TokenType::BOOL,                "BOOL"},
+      {TokenType::BREAK,               "BREAK"},
+      {TokenType::CARET_CARET_EQUAL,   "CARET_CARET_EQUAL"},
+      {TokenType::CARET_CARET,         "CARET_CARET"},
+      {TokenType::CARET_EQUAL,         "CARET_EQUAL"},
+      {TokenType::CARET,               "CARET"},
+      {TokenType::CLASS,               "CLASS"},
+      {TokenType::COLON,               "COLON"},
+      {TokenType::COMMA,               "COMMA"},
+      {TokenType::COMMENT,             "COMMENT"},
+      {TokenType::DOT,                 "DOT"},
+      {TokenType::ELIF,                "ELIF"},
+      {TokenType::ELSE,                "ELSE"},
+      {TokenType::ENUM,                "ENUM"},
+      {TokenType::EQUAL_EQUAL,         "EQUAL_EQUAL"},
+      {TokenType::EQUAL,               "EQUAL"},
+      {TokenType::EXCLAIM_EQUAL,       "EXCLAIM_EQUAL"},
+      {TokenType::EXIT,                "EXIT"},
+      {TokenType::FALSE,               "FALSE"},
+      {TokenType::FLOAT_CONST,         "FLOAT_CONST"},
+      {TokenType::FLOAT_NAN,           "FLOAT_NAN"},
+      {TokenType::FLOAT32_T_MAX,       "FLOAT32_T_MAX"},
+      {TokenType::FLOAT32_T_MIN,       "FLOAT32_T_MIN"},
+      {TokenType::FLOAT32_T,           "FLOAT32_T"},
+      {TokenType::FLOAT64_T_MAX,       "FLOAT64_T_MAX"},
+      {TokenType::FLOAT64_T_MIN,       "FLOAT64_T_MIN"},
+      {TokenType::FLOAT64_T,           "FLOAT64_T"},
+      {TokenType::FOR,                 "FOR"},
+      {TokenType::FSLASH_EQUAL,        "FSLASH_EQUAL"},
+      {TokenType::FSLASH_FSLASH_EQUAL, "FSLASH_FSLASH_EQUAL"},
+      {TokenType::FSLASH_FSLASH,       "FSLASH_FSLASH"},
+      {TokenType::FSLASH,              "FSLASH"},
+      {TokenType::FUNCTION,            "FUNCTION"},
+      {TokenType::IDENT,               "IDENT"},
+      {TokenType::IF,                  "IF"},
+      {TokenType::IN,                  "IN"},
+      {TokenType::INT16_T_MAX,         "INT16_T_MAX"},
+      {TokenType::INT16_T_MIN,         "INT16_T_MIN"},
+      {TokenType::INT16_T,             "INT16_T"},
+      {TokenType::INT32_T_MAX,         "INT32_T_MAX"},
+      {TokenType::INT32_T_MIN,         "INT32_T_MIN"},
+      {TokenType::INT32_T,             "INT32_T"},
+      {TokenType::INT64_T_MAX,         "INT64_T_MAX"},
+      {TokenType::INT64_T_MIN,         "INT64_T_MIN"},
+      {TokenType::INT64_T,             "INT64_T"},
+      {TokenType::INT8_T_MAX,          "INT8_T_MAX"},
+      {TokenType::INT8_T_MIN,          "INT8_T_MIN"},
+      {TokenType::INT8_T,              "INT8_T"},
+      {TokenType::INTEGER_CONST,       "INTEGER_CONST"},
+      {TokenType::INTERFACE,           "INTERFACE"},
+      {TokenType::LANGLE_EQUAL,        "LANGLE_EQUAL"},
+      {TokenType::LANGLE_LANGLE,       "LANGLE_LANGLE"},
+      {TokenType::LANGLE,              "LANGLE"},
+      {TokenType::LEFT_CURLY,          "LEFT_CURLY"},
+      {TokenType::LEFT_PAREN,          "LEFT_PAREN"},
+      {TokenType::LEFT_SQUARE,         "LEFT_SQUARE"},
+      {TokenType::MINUS_EQUAL,         "MINUS_EQUAL"},
+      {TokenType::MINUS_MINUS,         "MINUS_MINUS"},
+      {TokenType::MINUS,               "MINUS"},
+      {TokenType::MUTABLE,             "MUTABLE"},
+      {TokenType::NEG_INF,             "NEG_INF"},
+      {TokenType::NOT,                 "NOT"},
+      {TokenType::NUMERIC_CONST,       "NUMERIC_CONST"},
+      {TokenType::OR,                  "OR"},
+      {TokenType::PERCENT_EQUAL,       "PERCENT_EQUAL"},
+      {TokenType::PERCENT,             "PERCENT"},
+      {TokenType::PIPE_EQUAL,          "PIPE_EQUAL"},
+      {TokenType::PIPE,                "PIPE"},
+      {TokenType::PLUS_EQUAL,          "PLUS_EQUAL"},
+      {TokenType::PLUS_PLUS,           "PLUS_PLUS"},
+      {TokenType::PLUS,                "PLUS"},
+      {TokenType::POS_INF,             "POS_INF"},
+      {TokenType::PRIVATE,             "PRIVATE"},
+      {TokenType::PUBLIC,              "PUBLIC"},
+      {TokenType::QUESTION,            "QUESTION"},
+      {TokenType::RANGLE_EQUAL,        "RANGLE_EQUAL"},
+      {TokenType::RANGLE_RANGLE,       "RANGLE_RANGLE"},
+      {TokenType::RANGLE,              "RANGLE"},
+      {TokenType::RETURN,              "RETURN"},
+      {TokenType::RIGHT_CURLY,         "RIGHT_CURLY"},
+      {TokenType::RIGHT_PAREN,         "RIGHT_PAREN"},
+      {TokenType::RIGHT_SQUARE,        "RIGHT_SQUARE"},
+      {TokenType::SEMI,                "SEMI"},
+      {TokenType::STAR_EQUAL,          "STAR_EQUAL"},
+      {TokenType::STAR,                "STAR"},
+      {TokenType::STRING_LITERAL,      "STRING_LITERAL"},
+      {TokenType::STRING,              "STRING"},
+      {TokenType::TILDE_EQUAL,         "TILDE_EQUAL"},
+      {TokenType::TILDE,               "TILDE"},
+      {TokenType::TRUE,                "TRUE"},
+      {TokenType::TYPE_IDENT,          "TYPE_IDENT"},
+      {TokenType::UINT16_T_MAX,        "UINT16_T_MAX"},
+      {TokenType::UINT16_T_MIN,        "UINT16_T_MIN"},
+      {TokenType::UINT16_T,            "UINT16_T"},
+      {TokenType::UINT32_T_MAX,        "UINT32_T_MAX"},
+      {TokenType::UINT32_T_MIN,        "UINT32_T_MIN"},
+      {TokenType::UINT32_T,            "UINT32_T"},
+      {TokenType::UINT64_T_MAX,        "UINT64_T_MAX"},
+      {TokenType::UINT64_T_MIN,        "UINT64_T_MIN"},
+      {TokenType::UINT64_T,            "UINT64_T"},
+      {TokenType::UINT8_T_MAX,         "UINT8_T_MAX"},
+      {TokenType::UINT8_T_MIN,         "UINT8_T_MIN"},
+      {TokenType::UINT8_T,             "UINT8_T"},
+      {TokenType::WHILE,               "WHILE"}
     };
     // clang-format on
 
     return token_str;
   }
-
-  //! @brief Get the bidirectional map between token string representations and
-  //! token types
-  [[nodiscard]] static TokenBimap get_token_bimap() noexcept {
-    // clang-format off
-    static const TokenBimap token_lookup =
-        make_bimap<std::string, TokenType>({
-          {"and",     TokenType::LOGICAL_AND},
-          {"bool",    TokenType::BOOL},
-          {"break",   TokenType::BREAK},
-          {"class",   TokenType::CLASS},
-          {"elif",    TokenType::ELIF},
-          {"else",    TokenType::ELSE},
-          {"enum",    TokenType::ENUM},
-          {"exit",    TokenType::EXIT},
-          {"false",   TokenType::FALSE},
-          {"float32", TokenType::FLOAT32},
-          {"float64", TokenType::FLOAT64},
-          {"for",     TokenType::FOR},
-          {"func",    TokenType::FUNCTION},
-          {"if",      TokenType::IF},
-          {"iface",   TokenType::INTERFACE},
-          {"in",      TokenType::IN},
-          {"int16",   TokenType::INT16},
-          {"int32",   TokenType::INT32},
-          {"int64",   TokenType::INT64},
-          {"int8",    TokenType::INT8},
-          {"mut",     TokenType::MUTABLE},
-          {"or",      TokenType::LOGICAL_OR},
-          {"private", TokenType::PRIVATE},
-          {"public",  TokenType::PUBLIC},
-          {"return",  TokenType::RETURN},
-          {"string",  TokenType::STRING},
-          {"true",    TokenType::TRUE},
-          {"uint16",  TokenType::UINT16},
-          {"uint32",  TokenType::UINT32},
-          {"uint64",  TokenType::UINT64},
-          {"uint8",   TokenType::UINT8},
-          {"while",   TokenType::WHILE},
-          {"^^=",     TokenType::EXPONENT_ASSIGN},
-          {"^^",      TokenType::EXPONENT},
-          {"^=",      TokenType::XOR_ASSIGN},
-          {"^",       TokenType::XOR},
-          {"%=",      TokenType::MOD_ASSIGN},
-          {"%",       TokenType::MOD},
-          {"*=",      TokenType::MUL_ASSIGN},
-          {"*",       TokenType::MUL},
-          {"//=",     TokenType::INTEGER_DIV_ASSIGN},
-          {"//",      TokenType::INTEGER_DIV},
-          {"/=",      TokenType::DIV_ASSIGN},
-          {"/",       TokenType::DIV},
-          {"++",      TokenType::INC},
-          {"+=",      TokenType::ADD_ASSIGN},
-          {"+",       TokenType::ADD},
-          {"--",      TokenType::DEC},
-          {"-=",      TokenType::SUB_ASSIGN},
-          {"-",       TokenType::SUB},
-          {"<<",      TokenType::SHIFT_LEFT},
-          {"<=",      TokenType::LE_OP},
-          {"<",       TokenType::LT_OP},
-          {">>",      TokenType::SHIFT_RIGHT},
-          {">=",      TokenType::GE_OP},
-          {">",       TokenType::GT_OP},
-          {"!=",      TokenType::NE_OP},
-          {"==",      TokenType::EQ_OP},
-          {"=",       TokenType::ASSIGN},
-          {"~=",      TokenType::BIT_NOT_ASSIGN},
-          {"~",       TokenType::BIT_NOT},
-          {"&=",      TokenType::AND_ASSIGN},
-          {"&",       TokenType::AND},
-          {"|=",      TokenType::OR_ASSIGN},
-          {"|",       TokenType::OR},
-          {"?",       TokenType::TERNARY},
-          {".",       TokenType::DOT},
-          {",",       TokenType::COMMA},
-          {";",       TokenType::SEMI},
-          {"(",       TokenType::LEFT_PAREN},
-          {")",       TokenType::RIGHT_PAREN},
-          {"[",       TokenType::LEFT_SQUARE},
-          {"]",       TokenType::RIGHT_SQUARE},
-          {"{",       TokenType::LEFT_CURLY},
-          {"}",       TokenType::RIGHT_CURLY},
-          {"",        TokenType::IDENT},
-          {"",        TokenType::TYPE_IDENT},
-          {"",        TokenType::INTEGER_CONST},
-          {"",        TokenType::NUMERIC_CONST},
-          {"",        TokenType::FLOAT_CONST},
-          {"",        TokenType::STRING_LITERAL},
-          {"",        TokenType::COMMENT}
-        });
-    // clang-format on
-    return token_lookup;
-  }
-
-  //! @brief Get the map from Binary Operator tokens to their respective
-  //! properties.
-  [[nodiscard]] static BinExprMap get_bin_expr_properties_map() noexcept {
-    // clang-format off
-    static const BinExprMap
-        bin_expr_properties{
-            {TokenType::EXPONENT, {3, BinOpProperties::Associativity::RIGHT}},
-            {TokenType::MUL,      {2, BinOpProperties::Associativity::LEFT}},
-            {TokenType::DIV,      {2, BinOpProperties::Associativity::LEFT}},
-            {TokenType::MOD,      {2, BinOpProperties::Associativity::LEFT}},
-            {TokenType::ADD,      {1, BinOpProperties::Associativity::LEFT}},
-            {TokenType::SUB,      {1, BinOpProperties::Associativity::LEFT}},
-            {TokenType::LT_OP,    {0, BinOpProperties::Associativity::LEFT}},
-            {TokenType::GT_OP,    {0, BinOpProperties::Associativity::LEFT}},
-        };
-    // clang-format on
-
-    return bin_expr_properties;
-  }
 };
 
-// TODO(lthomas): Potentially use template specialization for static functions
-// here?
-//! @brief Factory class for creating tokens.
-class TokenFactory {
-public:
-  //! @brief Create a token.
-  //! @param token_type The token type the created token should be.
-  //! @return Token The created token.
-  [[nodiscard]] static inline Token
-  create_token(TokenType token_type) noexcept {
-    try {
-      std::pair<uint8_t, BinOpProperties::Associativity> bin_op_properties =
-          TokenTypeUtil::get_bin_expr_properties(token_type);
-      // Token is a binary operator, should include binary operator properties
-      return Token{.token_type = token_type,
-                   .properties = BinOpProperties{
-                       .precedence = bin_op_properties.first,
-                       .associativity = bin_op_properties.second}};
-    } catch (const std::out_of_range &) {
-      // No token properties
-      return Token{.token_type = token_type, .properties = std::monostate()};
-    }
-  }
-
-  //! @brief Create a token.
-  //! @param token_type TokenType The token type the created token should be.
-  //! @param value uint64_t The value to store in the Int Literal token.
-  //! @return Token The created token.
-  [[nodiscard]] static inline Token create_token(TokenType token_type,
-                                                 uint64_t value) noexcept {
-    return Token{.token_type = token_type,
-                 .properties = IntLitProperties{.value = value}};
-  }
-
-  //! @brief Create a token.
-  //! @param token_type TokenType The token type the created token should be.
-  //! @param identifier std::string The identifier to store in the Identifier
-  //! token.
-  //! @return Token The created token.
-  [[nodiscard]] static inline Token
-  create_token(TokenType token_type, const std::string &identifier) noexcept {
-    return Token{.token_type = token_type,
-                 .properties = IdentProperties{.identifier = identifier}};
-  }
-
-private:
-};
 } // namespace pimento::tokenization
