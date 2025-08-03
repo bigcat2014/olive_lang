@@ -51,6 +51,17 @@ private:
   //! @return bool Whether or not we successfully parsed a full token.
   bool try_parse_token(std::string &token_buffer, const char next) noexcept;
 
+  //! @brief Convert Scientific Notation to double precision float constant.
+  //! @param mantissa_str const std::string& The mantissa of the scientific
+  //! number.
+  //! @param exponent_str const std::string& The exponent of the scientific
+  //! number.
+  //! @return FloatConst The double precision floating point number represented
+  //! by the scientific notation.
+  [[nodiscard]] FloatConst
+  double_from_scientific(std::string &mantissa_str,
+                         const std::string &exponent_str);
+
   //! @brief Token visitor for logging trace output.
   struct TraceTokenVisitor {
     //! @brief Output string stream for building a trace string based on the

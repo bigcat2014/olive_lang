@@ -5,10 +5,14 @@
 #pragma once
 
 #include <bit>
+#include <cmath>
+#include <cstdint>
 #include <optional>
 #include <ranges>
 #include <string>
 #include <variant>
+
+#include <iostream>
 
 #include <boost/bimap.hpp>
 
@@ -127,288 +131,476 @@ enum class TokenType : uint8_t {
   NUM_TOKENS
 };
 
-#if defined(_MSC_VER)
-    #define PACKED_STRUCT(name) __pragma(pack(push, 1)) struct name __pragma(pack(pop))
-#else
-    #define PACKED_STRUCT(name) struct __attribute__((packed)) name
-#endif
-
-//! @brief 64-bit integers with the 32-bit, 16-bit, and 8-bit representations packed.
-union IntegerConst {
-  //! @brief Get the value as a 64-bit unsigned integer.
-  //! @return uint64_t The value as a 64-bit unsigned integer.
-  [[nodiscard]] inline uint64_t as_uint64()  { return uint64; }
-  //! @brief Get the value as a 64-bit signed integer.
-  //! @return uint64_t The value as a 64-bit signed integer.
-  [[nodiscard]] inline int64_t  as_int64()   { return std::bit_cast<int64_t>(uint64); }
-
-  //! @brief Get the value as a 32-bit unsigned integer.
-  //! @return uint32_t The value as a 32-bit unsigned integer.
-  [[nodiscard]] inline uint32_t as_uint32()  { return uint32_view.value; }
-  //! @brief Get the value as a 32-bit signed integer.
-  //! @return uint32_t The value as a 32-bit signed integer.
-  [[nodiscard]] inline int32_t  as_int32()   { return std::bit_cast<int32_t>(uint32_view.value); }
-
-  //! @brief Get the value as a 16-bit unsigned integer.
-  //! @return uint16_t The value as a 16-bit unsigned integer.
-  [[nodiscard]] inline uint16_t as_uint16()  { return uint16_view.value; }
-  //! @brief Get the value as a 16-bit signed integer.
-  //! @return uint16_t The value as a 16-bit signed integer.
-  [[nodiscard]] inline int16_t  as_int16()   { return std::bit_cast<int16_t>(uint16_view.value);}
-
-  //! @brief Get the value as an 8-bit unsigned integer.
-  //! @return uint8_t The value as an 8-bit unsigned integer.
-  [[nodiscard]] inline uint8_t  as_uint8()   { return uint8_view.value; }
-  //! @brief Get the value as an 8-bit signed integer.
-  //! @return uint8_t The value as an 8-bit signed integer.
-  [[nodiscard]] inline int8_t   as_int8()    { return std::bit_cast<int8_t>(uint8_view.value); }
-
-  // Explicit overloads to make use of C++ built-in sign extension
-  void operator=(double                 value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(float                  value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(long long unsigned int value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(long unsigned int      value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(unsigned int           value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(unsigned short         value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(unsigned char          value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(long long signed int   value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(long signed int        value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(signed int             value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(signed short           value) { uint64 = static_cast<uint64_t>(value); }
-  void operator=(signed char            value) { uint64 = static_cast<uint64_t>(value); }
-
-private:
-  uint64_t uint64;
-
-  PACKED_STRUCT(uint32Struct) {
-    uint32_t value;
-  } uint32_view;
-
-  PACKED_STRUCT(uint16Struct) {
-    uint16_t value;
-  } uint16_view;
-
-  PACKED_STRUCT(uint8Struct) {
-    uint8_t value;
-  } uint8_view;
-};
-
-template<typename T>
+// TODO(lthomas): Not yet IEEE-754 compliant.
+//! @brief Float Constant Value.
+//! @details Can be a double, float, or scientific notation.
 class FloatConst {
 public:
-  FloatConst(T value, InputType type){
-    switch (type)
-    {
-    case InputType::RAW:
-      float64 = reinterpret_cast<double&>(value);
-      float32 = reinterpret_cast<float&>(value);
-      break;
-    case InputType::CAST:
-      float64 = static_cast<double>(value);
-      float32 = static_cast<float>(value);
-      break;
-    default:
-      break;
-    }
+  enum class Precision { FLOAT32, FLOAT64 };
+
+  //! @brief FloatConst Constructor for value represented in scientific
+  //! notation.
+  //! @param mantissa uint64_t The mantissa of the value.
+  //! @param exponent int The exponent of the value.
+  //! @param negative bool Whether or not the value is negative.
+  FloatConst(uint64_t mantissa, int exponent, bool negative,
+             Precision precision)
+      : m_mantissa(mantissa), m_exponent(exponent), m_negative(negative),
+        m_precision(precision) {}
+
+  //! @brief NumericConst Constructor for double-precision floating point
+  //! values.
+  //! @param value double The value of the floating point number.
+  explicit FloatConst(double value) : m_precision(Precision::FLOAT64) {
+    m_negative = std::signbit(value);
+    double abs_val = std::fabs(value);
+    int exp;
+    double frac = std::frexp(abs_val, &exp);
+    m_mantissa = static_cast<uint64_t>(frac * (1ull << FLOAT64_MANTISSA_BITS));
+    m_exponent = exp - FLOAT64_MANTISSA_BITS;
+  }
+
+  //! @brief NumericConst Constructor for single-precision floating point
+  //! values.
+  //! @param value float The value of the floating point number.
+  explicit FloatConst(float value) : m_precision(Precision::FLOAT32) {
+    m_negative = std::signbit(value);
+    float abs_val = std::fabs(value);
+    int exp;
+    float frac = std::frexp(abs_val, &exp);
+    m_mantissa = static_cast<uint64_t>(frac * (1ull << FLOAT32_MANTISSA_BITS));
+    m_exponent = exp - FLOAT32_MANTISSA_BITS;
   }
 
   //! @brief Get the value as a double precision float.
   //! @return double The value as a double precision float.
-  [[nodiscard]] inline double as_float64() { return float64; }
+  [[nodiscard]] inline double as_float64() const noexcept {
+    double result;
+    switch (m_precision) {
+    case Precision::FLOAT64:
+      result = std::ldexp(static_cast<double>(m_mantissa), m_exponent);
+      result = m_negative ? -result : result;
+      break;
+    case Precision::FLOAT32:
+      result = static_cast<double>(as_float32());
+      break;
+    }
+    return result;
+  }
   //! @brief Get the value as a single precision float.
   //! @return float The value as a single precision float.
-  [[nodiscard]] inline float  as_float32() { return float32; }
-
-  void operator=(double value) {
-    float64 = value;
-    float32 = static_cast<float>(value);
+  [[nodiscard]] inline float as_float32() const noexcept {
+    float result;
+    switch (m_precision) {
+    case Precision::FLOAT64:
+      result = static_cast<float>(as_float64());
+      break;
+    case Precision::FLOAT32:
+      result = std::ldexp(static_cast<double>(m_mantissa), m_exponent);
+      result = m_negative ? -result : result;
+      break;
+    }
+    return result;
   }
-  void operator=(float value) {
-    float64 = static_cast<double>(value);
-    float32 = value;
-  }
-
-
-  // // Explicit overloads to make use of C++ built-in sign extension
-  // void operator=(double value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(float value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(long long unsigned int value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(long unsigned int value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(unsigned int value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(unsigned short value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(unsigned char value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(long long signed int value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(long signed int value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(signed int value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(signed short value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-  // void operator=(signed char value) {
-  //   float64 = static_cast<double>(value);
-  //   float32 = static_cast<float>(value);
-  // }
-
-public:
-  enum class InputType {
-    CAST,
-    RAW,
-  };
 
 private:
-  double float64;
-  float  float32;
+  //! @brief The mantissa of the floating point number.
+  uint64_t m_mantissa;
+  //! @brief The exponent of the floating point number.
+  int m_exponent;
+  //! @brief Whether or not the value is negative.
+  bool m_negative;
+  //! @brief The precision the value was stored as.
+  Precision m_precision;
+
+  //! @brief Number of bits in a 64-bit floating point value mantissa.
+  static inline constexpr uint8_t FLOAT64_MANTISSA_BITS = 53;
+  //! @brief Number of bits in a 32-bit floating point value mantissa.
+  static inline constexpr uint8_t FLOAT32_MANTISSA_BITS = 24;
 };
 
-struct NumericConst {
-  //! @brief Get the value as a double precision float assuming the value was stored as an integer.
-  //! @return double The value as a double precision float.
-  [[nodiscard]] inline double   as_float64() { return float64; }
-  //! @brief Get the value as a single precision float assuming the value was stored as an integer.
-  //! @return float The value as a single precision float.
-  [[nodiscard]] inline float    as_float32() { return float32; }
+#if defined(_MSC_VER)
+#define PACKED_STRUCT() __pragma(pack(push, 1)) struct __pragma(pack(pop))
+#else
+#define PACKED_STRUCT() struct __attribute__((packed))
+#endif
 
-  //! @brief Get the value as a double precision float assuming the value was stored as an integer.
-  //! @return double The value as a double precision float.
-  [[nodiscard]] inline double   as_float64_from_int() { uint64_t val = uint64.as_uint64(); return reinterpret_cast<double&>(val); }
-  //! @brief Get the value as a single precision float assuming the value was stored as an integer.
-  //! @return float The value as a single precision float.
-  [[nodiscard]] inline float    as_float32_from_int() { uint32_t val = uint64.as_uint32(); return reinterpret_cast<float&>(val); }
+//! @brief Constant value as raw bits.
+//! @details Generally to be used with values specified in hex, octal, or
+//! binary.
+class RawBits {
+public:
+  //! @brief RawBits Constructor.
+  //! @tparam T Integral type.
+  //! @param value The value to use as the raw bits.
+  template <typename T>
+    requires std::is_integral_v<T>
+  explicit RawBits(T value) {
+    if constexpr (std::is_signed_v<T>) {
+      int64 = static_cast<int64_t>(value);
+    } else {
+      uint64 = static_cast<uint64_t>(value);
+    }
+  }
 
-  //! @brief Get the value as a 64-bit unsigned integer.
-  //! @return uint64_t The value as a 64-bit unsigned integer.
-  [[nodiscard]] inline uint64_t as_uint64()  { return uint64.as_uint64(); }
-  //! @brief Get the value as a 64-bit signed integer.
-  //! @return uint64_t The value as a 64-bit signed integer.
-  [[nodiscard]] inline int64_t  as_int64()   { return uint64.as_int64(); }
+  // clang-format off
+  //! @brief Get the raw bits as unsigned 64-bit integer.
+  //! @return uint64_t The raw bits as unsigned 64-bit integer.
+  [[nodiscard]] inline uint64_t as_uint64() const noexcept { return uint64; }
+  //! @brief Get the raw bits as signed 64-bit integer.
+  //! @return int64_t The raw bits as signed 64-bit integer.
+  [[nodiscard]] inline int64_t  as_int64()  const noexcept { return int64; }
+  //! @brief Get the raw bits as unsigned 32-bit integer.
+  //! @return uint32_t The raw bits as unsigned 32-bit integer.
+  [[nodiscard]] inline uint32_t as_uint32() const noexcept { return std::bit_cast<uint32_t>(uint32_view.value); }
+  //! @brief Get the raw bits as signed 32-bit integer.
+  //! @return int32_t The raw bits as signed 32-bit integer.
+  [[nodiscard]] inline uint32_t as_int32()  const noexcept { return std::bit_cast<uint32_t>(int32_view.value); }
+  //! @brief Get the raw bits as unsigned 16-bit integer.
+  //! @return uint16_t The raw bits as unsigned 16-bit integer.
+  [[nodiscard]] inline uint16_t as_uint16() const noexcept { return std::bit_cast<uint16_t>(uint16_view.value); }
+  //! @brief Get the raw bits as signed 16-bit integer.
+  //! @return int16_t The raw bits as signed 16-bit integer.
+  [[nodiscard]] inline uint16_t as_int16()  const noexcept { return std::bit_cast<uint16_t>(int16_view.value); }
+  //! @brief Get the raw bits as unsigned 8-bit integer.
+  //! @return uint8_t The raw bits as unsigned 8-bit integer.
+  [[nodiscard]] inline uint8_t  as_uint8()  const noexcept { return std::bit_cast<uint8_t>(uint8_view.value); }
+  //! @brief Get the raw bits as signed 8-bit integer.
+  //! @return int8_t The raw bits as signed 8-bit integer.
+  [[nodiscard]] inline uint8_t  as_int8()   const noexcept { return std::bit_cast<uint8_t>(int8_view.value); }
+  // clang-format on
 
-  //! @brief Get the value as a 32-bit unsigned integer.
-  //! @return uint32_t The value as a 32-bit unsigned integer.
-  [[nodiscard]] inline uint32_t as_uint32()  { return uint64.as_uint32(); }
-  //! @brief Get the value as a 32-bit signed integer.
-  //! @return uint32_t The value as a 32-bit signed integer.
-  [[nodiscard]] inline int32_t  as_int32()   { return uint64.as_uint32(); }
-
-  //! @brief Get the value as a 16-bit unsigned integer.
-  //! @return uint16_t The value as a 16-bit unsigned integer.
-  [[nodiscard]] inline uint16_t as_uint16()  { return uint64.as_uint16(); }
-  //! @brief Get the value as a 16-bit signed integer.
-  //! @return uint16_t The value as a 16-bit signed integer.
-  [[nodiscard]] inline int16_t  as_int16()   { return uint64.as_uint16();}
-
-  //! @brief Get the value as an 8-bit unsigned integer.
-  //! @return uint8_t The value as an 8-bit unsigned integer.
-  [[nodiscard]] inline uint8_t  as_uint8()   { return uint64.as_uint8(); }
-  //! @brief Get the value as an 8-bit signed integer.
-  //! @return uint8_t The value as an 8-bit signed integer.
-  [[nodiscard]] inline int8_t   as_int8()    { return uint64.as_uint8(); }
-
-  void operator=(double value) {
-    std::cout << "operator= for double" << std::endl;
-    float64 = value;
-    float32 = value;
-    uint64 = static_cast<uint64_t>(value);
-  }
-  void operator=(float value) {
-    std::cout << "operator= for float" << std::endl;
-    float64 = value;
-    float32 = value;
-    uint64 = static_cast<uint64_t>(value);
-  }
-  void operator=(long long unsigned int value) {
-    std::cout << "operator= for long long unsigned int" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(long unsigned int value) {
-    std::cout << "operator= for long unsigned int" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(unsigned int value) {
-    std::cout << "operator= for unsigned int" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(unsigned short value) {
-    std::cout << "operator= for unsigned short" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(unsigned char value) {
-    std::cout << "operator= for unsigned char" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(long long signed int value) {
-    std::cout << "operator= for long long signed int" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(long signed int value) {
-    std::cout << "operator= for long signed int" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(signed int value) {
-    std::cout << "operator= for signed int" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(signed short value) {
-    std::cout << "operator= for signed short" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
-  void operator=(signed char value) {
-    std::cout << "operator= for signed char" << std::endl;
-    uint64  = value;
-    float64 = static_cast<double>(value);
-    float32 = static_cast<double>(value);
-  }
 private:
-  IntegerConst uint64;
-  double float64;
-  float float32;
+  //! @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
+  //! used for type punning.
+  union {
+    //! @brief 64-bit unsigned value.
+    uint64_t uint64;
+    //! @brief 64-bit signed value.
+    int64_t int64;
+
+    //! @brief View of lower 32-bits of unsigned value.
+    PACKED_STRUCT() { uint32_t value; }
+    uint32_view;
+    //! @brief View of lower 32-bits of signed value.
+    PACKED_STRUCT() { int32_t value; }
+    int32_view;
+
+    //! @brief View of lower 16-bits of unsigned value.
+    PACKED_STRUCT() { uint16_t value; }
+    uint16_view;
+    //! @brief View of lower 16-bits of signed value.
+    PACKED_STRUCT() { int16_t value; }
+    int16_view;
+
+    //! @brief View of lower 8-bits of unsigned value.
+    PACKED_STRUCT() { uint8_t value; }
+    uint8_view;
+    //! @brief View of lower 8-bits of signed value.
+    PACKED_STRUCT() { int8_t value; }
+    int8_view;
+  };
+};
+
+//! @brief Integer Constant value.
+//! @details Can be signed or unsigned.
+class IntConst {
+public:
+  //! @brief IntConst Constructor.
+  //! @tparam T Integral type.
+  //! @param value The value of the integer.
+  template <typename T>
+    requires std::is_integral_v<T>
+  explicit IntConst(T value) {
+    if constexpr (std::is_signed_v<T>) {
+      int64 = static_cast<int64_t>(value);
+    } else {
+      uint64 = static_cast<uint64_t>(value);
+    }
+  }
+
+  // clang-format off
+  //! @brief Get the value as unsigned 64-bit integer.
+  //! @return uint64_t The value as unsigned 64-bit integer.
+  [[nodiscard]] inline uint64_t as_uint64() const noexcept { return uint64; }
+  //! @brief Get the value as signed 64-bit integer.
+  //! @return int64_t The value as signed 64-bit integer.
+  [[nodiscard]] inline int64_t  as_int64()  const noexcept { return int64; }
+  //! @brief Get the value as unsigned 32-bit integer.
+  //! @return uint32_t The value as unsigned 32-bit integer.
+  [[nodiscard]] inline uint32_t as_uint32() const noexcept { return static_cast<uint32_t>(uint64); }
+  //! @brief Get the value as signed 32-bit integer.
+  //! @return int32_t The value as signed 32-bit integer.
+  [[nodiscard]] inline uint32_t as_int32()  const noexcept { return static_cast<uint32_t>(int64); }
+  //! @brief Get the value as unsigned 16-bit integer.
+  //! @return uint16_t The value as unsigned 16-bit integer.
+  [[nodiscard]] inline uint16_t as_uint16() const noexcept { return static_cast<uint16_t>(uint64); }
+  //! @brief Get the value as signed 16-bit integer.
+  //! @return int16_t The value as signed 16-bit integer.
+  [[nodiscard]] inline uint16_t as_int16()  const noexcept { return static_cast<uint16_t>(int64); }
+  //! @brief Get the value as unsigned 8-bit integer.
+  //! @return uint8_t The value as unsigned 8-bit integer.
+  [[nodiscard]] inline uint8_t  as_uint8()  const noexcept { return static_cast<uint8_t>(uint64); }
+  //! @brief Get the value as signed 8-bit integer.
+  //! @return int8_t The value as signed 8-bit integer.
+  [[nodiscard]] inline uint8_t  as_int8()   const noexcept { return static_cast<uint8_t>(int64); }
+  // clang-format on
+
+private:
+  union {
+    uint64_t uint64;
+    int64_t int64;
+  };
+};
+
+//! @brief Numeric Constant value.
+//! @details Can be floating point number, integer, or raw bits.
+class NumericConst {
+public:
+  using Value = std::variant<IntConst, FloatConst, RawBits>;
+
+  //! @brief NumericConst Constructor for integer value.
+  //! @tparam T Integral type.
+  //! @param value The value of the integer.
+  template <typename T>
+    requires std::is_integral_v<T>
+  explicit NumericConst(T value) : m_value(IntConst(value)) {}
+
+  // TODO(lthomas): Not sure if I should always be creating these as float64
+  // precision, I think this has the potential for a double round error.
+  //! @brief NumericConst Constructor for floating point value represented in
+  //! scientific notation.
+  //! @param mantissa uint64_t The mantissa of the floating point value.
+  //! @param exponent int The exponent of the floating point value.
+  //! @param negative bool Whether or not the value is negative.
+  NumericConst(uint64_t mantissa, int exponent, bool negative = false)
+      : m_value(FloatConst{mantissa, exponent, negative,
+                           FloatConst::Precision::FLOAT64}) {}
+
+  //! @brief NumericConst Constructor for value specified in raw bits.
+  //! @param raw const RawBits& The raw bits from which to construct the value.
+  explicit NumericConst(const RawBits &raw) : m_value(std::move(raw)) {}
+
+  //! @brief NumericConst Constructor for value specified as FloatConst.
+  //! @param raw const FloatConst& The floating point constant from which to
+  //! construct the value.
+  explicit NumericConst(const FloatConst &float_const)
+      : m_value(std::move(float_const)) {}
+
+  //! @brief NumericConst Constructor for double-precision floating point
+  //! values.
+  //! @param value double The value of the floating point number.
+  explicit NumericConst(double value) : m_value(FloatConst(value)) {}
+
+  //! @brief NumericConst Constructor for single-precision floating point
+  //! values.
+  //! @param value float The value of the floating point number.
+  explicit NumericConst(float value) : m_value(FloatConst(value)) {}
+
+  //! @brief Get the value as a double-precision (64-bit) floating point number.
+  //! @return double The value as a double-precision (64-bit) floating point
+  //! number.
+  double as_float64() const {
+    return std::visit(
+        [](auto &&v) -> double {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return std::bit_cast<double>(v.as_uint64());
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return v.as_float64();
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return static_cast<double>(v.as_int64());
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as a single-precision (32-bit) floating point number.
+  //! @return float The value as a single-precision (32-bit) floating point
+  //! number.
+  float as_float32() const {
+    return std::visit(
+        [](auto &&v) -> float {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return std::bit_cast<float>(v.as_uint32());
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return v.as_float32();
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return static_cast<float>(v.as_int64());
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as unsigned 64-bit integer.
+  //! @return uint64_t The value as unsigned 64-bit integer.
+  uint64_t as_uint64() const {
+    return std::visit(
+        [](auto &&v) -> uint64_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_uint64();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<uint64_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_uint64();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as signed 64-bit integer.
+  //! @return int64_t The value as signed 64-bit integer.
+  int64_t as_int64() const {
+    return std::visit(
+        [](auto &&v) -> int64_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_int64();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<int64_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_int64();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as unsigned 32-bit integer.
+  //! @return uint32_t The value as unsigned 32-bit integer.
+  uint32_t as_uint32() const {
+    return std::visit(
+        [](auto &&v) -> uint32_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_uint32();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<uint32_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_uint32();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as signed 32-bit integer.
+  //! @return int32_t The value as signed 32-bit integer.
+  int32_t as_int32() const {
+    return std::visit(
+        [](auto &&v) -> int32_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_int32();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<int32_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_int32();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as unsigned 16-bit integer.
+  //! @return uint16_t The value as unsigned 16-bit integer.
+  uint16_t as_uint16() const {
+    return std::visit(
+        [](auto &&v) -> uint16_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_uint16();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<uint16_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_uint16();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as signed 16-bit integer.
+  //! @return int16_t The value as signed 16-bit integer.
+  int16_t as_int16() const {
+    return std::visit(
+        [](auto &&v) -> int16_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_int16();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<int16_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_int16();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as unsigned 8-bit integer.
+  //! @return uint8_t The value as unsigned 8-bit integer.
+  uint8_t as_uint8() const {
+    return std::visit(
+        [](auto &&v) -> uint8_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_uint8();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<uint8_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_uint8();
+          }
+        },
+        m_value);
+  }
+
+  //! @brief Get the value as signed 8-bit integer.
+  //! @return int8_t The value as signed 8-bit integer.
+  int8_t as_int8() const {
+    return std::visit(
+        [](auto &&v) -> int8_t {
+          using T = std::decay_t<decltype(v)>;
+          if constexpr (std::is_same_v<T, RawBits>) {
+            // std::cout << "RawBits" << std::endl;
+            return v.as_int8();
+          } else if constexpr (std::is_same_v<T, FloatConst>) {
+            // std::cout << "FloatConst" << std::endl;
+            return static_cast<int8_t>(v.as_float64());
+          } else {
+            // std::cout << "IntConst" << std::endl;
+            return v.as_int8();
+          }
+        },
+        m_value);
+  }
+
+private:
+  Value m_value;
 };
 
 //! @brief Parsed token.
