@@ -28,8 +28,7 @@ void configure_logger(spdlog::level::level_enum level);
 std::filesystem::path expand_vars(const std::string &input_path);
 
 //! @brief Sanitize the input path.
-//!
-//! Sanitize the input path by expanding `~` and environment variables,
+//! @details Sanitize the input path by expanding `~` and environment variables,
 //! normalizing the path, and ensuring it is a file. Additionally checks the
 //! file extension and warns the user if the extension is not the expected
 //! `.oil` extension.

@@ -30,9 +30,8 @@ private:
 
   //! @brief Peek at a character at an offset from the current character in the
   //! buffer.
-  //!
-  //! Peek at a character at an offset from the current character in the buffer.
-  //! If attempting to peek out of bounds, return whitespace.
+  //! @details Peek at a character at an offset from the current character in
+  //! the buffer. If attempting to peek out of bounds, return whitespace.
   //! @param current_index size_t The index of the current character in the
   //! buffer.
   //! @param buffer const char* const The buffer from which to get the

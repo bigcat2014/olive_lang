@@ -46,9 +46,8 @@ private:
   try_consume() noexcept;
 
   //! @brief Try to consume the next token if it is the provided TokenType.
-  //!
-  //! Try to consume the next token if it is a specific TokenType. If the token
-  //! type matches, consume it, otherwise log an error and exit.
+  //! @details Try to consume the next token if it is a specific TokenType. If
+  //! the token type matches, consume it, otherwise log an error and exit.
   //! @param token_type tokenization::TokenType The token type we are asserting
   //! is next.
   inline tokenization::Token
@@ -60,8 +59,7 @@ private:
 
   //! @brief Parse an Expression into the AST.
   //! @return std::shared_ptr<node::ExprNode> The Expression node of the AST.
-  std::shared_ptr<node::ExprNode>
-  parse_expression(uint8_t min_precedence = 0);
+  std::shared_ptr<node::ExprNode> parse_expression(uint8_t min_precedence = 0);
 
   //! @brief Parse a Scope into the AST.
   //! @return std::shared_ptr<node::ScopeNode> The Scope node of the AST.
