@@ -1,9 +1,11 @@
 # Olive Lang
-## Prerequisites
+## Dependencies / Prerequisites
 - cmake
 - libboost-dev
 - libspdlog-dev
-### Building unit tests
+### Unit test dependencies
+- clang-format
+- clang-tidy
 - cmake-format
 - gcovr
 - libgtest-dev
@@ -47,6 +49,9 @@ Add the following option to one of the above configuration commands.
 ## Targets
 - all - Build targets
 - install - Install targets
+- build_tests - Build all unit tests
+- run_tests - Run all unit tests
+- run_linters - Run the linter subset of unit tests
 - coverage - Generate code coverage report
 
 ## Building
@@ -75,10 +80,18 @@ From the root of the project, run the following command:
 cmake --build build --config Release --target install --
 ```
 
-## Running tests
-From the build directory run ctest:
+## Running All Unit Tests
+From the root of the project, run the following commands:
 ```bash
-ctest -V
+cmake --build build --config Release --target build_tests --
+cmake --build build --config Release --target run_tests --
+```
+
+## Running Linter Unit Tests
+From the root of the project, run the following commands:
+```bash
+cmake --build build --config Release --target build_tests --
+cmake --build build --config Release --target run_linters --
 ```
 
 ### Generating Test Coverage Report
@@ -87,7 +100,6 @@ From the root of the project, build the coverage target
 ```bash
 cmake --build build --config Debug --target coverage --
 ```
-
 
 ## Running
 ### Not Installed
