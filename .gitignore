@@ -95,6 +95,11 @@ _deps
 .bak 
 .mtc
 
+# Doxygen
+docs/html
+docs/latex
+docs/man
+
 # Build, install, and output
 build
 install

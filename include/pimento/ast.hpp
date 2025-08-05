@@ -23,7 +23,7 @@ struct TermExprNode {
   std::shared_ptr<ExprNode> expression;
 
   //! @brief Constructor for the Term Expression AST node.
-  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
+  //! @param expression The expression of this node.
   explicit TermExprNode(std::shared_ptr<ExprNode> expression)
       : expression(std::move(expression)) {}
 };
@@ -34,7 +34,7 @@ struct TermIdentNode {
   tokenization::Token identifier_token;
 
   //! @brief Constructor for the Term Identifier AST node.
-  //! @param token tokenization::Token The identifier token.
+  //! @param token The identifier token.
   explicit TermIdentNode(tokenization::Token token)
       : identifier_token(std::move(token)) {}
 };
@@ -45,7 +45,7 @@ struct TermIntLitNode {
   tokenization::Token int_lit_token;
 
   //! @brief Constructor for the Term Int Literal AST node.
-  //! @param token tokenization::Token The int literal token.
+  //! @param token The int literal token.
   explicit TermIntLitNode(tokenization::Token token)
       : int_lit_token(std::move(token)) {}
 };
@@ -59,9 +59,8 @@ struct BinExprLessThanNode {
 
   //! @brief Constructor for the Binary Expression Less Than Comparison AST
   //! node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprLessThanNode(std::shared_ptr<ExprNode> left,
                       std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -76,9 +75,8 @@ struct BinExprGreaterThanNode {
 
   //! @brief Constructor for the Binary Expression Greater Than Comparison AST
   //! node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprGreaterThanNode(std::shared_ptr<ExprNode> left,
                          std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -92,9 +90,8 @@ struct BinExprMinusNode {
   std::shared_ptr<ExprNode> right;
 
   //! @brief Constructor for the Binary Expression Subtraction AST node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprMinusNode(std::shared_ptr<ExprNode> left,
                    std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -108,9 +105,8 @@ struct BinExprPlusNode {
   std::shared_ptr<ExprNode> right;
 
   //! @brief Constructor for the Binary Expression Addition AST node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprPlusNode(std::shared_ptr<ExprNode> left,
                   std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -124,9 +120,8 @@ struct BinExprDivNode {
   std::shared_ptr<ExprNode> right;
 
   //! @brief Constructor for the Binary Expression Division AST node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprDivNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -140,9 +135,8 @@ struct BinExprMulNode {
   std::shared_ptr<ExprNode> right;
 
   //! @brief Constructor for the Binary Expression Multiplication AST node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprMulNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -156,9 +150,8 @@ struct BinExprModNode {
   std::shared_ptr<ExprNode> right;
 
   //! @brief Constructor for the Binary Expression Modulus AST node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprModNode(std::shared_ptr<ExprNode> left,
                  std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -172,9 +165,8 @@ struct BinExprPowerNode {
   std::shared_ptr<ExprNode> right;
 
   //! @brief Constructor for the Binary Expression Exponentiation AST node.
-  //! @param left std::shared_ptr<ExprNode> The operator's left-side expression.
-  //! @param right std::shared_ptr<ExprNode> The operator's right-side
-  //! expression.
+  //! @param left The operator's left-side expression.
+  //! @param right The operator's right-side expression.
   BinExprPowerNode(std::shared_ptr<ExprNode> left,
                    std::shared_ptr<ExprNode> right)
       : left(std::move(left)), right(std::move(right)) {}
@@ -186,7 +178,7 @@ struct IfPredElseNode {
   std::shared_ptr<ScopeNode> scope;
 
   //! @brief Constructor for the If Predicate Else AST node.
-  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  //! @param scope The scope of this node.
   explicit IfPredElseNode(std::shared_ptr<ScopeNode> scope)
       : scope(std::move(scope)) {}
 };
@@ -201,10 +193,9 @@ struct IfPredElifNode {
   std::optional<std::shared_ptr<IfPredNode>> ifpred;
 
   //! @brief Constructor for the If Predicate Else If AST node.
-  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
-  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
-  //! @param ifpred std::optional<std::shared_ptr<IfPredNode>> The optional If
-  //! Predicate of this node.
+  //! @param expression The Expression for this node.
+  //! @param scope The scope of this node.
+  //! @param ifpred The optional If Predicate of this node.
   IfPredElifNode(std::shared_ptr<ExprNode> expression,
                  std::shared_ptr<ScopeNode> scope,
                  std::optional<std::shared_ptr<IfPredNode>> ifpred)
@@ -213,8 +204,8 @@ struct IfPredElifNode {
 
   //! @brief Constructor for the If Predicate Else If AST node without a chained
   //! If Predicate.
-  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
-  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  //! @param expression The Expression for this node.
+  //! @param scope The scope of this node.
   IfPredElifNode(std::shared_ptr<ExprNode> expression,
                  std::shared_ptr<ScopeNode> scope)
       : expression(std::move(expression)), scope(std::move(scope)) {}
@@ -226,7 +217,7 @@ struct StmtExitNode {
   std::shared_ptr<ExprNode> expression;
 
   //! @brief Constructor for the Statement Exit AST node.
-  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
+  //! @param expression The expression of this node.
   explicit StmtExitNode(std::shared_ptr<ExprNode> expression)
       : expression(std::move(expression)) {}
 };
@@ -239,8 +230,8 @@ struct StmtLetNode {
   std::shared_ptr<ExprNode> expression;
 
   //! @brief Constructor for the Statement Let AST node.
-  //! @param identifier tokenization::Token The identifier token.
-  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
+  //! @param identifier The identifier token.
+  //! @param expression The expression of this node.
   StmtLetNode(tokenization::Token identifier,
               std::shared_ptr<ExprNode> expression)
       : identifier(std::move(identifier)), expression(std::move(expression)) {}
@@ -254,8 +245,8 @@ struct StmtAssignNode {
   std::shared_ptr<ExprNode> expression;
 
   //! @brief Constructor for the Statement Assignment AST node.
-  //! @param identifier tokenization::Token The identifier token.
-  //! @param expression std::shared_ptr<ExprNode> The expression of this node.
+  //! @param identifier The identifier token.
+  //! @param expression The expression of this node.
   StmtAssignNode(tokenization::Token identifier,
                  std::shared_ptr<ExprNode> expression)
       : identifier(std::move(identifier)), expression(std::move(expression)) {}
@@ -271,10 +262,9 @@ struct StmtIfNode {
   std::optional<std::shared_ptr<IfPredNode>> ifpred;
 
   //! @brief Constructor for the Statement If AST node.
-  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
-  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
-  //! @param ifpred std::optional<std::shared_ptr<IfPredNode>> The optional If
-  //! Predicate of this node.
+  //! @param expression The Expression for this node.
+  //! @param scope The scope of this node.
+  //! @param ifpred The optional If Predicate of this node.
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope,
              std::optional<std::shared_ptr<IfPredNode>> ifpred)
@@ -283,8 +273,8 @@ struct StmtIfNode {
 
   //! @brief Constructor for the Statement If AST node without a chained If
   //! Predicate.
-  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
-  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  //! @param expression The Expression for this node.
+  //! @param scope The scope of this node.
   StmtIfNode(std::shared_ptr<ExprNode> expression,
              std::shared_ptr<ScopeNode> scope)
       : expression(std::move(expression)), scope(std::move(scope)) {}
@@ -298,8 +288,8 @@ struct StmtWhileNode {
   std::shared_ptr<ScopeNode> scope;
 
   //! @brief Constructor for the Statement While AST node.
-  //! @param expression std::shared_ptr<ExprNode> The Expression for this node.
-  //! @param scope std::shared_ptr<ScopeNode> The scope of this node.
+  //! @param expression The Expression for this node.
+  //! @param scope The scope of this node.
   StmtWhileNode(std::shared_ptr<ExprNode> expression,
                 std::shared_ptr<ScopeNode> scope)
       : expression(std::move(expression)), scope(std::move(scope)) {}
@@ -315,7 +305,7 @@ struct TermNode {
   TermVariant node;
 
   //! @brief Constructor for the Term AST node.
-  //! @param node TermVariant The variant of the Term in this node.
+  //! @param node The variant of the Term in this node.
   explicit TermNode(TermVariant node) : node(std::move(node)) {}
 };
 
@@ -332,8 +322,7 @@ struct BinExprNode {
   BinExprVariant node;
 
   //! @brief Constructor for the Binary Expression AST node.
-  //! @param node BinExprVariant The variant of the Binary Expression in this
-  //! node.
+  //! @param node The variant of the Binary Expression in this node.
   explicit BinExprNode(BinExprVariant node) : node(std::move(node)) {}
 };
 
@@ -346,7 +335,7 @@ struct ExprNode {
   ExprVariant node;
 
   //! @brief Constructor for the Expression AST node.
-  //! @param node ExprVariant The variant of the Expression in this node.
+  //! @param node The variant of the Expression in this node.
   explicit ExprNode(ExprVariant node) : node(std::move(node)) {}
 };
 
@@ -359,7 +348,7 @@ struct IfPredNode {
   IfPredVariant node;
 
   //! @brief Constructor for the If Predicate AST node.
-  //! @param node IfPredVariant The variant of the If Predicate in this node.
+  //! @param node The variant of the If Predicate in this node.
   explicit IfPredNode(IfPredVariant node) : node(std::move(node)) {}
 };
 
@@ -374,7 +363,7 @@ struct StmtNode {
   StmtVariant node;
 
   //! @brief Constructor for the Statement AST node.
-  //! @param node StmtVariant The variant of the Statement in this node.
+  //! @param node The variant of the Statement in this node.
   explicit StmtNode(StmtVariant node) : node(std::move(node)) {}
 };
 

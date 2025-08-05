@@ -10,29 +10,3 @@ _{0,2}[a-z][a-zA-Z0-9_]*
 [\+-]?(?:[0-9]+\.[0-9]*|\.[0-9]+)
 (r?)"((?:[^"\\]|\\")*)
 #.*$
-
-## Baxkus-Naur Form
-
-<ident> ::= <lower> <ident?>
-          | "_" <lower> <ident?>
-          | "_" "_" <lower> <ident?>
-<ident?> ::= <lower> <ident?>
-           | <upper> <ident?>
-           | <digit> <ident?>
-           | "_" <ident?>
-           | e
-<type_ident> ::= <upper> <type_ident?>
-<type_ident?> ::= <type_ident>
-                | <lower> <type_ident?>
-                | <digit> <type_ident?>
-                | e
-<float_const> ::= <decimal_const>
-                | <mantissa>
-                | <hex_const>
-                | <octal_const>
-                | <binary_const>
-                | <scientific>
-<integer_const> ::= <decimal_const>
-                  | <hex_const>
-                  | <octal_const>
-                  | <binary_const>
