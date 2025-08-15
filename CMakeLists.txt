@@ -10,7 +10,7 @@ set(${PROJECT_NAME}_VERSION
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS
-    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -fno-fast-math")
+    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -fno-fast-math")  # cmake-lint: disable=C0301
 if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
@@ -152,7 +152,19 @@ if (BUILD_TESTING)
     set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
     # Use llvm-cov gcov for Clang
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        find_program(LLVM_COV_PATH llvm-cov)
+        find_program(
+            LLVM_COV_PATH
+            NAMES
+                llvm-cov
+                llvm-cov-11
+                llvm-cov-12
+                llvm-cov-13
+                llvm-cov-14
+                llvm-cov-15
+                llvm-cov-16
+                llvm-cov-17
+                llvm-cov-18
+                llvm-cov-19)
         if(NOT LLVM_COV_PATH)
             message(FATAL_ERROR "llvm-cov not found! Aborting...")
         endif() # NOT LLVM_COV_PATH
@@ -315,6 +327,10 @@ if (BUILD_TESTING)
         DEPENDS lexer_test parser_test
         COMMENT "Build unit tests")
 
+    find_program(CTEST_PATH ctest)
+    if(NOT CTEST_PATH)
+        message(FATAL_ERROR "ctest not found! Aborting...")
+    endif() # NOT CTEST_PATH
     file(MAKE_DIRECTORY ${${PROJECT_NAME}_LINTER_OUTPUT_DIR})
     add_custom_target(run_linters
         COMMAND ${CTEST_PATH}
@@ -323,10 +339,6 @@ if (BUILD_TESTING)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Run linters")
 
-    find_program(CTEST_PATH ctest)
-    if(NOT CTEST_PATH)
-        message(FATAL_ERROR "ctest not found! Aborting...")
-    endif() # NOT CTEST_PATH
     add_custom_target(run_tests
         COMMAND ${CTEST_PATH}
         --output-on-failure
