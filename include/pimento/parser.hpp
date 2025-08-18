@@ -36,8 +36,8 @@ private:
   [[nodiscard]] inline std::optional<tokenization::Token>
   peek(size_t lookahead = 0) const noexcept;
 
-  //! @brief Consume the current token.
-  inline void consume() noexcept;
+  //! @brief Advance the parser.
+  inline void advance() noexcept;
 
   //! @brief Attempt to consume the next token.
   //! @return The token that was consumed.
@@ -73,7 +73,7 @@ private:
 
 private:
   //! @brief The lexer used by this parser.
-  const tokenization::Lexer m_lexer;
+  tokenization::Lexer m_lexer;
   //! @brief The current parsing index.
   size_t m_index{0};
   //! @brief The root node of the ast.

@@ -3,7 +3,7 @@
 
 namespace pimento::ast {
 
-Parser::Parser(std::istream &istream) : m_lexer(istream) { parse(); }
+Parser::Parser(std::istream &istream) : m_lexer(istream) { m_lexer.tokenize(); parse(); }
 
 [[nodiscard]] const node::ProgNode &Parser::get_program() const noexcept {
   return m_prog;
@@ -27,12 +27,12 @@ Parser::peek(size_t lookahead) const noexcept {
   }
 }
 
-inline void Parser::consume() noexcept { m_index++; }
+inline void Parser::advance() noexcept { ++m_index; }
 
 [[nodiscard]] inline std::optional<tokenization::Token>
 Parser::try_consume() noexcept {
   if (auto ret = peek()) {
-    consume();
+    advance();
     return ret;
   }
   return {};

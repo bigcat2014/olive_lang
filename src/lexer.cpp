@@ -7,7 +7,7 @@ namespace pimento::tokenization {
 
 Lexer::Lexer(std::istream &istream) : m_stream(istream) {
   m_tokens.reserve(BUFFER_SIZE);
-  tokenize();
+  // tokenize();
 }
 
 [[nodiscard]] const std::vector<Token> &Lexer::tokens() const noexcept {
@@ -17,8 +17,6 @@ Lexer::Lexer(std::istream &istream) : m_stream(istream) {
 void Lexer::tokenize() {
   auto &logger = utils::get_logger();
 
-  size_t total = 0;
-  size_t total_chunks = 0;
   std::array<char, BUFFER_SIZE> file_buffer;
   std::string token_buffer;
   token_buffer.reserve(MAX_TOKEN_LEN);
@@ -30,48 +28,104 @@ void Lexer::tokenize() {
       break;
     }
 
-    total += n;
-    for (size_t i = 0; i < n; i++) {
-      if (token_buffer.size() + 1 > token_buffer.capacity()) {
+    m_total_bytes += n;
+    m_buffer_index = 0;
+    while (m_buffer_index < n) {
+      if (token_buffer.size() + 1 > MAX_TOKEN_LEN) {
         logger.error("Max token length of {} characters exceeded.",
                      MAX_TOKEN_LEN);
         exit(EXIT_FAILURE);
       }
 
-      // Skip whitespace
-      if (std::isspace(file_buffer[i])) {
-        token_buffer.clear();
-        continue;
+      switch (file_buffer[m_buffer_index]) {
+        case '_':
+          // TODO(lthomas): parse_ident(file_buffer.data());
+          advance(file_buffer);
+          break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          advance(file_buffer);
+          // TODO(lthomas): parse_numeric_const(file_buffer.data());
+          break;
+        case '#': {
+          std::optional<char> next = peek(file_buffer);
+          while (next.has_value() && next.value() != '\n') {
+            advance(file_buffer);
+            next = peek(file_buffer);
+          }
+          try_consume(file_buffer, '\n');
+          break;
+        }
+        default:
+          advance(file_buffer);
       }
 
       // Add next character to token buffer
-      token_buffer.push_back(file_buffer[i]);
+      // token_buffer.push_back(file_buffer[m_buffer_index]);
 
       // Attempt to parse token from token buffer
-      const char next = peek(i, file_buffer.data(), n, 1);
-      bool token_added = try_parse_token(token_buffer, next);
+      // const char next = peek(m_buffer_index, file_buffer.data(), n, 1);
+      // bool token_added = try_parse_token(token_buffer, next);
 
       // TODO(lthomas): Implement logging
       // if (logger.level() == spdlog::level::trace) {
       // }
+      // ++m_buffer_index;
     }
 
-    logger.trace("Finished chunk {}", total_chunks++);
+    logger.trace("Finished chunk {}", m_total_chunks++);
   }
 
-  logger.debug("Total chunks read: {}", total_chunks);
-  logger.debug("Total bytes read: {}", total);
+  logger.debug("Total chunks read: {}", m_total_chunks);
+  logger.debug("Total bytes read: {}", m_total_bytes);
 }
 
-[[nodiscard]] inline char Lexer::peek(size_t current_index,
-                                      const char *const buffer, size_t size,
-                                      size_t lookahead) noexcept {
-  if (current_index + lookahead < size) {
-    return buffer[current_index + lookahead];
+[[nodiscard]] inline std::optional<char> Lexer::peek(const std::array<char, BUFFER_SIZE> &buffer) noexcept {
+  if (m_buffer_index + 1 < buffer.size()) {
+    return buffer[m_buffer_index + 1];
   }
 
-  // Return invalid character.
-  return '\0';
+  return {};
+}
+
+inline void Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer) noexcept {
+  // End of chunk or EoF
+  if (buffer.size() <= m_buffer_index) { return; }
+
+  char current = buffer[m_buffer_index++];
+  if (current == '\n') {
+    ++m_current_line;
+    m_current_column = 0;
+  } else {
+    ++m_current_column;
+  }
+}
+
+[[nodiscard]] inline std::optional<char> Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer) noexcept {
+  if (auto ret = peek(buffer)) {
+    advance(buffer);
+    return ret;
+  }
+  return {};
+}
+
+inline char Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer, const char &character) noexcept {
+  auto next = try_consume(buffer);
+  if (!next.has_value() || next.value() != character) {
+    // TODO(lthomas): I don't know if I want to log and exit here
+    auto &logger = utils::get_logger();
+    logger.error("Expected {} at line: {} column: {}", character, m_current_line, m_current_column);
+    exit(EXIT_FAILURE);
+  }
+  return next.value();
 }
 
 bool Lexer::try_parse_token(std::string &token_buffer,
