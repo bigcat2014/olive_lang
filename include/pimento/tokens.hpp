@@ -607,6 +607,7 @@ struct Token {
   //! @brief The literal string parsed to get the token.
   std::string lexeme;
   //! @brief The line and column number of the token.
+  // TODO(lthomas): Currently storing line and column, switch to file offset and span
   std::pair<unsigned, unsigned> source_span;
 };
 

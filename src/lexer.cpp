@@ -489,8 +489,8 @@ Lexer::peek(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
   return {};
 }
 
-inline bool
-Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
+inline bool Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer,
+                           size_t size) noexcept {
   // End of chunk or EoF
   if (m_buffer_index >= size) {
     return false;
@@ -511,7 +511,8 @@ Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcep
 }
 
 [[nodiscard]] inline std::optional<char>
-Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
+Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer,
+                   size_t size) noexcept {
   if (auto ret = peek(buffer, size)) {
     advance(buffer, size);
     return ret;
