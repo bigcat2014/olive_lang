@@ -38,21 +38,22 @@ private:
   //! @brief Peek at the next character in the buffer without consuming it.
   //! @param buffer The buffer from which to get the character.
   //! @return The next character in the buffer.
-  [[nodiscard]] inline std::optional<char> peek(const std::array<char, BUFFER_SIZE> &buffer) noexcept;
+  [[nodiscard]] inline std::optional<char> peek(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept;
 
   //! @brief Advance the lexer.
-  inline void advance(const std::array<char, BUFFER_SIZE> &buffer) noexcept;
+  //! @return True if advance was successful, false if we try to advance past the end of the buffer.
+  inline bool advance(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept;
 
   //! @brief Attempt to consume the next character.
   //! @param buffer The buffer to consume from.
   //! @return The character that was consumed.
-  [[nodiscard]] inline std::optional<char> try_consume(const std::array<char, BUFFER_SIZE> &buffer) noexcept;
+  [[nodiscard]] inline std::optional<char> try_consume(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept;
 
   //! @brief Attempt to consume the next character if it matches the provided character.
   //! @param buffer The buffer to consume from.
   //! @param character The character to attempt to consume.
   //! @return The consumed character.
-  inline char try_consume(const std::array<char, BUFFER_SIZE> &buffer, const char &character) noexcept;
+  inline char try_consume(const std::array<char, BUFFER_SIZE> &buffer, size_t size, const char &character) noexcept;
 
   //! @brief Attmpt to parse a token from the buffer.
   //! @param token_buffer The buffer from which to attempt to parse a token.
@@ -79,7 +80,7 @@ private:
   //! @brief Current index in the buffer.
   size_t m_buffer_index{0};
   //! @brief The current line of the input stream.
-  size_t m_current_line{0};
+  size_t m_current_line{1};
   //! @brief The current column of the current line of the input stream.
   size_t m_current_column{0};
   //! @brief The tokens parsed from the input stream.

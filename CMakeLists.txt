@@ -145,35 +145,6 @@ if (BUILD_TESTING)
         ${PROJECT_NAME}_parser GTest::gtest_main)
     gtest_discover_tests(parser_test)
 
-    # Gcovr Coverage Report Generation
-    list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
-    include(CodeCoverage)
-    append_coverage_compiler_flags()
-    set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
-    # Use llvm-cov gcov for Clang
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        find_program(
-            LLVM_COV_PATH
-            NAMES
-                llvm-cov
-                llvm-cov-11
-                llvm-cov-12
-                llvm-cov-13
-                llvm-cov-14
-                llvm-cov-15
-                llvm-cov-16
-                llvm-cov-17
-                llvm-cov-18
-                llvm-cov-19)
-        if(NOT LLVM_COV_PATH)
-            message(FATAL_ERROR "llvm-cov not found! Aborting...")
-        endif() # NOT LLVM_COV_PATH
-        list(APPEND GCOVR_ADDITIONAL_ARGS
-            --gcov-executable "${LLVM_COV_PATH} gcov")
-    endif()
-    set(Coverage_DEPENDENCIES run_tests)
-    setup_target_for_coverage_gcovr_html(NAME coverage)
-
     # Linters
     set(${PROJECT_NAME}_LINTER_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Linters)
 
@@ -321,6 +292,35 @@ if (BUILD_TESTING)
             ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
             --stdout --verbose
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+
+    # Gcovr Coverage Report Generation
+    list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
+    include(CodeCoverage)
+    append_coverage_compiler_flags()
+    set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
+    # Use llvm-cov gcov for Clang
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+        find_program(
+            LLVM_COV_PATH
+            NAMES
+                llvm-cov
+                llvm-cov-11
+                llvm-cov-12
+                llvm-cov-13
+                llvm-cov-14
+                llvm-cov-15
+                llvm-cov-16
+                llvm-cov-17
+                llvm-cov-18
+                llvm-cov-19)
+        if(NOT LLVM_COV_PATH)
+            message(FATAL_ERROR "llvm-cov not found! Aborting...")
+        endif() # NOT LLVM_COV_PATH
+        list(APPEND GCOVR_ADDITIONAL_ARGS
+            --gcov-executable "${LLVM_COV_PATH} gcov")
+    endif()
+    set(Coverage_DEPENDENCIES run_tests)
+    setup_target_for_coverage_gcovr_html(NAME coverage)
 
     # Custom Testing Targets
     add_custom_target(build_tests

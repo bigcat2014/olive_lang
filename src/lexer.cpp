@@ -37,36 +37,426 @@ void Lexer::tokenize() {
         exit(EXIT_FAILURE);
       }
 
+      // clang-format off
+      // TODO(lthomas): Some line/column number calculations are off
       switch (file_buffer[m_buffer_index]) {
-        case '_':
-          // TODO(lthomas): parse_ident(file_buffer.data());
-          advance(file_buffer);
-          break;
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-          advance(file_buffer);
-          // TODO(lthomas): parse_numeric_const(file_buffer.data());
-          break;
-        case '#': {
-          std::optional<char> next = peek(file_buffer);
-          while (next.has_value() && next.value() != '\n') {
-            advance(file_buffer);
-            next = peek(file_buffer);
+      case '_':
+        // TODO(lthomas): parse_ident(file_buffer.data());
+        advance(file_buffer, n);
+        break;
+      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+      case 'g': case 'h': case 'i': case 'j': case 'k':
+      case 'l': case 'm': case 'n': case 'o': case 'p':
+      case 'q': case 'r': case 's': case 't': case 'u':
+      case 'v': case 'w': case 'x': case 'y': case 'z':
+        // TODO(lthomas): parse_ident or keyword
+        advance(file_buffer, n);
+        break;
+      case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+      case 'G': case 'H': case 'I': case 'J': case 'K':
+      case 'L': case 'M': case 'N': case 'O': case 'P':
+      case 'Q': case 'R': case 'S': case 'T': case 'U':
+      case 'V': case 'W': case 'X': case 'Y': case 'Z':
+        // TODO(lthomas): parse_ident or keyword
+        advance(file_buffer, n);
+        break;
+      case '0': case '1': case '2': case '3': case '4':
+      case '5': case '6': case '7': case '8': case '9':
+        // TODO(lthomas): parse_numeric_const(file_buffer.data());
+        advance(file_buffer, n);
+        break;
+      case '\n': case '\t': case '\v': case '\f': case ' ':
+        advance(file_buffer, n);
+        break;
+      case ':':
+        m_tokens.emplace_back(
+            TokenType::COLON, ":",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case ',':
+        m_tokens.emplace_back(
+            TokenType::COMMA, ",",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case '{':
+        m_tokens.emplace_back(
+            TokenType::LEFT_CURLY, "{",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case '(':
+        m_tokens.emplace_back(
+            TokenType::LEFT_PAREN, "(",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case '[':
+        m_tokens.emplace_back(
+            TokenType::LEFT_SQUARE, "[",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case '}':
+        m_tokens.emplace_back(
+            TokenType::RIGHT_CURLY, "}",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case ')':
+        m_tokens.emplace_back(
+            TokenType::RIGHT_PAREN, ")",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case ']':
+        m_tokens.emplace_back(
+            TokenType::RIGHT_SQUARE, "]",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      case ';':
+        m_tokens.emplace_back(
+            TokenType::SEMI, ";",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      // &, &=
+      case '&':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::AMP_EQUAL, "&=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::AMP, "&",
+                std::make_pair(m_current_line, m_current_column));
+            break;
           }
-          try_consume(file_buffer, '\n');
-          break;
+          advance(file_buffer, n);
         }
-        default:
-          advance(file_buffer);
+        break;
+      // ^, ^=, ^^, ^^=
+      case '^':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value()) {
+          case '^':
+            advance(file_buffer, n);
+            if (auto next = peek(file_buffer, n)) {
+              switch (next.value()) {
+              case '=':
+                m_tokens.emplace_back(
+                    TokenType::CARET_CARET_EQUAL, "^^=",
+                    std::make_pair(m_current_line, m_current_column));
+                advance(file_buffer, n);
+                break;
+              default:
+                m_tokens.emplace_back(
+                    TokenType::CARET_CARET, "^^",
+                    std::make_pair(m_current_line, m_current_column));
+                break;
+              }
+              advance(file_buffer, n);
+            }
+            break;
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::CARET_EQUAL, "^=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::CARET, "^",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // .
+      case '.':
+        m_tokens.emplace_back(
+            TokenType::DOT, ".",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      // =, ==
+      case '=':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::EQUAL_EQUAL, "==",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::EQUAL, "=",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      
+      case '!':
+        // TODO(lthomas): Not sure if this symbol is necessary
+        advance(file_buffer, n);
+        break;
+      // /, //, /=, //=
+      case '/':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value()) {
+          case '/':
+            advance(file_buffer, n);
+            if (auto next = peek(file_buffer, n)) {
+              switch (next.value()) {
+              case '=':
+                m_tokens.emplace_back(
+                    TokenType::FSLASH_FSLASH_EQUAL, "//=",
+                    std::make_pair(m_current_line, m_current_column));
+                advance(file_buffer, n);
+                break;
+              default:
+                m_tokens.emplace_back(
+                    TokenType::FSLASH_FSLASH, "//",
+                    std::make_pair(m_current_line, m_current_column));
+                break;
+              }
+              advance(file_buffer, n);
+            }
+            break;
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::FSLASH_EQUAL, "/=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::FSLASH, "/",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // <, <=, <<
+      case '<':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '<':
+            m_tokens.emplace_back(
+                TokenType::LANGLE_LANGLE, "<<",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::LANGLE_EQUAL, "<=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::LANGLE, "<",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // -, --, -=
+      case '-':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '-':
+            m_tokens.emplace_back(
+                TokenType::MINUS_MINUS, "--",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::MINUS_EQUAL, "-=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::MINUS, "-",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // %, %=
+      case '%':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::PERCENT_EQUAL, "%=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::PERCENT, "%",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // |, |=
+      case '|':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::PIPE_EQUAL, "|=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::PIPE, "|",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // +, ++, +=
+      case '+':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '+':
+            m_tokens.emplace_back(
+                TokenType::PLUS_PLUS, "++",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::PLUS_EQUAL, "+=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::PLUS, "+",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // ?
+      case '?':
+        m_tokens.emplace_back(
+            TokenType::QUESTION, "?",
+            std::make_pair(m_current_line, m_current_column));
+        advance(file_buffer, n);
+        break;
+      // >, >=, >>
+      case '>':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '>':
+            m_tokens.emplace_back(
+                TokenType::RANGLE_RANGLE, ">>",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::RANGLE_EQUAL, ">=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::RANGLE, ">",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // *, *=
+      case '*':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::STAR_EQUAL, "*=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::STAR, "*",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // ~, ~=
+      case '~':
+        if (auto next = peek(file_buffer, n)) {
+          switch (next.value())
+          {
+          case '=':
+            m_tokens.emplace_back(
+                TokenType::TILDE_EQUAL, "~=",
+                std::make_pair(m_current_line, m_current_column));
+            advance(file_buffer, n);
+            break;
+          default:
+            m_tokens.emplace_back(
+                TokenType::TILDE, "~",
+                std::make_pair(m_current_line, m_current_column));
+            break;
+          }
+          advance(file_buffer, n);
+        }
+        break;
+      // Comments
+      case '#': {
+        std::optional<char> next = peek(file_buffer, n);
+        while (next.has_value() && next.value() != '\n') {
+          advance(file_buffer, n);
+          next = peek(file_buffer, n);
+        }
+        advance(file_buffer, n);
+        break;
       }
+      // Unknown symbol
+      default:
+        logger.error("Unknown symbol {}", file_buffer[m_buffer_index]);
+        advance(file_buffer, n);
+      }
+      // clang-format on
 
       // Add next character to token buffer
       // token_buffer.push_back(file_buffer[m_buffer_index]);
@@ -84,45 +474,59 @@ void Lexer::tokenize() {
     logger.trace("Finished chunk {}", m_total_chunks++);
   }
 
+  logger.trace("Finished final line: {} with {} columns", m_current_line,
+               m_current_column);
   logger.debug("Total chunks read: {}", m_total_chunks);
   logger.debug("Total bytes read: {}", m_total_bytes);
 }
 
-[[nodiscard]] inline std::optional<char> Lexer::peek(const std::array<char, BUFFER_SIZE> &buffer) noexcept {
-  if (m_buffer_index + 1 < buffer.size()) {
+[[nodiscard]] inline std::optional<char>
+Lexer::peek(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
+  if (m_buffer_index + 1 < size) {
     return buffer[m_buffer_index + 1];
   }
 
   return {};
 }
 
-inline void Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer) noexcept {
+inline bool
+Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
   // End of chunk or EoF
-  if (buffer.size() <= m_buffer_index) { return; }
+  if (m_buffer_index >= size) {
+    return false;
+  }
+
+  auto &logger = utils::get_logger();
 
   char current = buffer[m_buffer_index++];
   if (current == '\n') {
+    logger.trace("Finished line: {} with {} columns", m_current_line,
+                 m_current_column);
     ++m_current_line;
     m_current_column = 0;
   } else {
     ++m_current_column;
   }
+  return true;
 }
 
-[[nodiscard]] inline std::optional<char> Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer) noexcept {
-  if (auto ret = peek(buffer)) {
-    advance(buffer);
+[[nodiscard]] inline std::optional<char>
+Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
+  if (auto ret = peek(buffer, size)) {
+    advance(buffer, size);
     return ret;
   }
   return {};
 }
 
-inline char Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer, const char &character) noexcept {
-  auto next = try_consume(buffer);
+inline char Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer,
+                               size_t size, const char &character) noexcept {
+  auto next = try_consume(buffer, size);
   if (!next.has_value() || next.value() != character) {
     // TODO(lthomas): I don't know if I want to log and exit here
     auto &logger = utils::get_logger();
-    logger.error("Expected {} at line: {} column: {}", character, m_current_line, m_current_column);
+    logger.error("Expected {} at line: {} column: {}", character,
+                 m_current_line, m_current_column);
     exit(EXIT_FAILURE);
   }
   return next.value();
@@ -140,9 +544,8 @@ bool Lexer::try_parse_token(std::string &token_buffer,
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.
-FloatConst
-Lexer::double_from_scientific(std::string &mantissa_str,
-                              const std::string &exponent_str) {
+FloatConst Lexer::double_from_scientific(std::string &mantissa_str,
+                                         const std::string &exponent_str) {
   uint64_t mantissa;
   int exponent;
   bool negative = false;
