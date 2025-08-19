@@ -43,6 +43,8 @@ void Lexer::tokenize() {
       case '_':
         // TODO(lthomas): parse_ident(file_buffer.data());
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
         break;
       case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
       case 'g': case 'h': case 'i': case 'j': case 'k':
@@ -51,6 +53,8 @@ void Lexer::tokenize() {
       case 'v': case 'w': case 'x': case 'y': case 'z':
         // TODO(lthomas): parse_ident or keyword
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
         break;
       case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
       case 'G': case 'H': case 'I': case 'J': case 'K':
@@ -59,68 +63,47 @@ void Lexer::tokenize() {
       case 'V': case 'W': case 'X': case 'Y': case 'Z':
         // TODO(lthomas): parse_ident or keyword
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
         break;
       case '0': case '1': case '2': case '3': case '4':
       case '5': case '6': case '7': case '8': case '9':
         // TODO(lthomas): parse_numeric_const(file_buffer.data());
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
         break;
       case '\n': case '\t': case '\v': case '\f': case ' ':
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
         break;
       case ':':
-        m_tokens.emplace_back(
-            TokenType::COLON, ":",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::COLON);
         break;
       case ',':
-        m_tokens.emplace_back(
-            TokenType::COMMA, ",",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::COMMA);
         break;
       case '{':
-        m_tokens.emplace_back(
-            TokenType::LEFT_CURLY, "{",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::LEFT_CURLY);
         break;
       case '(':
-        m_tokens.emplace_back(
-            TokenType::LEFT_PAREN, "(",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::LEFT_PAREN);
         break;
       case '[':
-        m_tokens.emplace_back(
-            TokenType::LEFT_SQUARE, "[",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::LEFT_SQUARE);
         break;
       case '}':
-        m_tokens.emplace_back(
-            TokenType::RIGHT_CURLY, "}",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::RIGHT_CURLY);
         break;
       case ')':
-        m_tokens.emplace_back(
-            TokenType::RIGHT_PAREN, ")",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::RIGHT_PAREN);
         break;
       case ']':
-        m_tokens.emplace_back(
-            TokenType::RIGHT_SQUARE, "]",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::RIGHT_SQUARE);
         break;
       case ';':
-        m_tokens.emplace_back(
-            TokenType::SEMI, ";",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::SEMI);
         break;
       // &, &=
       case '&':
@@ -128,18 +111,12 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '=':
-            m_tokens.emplace_back(
-                TokenType::AMP_EQUAL, "&=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::AMP_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::AMP, "&",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::AMP);
           }
-          advance(file_buffer, n);
         }
         break;
       // ^, ^=, ^^, ^^=
@@ -151,41 +128,26 @@ void Lexer::tokenize() {
             if (auto next = peek(file_buffer, n)) {
               switch (next.value()) {
               case '=':
-                m_tokens.emplace_back(
-                    TokenType::CARET_CARET_EQUAL, "^^=",
-                    std::make_pair(m_current_line, m_current_column));
                 advance(file_buffer, n);
+                create_token(file_buffer, n, TokenType::CARET_CARET_EQUAL);
                 break;
               default:
-                m_tokens.emplace_back(
-                    TokenType::CARET_CARET, "^^",
-                    std::make_pair(m_current_line, m_current_column));
-                break;
+                create_token(file_buffer, n, TokenType::CARET_CARET);
               }
-              advance(file_buffer, n);
             }
             break;
           case '=':
-            m_tokens.emplace_back(
-                TokenType::CARET_EQUAL, "^=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::CARET_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::CARET, "^",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::CARET);
           }
-          advance(file_buffer, n);
         }
         break;
       // .
       case '.':
-        m_tokens.emplace_back(
-            TokenType::DOT, ".",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::DOT);
         break;
       // =, ==
       case '=':
@@ -193,18 +155,12 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '=':
-            m_tokens.emplace_back(
-                TokenType::EQUAL_EQUAL, "==",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::EQUAL_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::EQUAL, "=",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::EQUAL);
           }
-          advance(file_buffer, n);
         }
         break;
       
@@ -221,33 +177,21 @@ void Lexer::tokenize() {
             if (auto next = peek(file_buffer, n)) {
               switch (next.value()) {
               case '=':
-                m_tokens.emplace_back(
-                    TokenType::FSLASH_FSLASH_EQUAL, "//=",
-                    std::make_pair(m_current_line, m_current_column));
                 advance(file_buffer, n);
+                create_token(file_buffer, n, TokenType::FSLASH_FSLASH_EQUAL);
                 break;
               default:
-                m_tokens.emplace_back(
-                    TokenType::FSLASH_FSLASH, "//",
-                    std::make_pair(m_current_line, m_current_column));
-                break;
+                create_token(file_buffer, n, TokenType::FSLASH_FSLASH);
               }
-              advance(file_buffer, n);
             }
             break;
           case '=':
-            m_tokens.emplace_back(
-                TokenType::FSLASH_EQUAL, "/=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::FSLASH_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::FSLASH, "/",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::FSLASH);
           }
-          advance(file_buffer, n);
         }
         break;
       // <, <=, <<
@@ -256,24 +200,16 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '<':
-            m_tokens.emplace_back(
-                TokenType::LANGLE_LANGLE, "<<",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::LANGLE_LANGLE);
             break;
           case '=':
-            m_tokens.emplace_back(
-                TokenType::LANGLE_EQUAL, "<=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::LANGLE_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::LANGLE, "<",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::LANGLE);
           }
-          advance(file_buffer, n);
         }
         break;
       // -, --, -=
@@ -282,24 +218,16 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '-':
-            m_tokens.emplace_back(
-                TokenType::MINUS_MINUS, "--",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::MINUS_MINUS);
             break;
           case '=':
-            m_tokens.emplace_back(
-                TokenType::MINUS_EQUAL, "-=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::MINUS_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::MINUS, "-",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::MINUS);
           }
-          advance(file_buffer, n);
         }
         break;
       // %, %=
@@ -308,18 +236,12 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '=':
-            m_tokens.emplace_back(
-                TokenType::PERCENT_EQUAL, "%=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::PERCENT_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::PERCENT, "%",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::PERCENT);
           }
-          advance(file_buffer, n);
         }
         break;
       // |, |=
@@ -328,18 +250,12 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '=':
-            m_tokens.emplace_back(
-                TokenType::PIPE_EQUAL, "|=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::PIPE_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::PIPE, "|",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::PIPE);
           }
-          advance(file_buffer, n);
         }
         break;
       // +, ++, +=
@@ -348,32 +264,21 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '+':
-            m_tokens.emplace_back(
-                TokenType::PLUS_PLUS, "++",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::PLUS_PLUS);
             break;
           case '=':
-            m_tokens.emplace_back(
-                TokenType::PLUS_EQUAL, "+=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::PLUS_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::PLUS, "+",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::PLUS);
           }
-          advance(file_buffer, n);
         }
         break;
       // ?
       case '?':
-        m_tokens.emplace_back(
-            TokenType::QUESTION, "?",
-            std::make_pair(m_current_line, m_current_column));
-        advance(file_buffer, n);
+        create_token(file_buffer, n, TokenType::QUESTION);
         break;
       // >, >=, >>
       case '>':
@@ -381,24 +286,16 @@ void Lexer::tokenize() {
           switch (next.value())
           {
           case '>':
-            m_tokens.emplace_back(
-                TokenType::RANGLE_RANGLE, ">>",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::RANGLE_RANGLE);
             break;
           case '=':
-            m_tokens.emplace_back(
-                TokenType::RANGLE_EQUAL, ">=",
-                std::make_pair(m_current_line, m_current_column));
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::RANGLE_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::RANGLE, ">",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::RANGLE);
           }
-          advance(file_buffer, n);
         }
         break;
       // *, *=
@@ -406,19 +303,13 @@ void Lexer::tokenize() {
         if (auto next = peek(file_buffer, n)) {
           switch (next.value())
           {
-          case '=':
-            m_tokens.emplace_back(
-                TokenType::STAR_EQUAL, "*=",
-                std::make_pair(m_current_line, m_current_column));
+            case '=':
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::STAR_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::STAR, "*",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::STAR);
           }
-          advance(file_buffer, n);
         }
         break;
       // ~, ~=
@@ -426,19 +317,13 @@ void Lexer::tokenize() {
         if (auto next = peek(file_buffer, n)) {
           switch (next.value())
           {
-          case '=':
-            m_tokens.emplace_back(
-                TokenType::TILDE_EQUAL, "~=",
-                std::make_pair(m_current_line, m_current_column));
+            case '=':
             advance(file_buffer, n);
+            create_token(file_buffer, n, TokenType::TILDE_EQUAL);
             break;
           default:
-            m_tokens.emplace_back(
-                TokenType::TILDE, "~",
-                std::make_pair(m_current_line, m_current_column));
-            break;
+            create_token(file_buffer, n, TokenType::TILDE);
           }
-          advance(file_buffer, n);
         }
         break;
       // Comments
@@ -449,12 +334,16 @@ void Lexer::tokenize() {
           next = peek(file_buffer, n);
         }
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
         break;
       }
       // Unknown symbol
       default:
         logger.error("Unknown symbol {}", file_buffer[m_buffer_index]);
         advance(file_buffer, n);
+        m_token_buffer.str(std::string());
+        m_token_buffer.clear();
       }
       // clang-format on
 
@@ -478,6 +367,14 @@ void Lexer::tokenize() {
                m_current_column);
   logger.debug("Total chunks read: {}", m_total_chunks);
   logger.debug("Total bytes read: {}", m_total_bytes);
+}
+
+void Lexer::create_token(const std::array<char, BUFFER_SIZE> &buffer, size_t size, TokenType type) noexcept {
+  advance(buffer, size);
+  m_tokens.emplace_back(type, m_token_buffer.str(),
+      std::make_pair(m_current_line - 1, m_current_column - 1));
+  m_token_buffer.str(std::string());
+  m_token_buffer.clear();
 }
 
 [[nodiscard]] inline std::optional<char>
@@ -505,6 +402,7 @@ inline bool Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer,
     ++m_current_line;
     m_current_column = 0;
   } else {
+    m_token_buffer << current;
     ++m_current_column;
   }
   return true;

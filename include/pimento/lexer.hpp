@@ -34,6 +34,12 @@ private:
   constexpr static size_t MAX_TOKEN_LEN = 64;
 
 private:
+  //! @brief Create a token of the specified type.
+  //! @param buffer The buffer of characters read from the input.
+  //! @param size The number of characters read from the input.
+  //! @param type The TokenType to create.
+  void create_token(const std::array<char, BUFFER_SIZE> &buffer, size_t size, TokenType type) noexcept;
+
   //! @brief Peek at the next character in the buffer without consuming it.
   //! @param buffer The buffer from which to get the character.
   //! @return The next character in the buffer.
@@ -89,6 +95,8 @@ private:
   size_t m_current_line{1};
   //! @brief The current column of the current line of the input stream.
   size_t m_current_column{0};
+  //! @brief The current characters representing the token.
+  std::stringstream m_token_buffer;
   //! @brief The tokens parsed from the input stream.
   std::vector<Token> m_tokens;
 };
