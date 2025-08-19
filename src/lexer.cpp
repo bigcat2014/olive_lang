@@ -21,6 +21,7 @@ void Lexer::tokenize() {
   std::string token_buffer;
   token_buffer.reserve(MAX_TOKEN_LEN);
 
+  // TODO(lthomas): Breaks when buffer ends in the middle of a token
   while (m_stream) {
     m_stream.read(file_buffer.data(), file_buffer.size());
     auto n = static_cast<size_t>(m_stream.gcount());

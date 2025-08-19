@@ -29,7 +29,7 @@ public:
 
 private:
   //! @brief The size in bytes of the chunks to read from the input stream.
-  constexpr static size_t BUFFER_SIZE = 4096;
+  constexpr static size_t BUFFER_SIZE = 4096; // 19;
   //! @brief The size in bytes of the maximum token length.
   constexpr static size_t MAX_TOKEN_LEN = 64;
 
