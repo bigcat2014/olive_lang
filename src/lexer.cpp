@@ -18,7 +18,6 @@ Lexer::Lexer(std::istream &istream) : m_file_buffer(istream) {
 void Lexer::tokenize() {
   auto &logger = utils::get_logger();
   size_t offset, line, column;
-  // bool flag = false;
 
   while (!m_file_buffer.done()) {
     // Cache current offset, line number, and column number at start of parsing
@@ -126,26 +125,6 @@ void Lexer::tokenize() {
           create_token(TokenType::AMP, offset, line, column);
         }
       }
-      // std::optional<char> next = flag ? current_char : m_file_buffer.peek();
-      // if (next.has_value()) {
-      //   switch (next.value()) {
-      //   case '=':
-      //     if (!flag) {
-      //       if (auto current = m_file_buffer.consume()) {
-      //         m_token_buffer << current.value();
-      //       } else {
-      //         break;
-      //       }
-      //     }
-      //     create_token(TokenType::AMP_EQUAL, offset, line, column);
-      //     flag = false;
-      //     break;
-      //   default:
-      //     create_token(TokenType::AMP, offset, line, column);
-      //   }
-      // } else {
-      //   flag = true;
-      // }
       break;
     }
     // ^, ^=, ^^, ^^=
