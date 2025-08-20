@@ -25,18 +25,11 @@ FetchContent_Declare(
   GIT_TAG        v3.2)
 FetchContent_MakeAvailable(argparse)
 
-# Find Boost
-set(Boost_USE_STATIC_LIBS ON)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost 1.74.0 REQUIRED NO_MODULE)
-
-# Find additional project dependencies
-set(BUILD_DEPS
-    spdlog)
-foreach(package ${BUILD_DEPS})
-    find_package(${package} REQUIRED)
-endforeach()
+FetchContent_Declare(
+  spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog.git
+  GIT_TAG        v1.15.3)
+FetchContent_MakeAvailable(spdlog)
 
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
@@ -48,13 +41,13 @@ target_link_libraries(${PROJECT_NAME}_utils PRIVATE spdlog::spdlog_header_only)
 
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
+    src/input_buffer.cpp
     src/lexer.cpp)
 target_include_directories(${PROJECT_NAME}_lexer PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    ${Boost_INCLUDE_DIRS})
+    $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME}_lexer PRIVATE
-    ${PROJECT_NAME}_utils ${Boost_LIBRARIES})
+    ${PROJECT_NAME}_utils)
 
 # Parser library target
 add_library(${PROJECT_NAME}_parser STATIC
@@ -77,8 +70,7 @@ add_executable(${PROJECT_NAME}
     src/pimento.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-    ${Boost_INCLUDE_DIRS})
+    $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME} PRIVATE
     argparse ${PROJECT_NAME}_generator)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -128,8 +120,7 @@ if (BUILD_TESTING)
         tests/lexer_test.cpp)
     target_include_directories(lexer_test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        ${Boost_INCLUDE_DIRS})
+        $<INSTALL_INTERFACE:include>)
     target_link_libraries(lexer_test PRIVATE
         ${PROJECT_NAME}_lexer GTest::gtest_main)
     gtest_discover_tests(lexer_test)
@@ -139,8 +130,7 @@ if (BUILD_TESTING)
         tests/parser_test.cpp)
     target_include_directories(parser_test PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        ${Boost_INCLUDE_DIRS})
+        $<INSTALL_INTERFACE:include>)
     target_link_libraries(parser_test PRIVATE
         ${PROJECT_NAME}_parser GTest::gtest_main)
     gtest_discover_tests(parser_test)
@@ -398,7 +388,6 @@ set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 set(CPACK_DEB_COMPONENT_INSTALL "ON")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Logan Thomas")
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libspdlog-dev, libboost-dev")
 
 set(CPACK_TGZ_COMPONENT_INSTALL "ON")
 

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <variant>
 
 #include <pimento/lexer.hpp>
@@ -5,8 +6,8 @@
 
 namespace pimento::tokenization {
 
-Lexer::Lexer(std::istream &istream) : m_stream(istream) {
-  m_tokens.reserve(BUFFER_SIZE);
+Lexer::Lexer(std::istream &istream) : m_file_buffer(istream) {
+  m_tokens.reserve(InputBuffer::BUFFER_SIZE);
   // tokenize();
 }
 
@@ -17,430 +18,469 @@ Lexer::Lexer(std::istream &istream) : m_stream(istream) {
 void Lexer::tokenize() {
   auto &logger = utils::get_logger();
 
-  std::array<char, BUFFER_SIZE> file_buffer;
-  std::string token_buffer;
-  token_buffer.reserve(MAX_TOKEN_LEN);
+  // TODO(lthomas): Breaks when buffer ends right at the end of a token.
+  while (!m_file_buffer.done()) {
+    if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
+      logger.error("Max token length of {} characters exceeded.",
+                   MAX_TOKEN_LEN);
+      exit(EXIT_FAILURE);
+    }
 
-  // TODO(lthomas): Breaks when buffer ends in the middle of a token
-  while (m_stream) {
-    m_stream.read(file_buffer.data(), file_buffer.size());
-    auto n = static_cast<size_t>(m_stream.gcount());
-    if (n <= 0) {
+    char current_char;
+    if (auto current = m_file_buffer.consume()) {
+      current_char = current.value();
+    } else {
       break;
     }
+    m_token_buffer << current_char;
 
-    m_total_bytes += n;
-    m_buffer_index = 0;
-    while (m_buffer_index < n) {
-      if (token_buffer.size() + 1 > MAX_TOKEN_LEN) {
-        logger.error("Max token length of {} characters exceeded.",
-                     MAX_TOKEN_LEN);
-        exit(EXIT_FAILURE);
+    // Cache current offset, line number, and column number at start of parsing
+    // current token
+    std::streamsize offset = m_file_buffer.get_offset();
+    size_t line = m_file_buffer.get_current_line();
+    size_t column = m_file_buffer.get_current_column() - 1;
+
+    // clang-format off
+    // switch (current_char) {
+    switch (m_token_buffer.str()[0]) {
+    case '_': {
+      // TODO(lthomas): parse_ident(file_buffer.data());
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+      break;
+    }
+    case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+    case 'g': case 'h': case 'i': case 'j': case 'k':
+    case 'l': case 'm': case 'n': case 'o': case 'p':
+    case 'q': case 'r': case 's': case 't': case 'u':
+    case 'v': case 'w': case 'x': case 'y': case 'z': {
+      // TODO(lthomas): parse_ident or keyword
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+      break;
+    }
+    case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+    case 'G': case 'H': case 'I': case 'J': case 'K':
+    case 'L': case 'M': case 'N': case 'O': case 'P':
+    case 'Q': case 'R': case 'S': case 'T': case 'U':
+    case 'V': case 'W': case 'X': case 'Y': case 'Z': {
+      // TODO(lthomas): parse_ident or keyword
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+      break;
+    }
+    case '0': case '1': case '2': case '3': case '4':
+    case '5': case '6': case '7': case '8': case '9': {
+      // TODO(lthomas): parse_numeric_const(file_buffer.data());
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+      break;
+    }
+    case '\n': case '\t': case '\v': case '\f': case ' ': {
+      // m_file_buffer.advance();
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+      break;
+    }
+    case ':':
+      create_token(TokenType::COLON, offset, line, column);
+      break;
+    case ',':
+      create_token(TokenType::COMMA, offset, line, column);
+      break;
+    case '{':
+      create_token(TokenType::LEFT_CURLY, offset, line, column);
+      break;
+    case '(':
+      create_token(TokenType::LEFT_PAREN, offset, line, column);
+      break;
+    case '[':
+      create_token(TokenType::LEFT_SQUARE, offset, line, column);
+      break;
+    case '}':
+      create_token(TokenType::RIGHT_CURLY, offset, line, column);
+      break;
+    case ')':
+      create_token(TokenType::RIGHT_PAREN, offset, line, column);
+      break;
+    case ']':
+      create_token(TokenType::RIGHT_SQUARE, offset, line, column);
+      break;
+    case ';':
+      create_token(TokenType::SEMI, offset, line, column);
+      break;
+    // &, &=
+    case '&': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::AMP_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::AMP, offset, line, column);
+        }
       }
-
-      // clang-format off
-      // TODO(lthomas): Some line/column number calculations are off
-      switch (file_buffer[m_buffer_index]) {
-      case '_':
-        // TODO(lthomas): parse_ident(file_buffer.data());
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
-        break;
-      case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-      case 'g': case 'h': case 'i': case 'j': case 'k':
-      case 'l': case 'm': case 'n': case 'o': case 'p':
-      case 'q': case 'r': case 's': case 't': case 'u':
-      case 'v': case 'w': case 'x': case 'y': case 'z':
-        // TODO(lthomas): parse_ident or keyword
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
-        break;
-      case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-      case 'G': case 'H': case 'I': case 'J': case 'K':
-      case 'L': case 'M': case 'N': case 'O': case 'P':
-      case 'Q': case 'R': case 'S': case 'T': case 'U':
-      case 'V': case 'W': case 'X': case 'Y': case 'Z':
-        // TODO(lthomas): parse_ident or keyword
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
-        break;
-      case '0': case '1': case '2': case '3': case '4':
-      case '5': case '6': case '7': case '8': case '9':
-        // TODO(lthomas): parse_numeric_const(file_buffer.data());
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
-        break;
-      case '\n': case '\t': case '\v': case '\f': case ' ':
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
-        break;
-      case ':':
-        create_token(file_buffer, n, TokenType::COLON);
-        break;
-      case ',':
-        create_token(file_buffer, n, TokenType::COMMA);
-        break;
-      case '{':
-        create_token(file_buffer, n, TokenType::LEFT_CURLY);
-        break;
-      case '(':
-        create_token(file_buffer, n, TokenType::LEFT_PAREN);
-        break;
-      case '[':
-        create_token(file_buffer, n, TokenType::LEFT_SQUARE);
-        break;
-      case '}':
-        create_token(file_buffer, n, TokenType::RIGHT_CURLY);
-        break;
-      case ')':
-        create_token(file_buffer, n, TokenType::RIGHT_PAREN);
-        break;
-      case ']':
-        create_token(file_buffer, n, TokenType::RIGHT_SQUARE);
-        break;
-      case ';':
-        create_token(file_buffer, n, TokenType::SEMI);
-        break;
-      // &, &=
-      case '&':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::AMP_EQUAL);
+      break;
+    }
+    // ^, ^=, ^^, ^^=
+    case '^': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '^':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
             break;
-          default:
-            create_token(file_buffer, n, TokenType::AMP);
           }
-        }
-        break;
-      // ^, ^=, ^^, ^^=
-      case '^':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value()) {
-          case '^':
-            advance(file_buffer, n);
-            if (auto next = peek(file_buffer, n)) {
-              switch (next.value()) {
-              case '=':
-                advance(file_buffer, n);
-                create_token(file_buffer, n, TokenType::CARET_CARET_EQUAL);
-                break;
-              default:
-                create_token(file_buffer, n, TokenType::CARET_CARET);
-              }
-            }
-            break;
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::CARET_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::CARET);
-          }
-        }
-        break;
-      // .
-      case '.':
-        create_token(file_buffer, n, TokenType::DOT);
-        break;
-      // =, ==
-      case '=':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::EQUAL_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::EQUAL);
-          }
-        }
-        break;
-      
-      case '!':
-        // TODO(lthomas): Not sure if this symbol is necessary
-        advance(file_buffer, n);
-        break;
-      // /, //, /=, //=
-      case '/':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value()) {
-          case '/':
-            advance(file_buffer, n);
-            if (auto next = peek(file_buffer, n)) {
-              switch (next.value()) {
-              case '=':
-                advance(file_buffer, n);
-                create_token(file_buffer, n, TokenType::FSLASH_FSLASH_EQUAL);
-                break;
-              default:
-                create_token(file_buffer, n, TokenType::FSLASH_FSLASH);
-              }
-            }
-            break;
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::FSLASH_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::FSLASH);
-          }
-        }
-        break;
-      // <, <=, <<
-      case '<':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '<':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::LANGLE_LANGLE);
-            break;
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::LANGLE_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::LANGLE);
-          }
-        }
-        break;
-      // -, --, -=
-      case '-':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '-':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::MINUS_MINUS);
-            break;
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::MINUS_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::MINUS);
-          }
-        }
-        break;
-      // %, %=
-      case '%':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::PERCENT_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::PERCENT);
-          }
-        }
-        break;
-      // |, |=
-      case '|':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::PIPE_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::PIPE);
-          }
-        }
-        break;
-      // +, ++, +=
-      case '+':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '+':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::PLUS_PLUS);
-            break;
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::PLUS_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::PLUS);
-          }
-        }
-        break;
-      // ?
-      case '?':
-        create_token(file_buffer, n, TokenType::QUESTION);
-        break;
-      // >, >=, >>
-      case '>':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
-          case '>':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::RANGLE_RANGLE);
-            break;
-          case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::RANGLE_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::RANGLE);
-          }
-        }
-        break;
-      // *, *=
-      case '*':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
+          if (auto next = m_file_buffer.peek()) {
+            switch (next.value()) {
             case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::STAR_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::STAR);
+              if (auto current = m_file_buffer.consume()) {
+                m_token_buffer << current.value();
+              } else {
+                break;
+              }
+              create_token(TokenType::CARET_CARET_EQUAL, offset, line, column);
+              break;
+            default:
+              create_token(TokenType::CARET_CARET, offset, line, column);
+            }
           }
+          break;
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::CARET_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::CARET, offset, line, column);
         }
-        break;
-      // ~, ~=
-      case '~':
-        if (auto next = peek(file_buffer, n)) {
-          switch (next.value())
-          {
+      }
+      break;
+    }
+    // .
+    case '.':
+      create_token(TokenType::DOT, offset, line, column);
+      break;
+    // =, ==
+    case '=': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::EQUAL_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::EQUAL, offset, line, column);
+        }
+      }
+      break;
+    }
+    case '!':
+      // TODO(lthomas): Not sure if this symbol is necessary
+      if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+      break;
+    
+    // /, //, /=, //=
+    case '/': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '/':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          if (auto next = m_file_buffer.peek()) {
+            switch (next.value()) {
             case '=':
-            advance(file_buffer, n);
-            create_token(file_buffer, n, TokenType::TILDE_EQUAL);
-            break;
-          default:
-            create_token(file_buffer, n, TokenType::TILDE);
+              if (auto current = m_file_buffer.consume()) {
+                m_token_buffer << current.value();
+              } else {
+                break;
+              }
+              create_token(TokenType::FSLASH_FSLASH_EQUAL, offset, line, column);
+              break;
+            default:
+              create_token(TokenType::FSLASH_FSLASH, offset, line, column);
+            }
           }
+          break;
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::FSLASH_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::FSLASH, offset, line, column);
         }
-        break;
-      // Comments
-      case '#': {
-        std::optional<char> next = peek(file_buffer, n);
-        while (next.has_value() && next.value() != '\n') {
-          advance(file_buffer, n);
-          next = peek(file_buffer, n);
+      }
+      break;
+    }
+    // <, <=, <<
+    case '<': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '<':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::LANGLE_LANGLE, offset, line, column);
+          break;
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::LANGLE_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::LANGLE, offset, line, column);
         }
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
-        break;
       }
-      // Unknown symbol
-      default:
-        logger.error("Unknown symbol {}", file_buffer[m_buffer_index]);
-        advance(file_buffer, n);
-        m_token_buffer.str(std::string());
-        m_token_buffer.clear();
+      break;
+    }
+    // -, --, -=
+    case '-': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '-':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::MINUS_MINUS, offset, line, column);
+          break;
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::MINUS_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::MINUS, offset, line, column);
+        }
       }
-      // clang-format on
+      break;
+    }
+    // %, %=
+    case '%': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::PERCENT_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::PERCENT, offset, line, column);
+        }
+      }
+      break;
+    }
+    // |, |=
+    case '|': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::PIPE_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::PIPE, offset, line, column);
+        }
+      }
+      break;
+    }
+    // +, ++, +=
+    case '+': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '+':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::PLUS_PLUS, offset, line, column);
+          break;
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::PLUS_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::PLUS, offset, line, column);
+        }
+      }
+      break;
+    }
+    // ?
+    case '?':
+      create_token(TokenType::QUESTION, offset, line, column);
+      break;
+    // >, >=, >>
+    case '>': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '>':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::RANGLE_RANGLE, offset, line, column);
+          break;
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::RANGLE_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::RANGLE, offset, line, column);
+        }
+      }
+      break;
+    }
+    // *, *=
+    case '*': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::STAR_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::STAR, offset, line, column);
+        }
+      }
+      break;
+    }
+    // ~, ~=
+    case '~': {
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '=':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          create_token(TokenType::TILDE_EQUAL, offset, line, column);
+          break;
+        default:
+          create_token(TokenType::TILDE, offset, line, column);
+        }
+      }
+      break;
+    }
+    // Comments
+    case '#': {
+      std::optional<char> next = m_file_buffer.peek();
+      while (next.has_value() && next.value() != '\n') {
+        m_file_buffer.advance();
+        next = m_file_buffer.peek();
+      }
+      m_file_buffer.advance();
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+      break;
+    }
+    // Unknown symbol
+    default:
+      logger.error("Unknown symbol {}", current_char);
+      m_file_buffer.advance();
+      m_token_buffer.str("");
+      m_token_buffer.clear();
+    }
+    // clang-format on
 
-      // Add next character to token buffer
-      // token_buffer.push_back(file_buffer[m_buffer_index]);
+    // Add next character to token buffer
+    // token_buffer.push_back(file_buffer[m_buffer_index]);
 
-      // Attempt to parse token from token buffer
-      // const char next = peek(m_buffer_index, file_buffer.data(), n, 1);
-      // bool token_added = try_parse_token(token_buffer, next);
+    // Attempt to parse token from token buffer
+    // const char next = peek(m_buffer_index, file_buffer.data(), n, 1);
+    // bool token_added = try_parse_token(token_buffer, next);
 
-      // TODO(lthomas): Implement logging
-      // if (logger.level() == spdlog::level::trace) {
-      // }
-      // ++m_buffer_index;
+    // TODO(lthomas): Implement logging
+    // if (logger.level() == spdlog::level::trace) {
+    // }
+    // ++m_buffer_index;
+
+    // logger.trace("Finished chunk {}", m_total_chunks++);
+  }
+
+  logger.trace("Finished final line: {} with {} columns",
+               m_file_buffer.get_current_line(),
+               m_file_buffer.get_current_column());
+  // logger.debug("Total chunks read: {}", m_total_chunks);
+  // logger.debug("Total bytes read: {}", m_total_bytes);
+
+  if (logger.level() == spdlog::level::trace) {
+    std::cout << "Tokens:" << std::endl;
+    for (const auto &token : m_tokens) {
+      std::cout << token << std::endl;
     }
 
-    logger.trace("Finished chunk {}", m_total_chunks++);
+    // Testing using offset and span for pulling from input stream
+    std::cout << "Tokens from file" << std::endl;
+    for (const auto &token : m_tokens) {
+      std::cout << m_file_buffer.get(token.source_span.first,
+                                     token.source_span.second)
+                << std::endl;
+    }
   }
-
-  logger.trace("Finished final line: {} with {} columns", m_current_line,
-               m_current_column);
-  logger.debug("Total chunks read: {}", m_total_chunks);
-  logger.debug("Total bytes read: {}", m_total_bytes);
 }
 
-void Lexer::create_token(const std::array<char, BUFFER_SIZE> &buffer, size_t size, TokenType type) noexcept {
-  advance(buffer, size);
-  m_tokens.emplace_back(type, m_token_buffer.str(),
-      std::make_pair(m_current_line - 1, m_current_column - 1));
-  m_token_buffer.str(std::string());
+void Lexer::create_token(TokenType type, std::streamsize offset, size_t line,
+                         size_t column) noexcept {
+  std::string lexme{m_token_buffer.str()};
+  m_tokens.emplace_back(type, lexme, std::make_pair(offset, lexme.length()),
+                        std::make_pair(line, column));
+  m_token_buffer.str("");
   m_token_buffer.clear();
-}
-
-[[nodiscard]] inline std::optional<char>
-Lexer::peek(const std::array<char, BUFFER_SIZE> &buffer, size_t size) noexcept {
-  if (m_buffer_index + 1 < size) {
-    return buffer[m_buffer_index + 1];
-  }
-
-  return {};
-}
-
-inline bool Lexer::advance(const std::array<char, BUFFER_SIZE> &buffer,
-                           size_t size) noexcept {
-  // End of chunk or EoF
-  if (m_buffer_index >= size) {
-    return false;
-  }
-
-  auto &logger = utils::get_logger();
-
-  char current = buffer[m_buffer_index++];
-  if (current == '\n') {
-    logger.trace("Finished line: {} with {} columns", m_current_line,
-                 m_current_column);
-    ++m_current_line;
-    m_current_column = 0;
-  } else {
-    m_token_buffer << current;
-    ++m_current_column;
-  }
-  return true;
-}
-
-[[nodiscard]] inline std::optional<char>
-Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer,
-                   size_t size) noexcept {
-  if (auto ret = peek(buffer, size)) {
-    advance(buffer, size);
-    return ret;
-  }
-  return {};
-}
-
-inline char Lexer::try_consume(const std::array<char, BUFFER_SIZE> &buffer,
-                               size_t size, const char &character) noexcept {
-  auto next = try_consume(buffer, size);
-  if (!next.has_value() || next.value() != character) {
-    // TODO(lthomas): I don't know if I want to log and exit here
-    auto &logger = utils::get_logger();
-    logger.error("Expected {} at line: {} column: {}", character,
-                 m_current_line, m_current_column);
-    exit(EXIT_FAILURE);
-  }
-  return next.value();
-}
-
-bool Lexer::try_parse_token(std::string &token_buffer,
-                            const char next) noexcept {
-  if (token_buffer.empty()) {
-    return false;
-  }
-
-  // TODO(lthomas): Implement token parsing.
-
-  return false;
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.

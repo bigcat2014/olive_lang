@@ -600,30 +600,6 @@ private:
   Value m_value;
 };
 
-//! @brief Parsed token.
-struct Token {
-  //! @brief The type of this token.
-  TokenType token_type;
-  //! @brief The literal string parsed to get the token.
-  std::string lexeme;
-  //! @brief The line and column number of the token.
-  // TODO(lthomas): Currently storing line and column, switch to file offset and span
-  std::pair<unsigned, unsigned> source_span;
-};
-
-//! @brief Token for representing numeric constants.
-struct NumConstToken : public Token {
-  //! @brief The value of the floating point number.
-  NumericConst value;
-};
-
-//! @brief Token for representing string values.
-//! This could be string literals, identifiers, or type identifiers.
-struct StringToken : public Token {
-  //! @brief The string value stored, either string literal or identifier.
-  std::string value;
-};
-
 //! @brief Static utility class for interacting with token types.
 class TokenTypeUtil {
 public:
@@ -760,6 +736,42 @@ private:
 
     return token_str;
   }
+};
+
+//! @brief Parsed token.
+struct Token {
+  //! @brief The type of this token.
+  TokenType token_type;
+  //! @brief The literal string parsed to get the token.
+  std::string lexeme;
+  //! @brief The offset and span of the token.
+  std::pair<uint64_t, uint64_t> source_span;
+  //! @brief The line and column number of the token.
+  std::pair<uint64_t, uint64_t> location;
+
+  friend inline std::ostream &operator<<(std::ostream &out, Token const &data) {
+    out << "Token:";
+    out << "\n\tTokenType: " << TokenTypeUtil::get_type_as_str(data.token_type);
+    out << "\n\tLexme: \"" << data.lexeme << "\"";
+    out << "\n\tOffset: " << data.source_span.first;
+    out << "\n\tSpan: " << data.source_span.second;
+    out << "\n\tLine: " << data.location.first;
+    out << "\n\tColumn: " << data.location.second;
+    return out;
+  }
+};
+
+//! @brief Token for representing numeric constants.
+struct NumConstToken : public Token {
+  //! @brief The value of the floating point number.
+  NumericConst value;
+};
+
+//! @brief Token for representing string values.
+//! This could be string literals, identifiers, or type identifiers.
+struct StringToken : public Token {
+  //! @brief The string value stored, either string literal or identifier.
+  std::string value;
 };
 
 } // namespace pimento::tokenization

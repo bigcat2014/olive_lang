@@ -1,8 +1,6 @@
 # Olive Lang
-## Dependencies / Prerequisites
+## Prerequisites
 - cmake
-- libboost-dev
-- libspdlog-dev
 ### Unit test dependencies
 - clang-format
 - clang-tidy
