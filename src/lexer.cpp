@@ -428,27 +428,13 @@ void Lexer::tokenize() {
       m_token_buffer.clear();
     }
     // clang-format on
-
-    // Add next character to token buffer
-    // token_buffer.push_back(file_buffer[m_buffer_index]);
-
-    // Attempt to parse token from token buffer
-    // const char next = peek(m_buffer_index, file_buffer.data(), n, 1);
-    // bool token_added = try_parse_token(token_buffer, next);
-
-    // TODO(lthomas): Implement logging
-    // if (logger.level() == spdlog::level::trace) {
-    // }
-    // ++m_buffer_index;
-
-    // logger.trace("Finished chunk {}", m_total_chunks++);
   }
 
   logger.trace("Finished final line: {} with {} columns",
                m_file_buffer.get_current_line(),
                m_file_buffer.get_current_column());
-  // logger.debug("Total chunks read: {}", m_total_chunks);
-  // logger.debug("Total bytes read: {}", m_total_bytes);
+  logger.debug("Total chunks read: {}", m_file_buffer.get_total_chunks());
+  logger.debug("Total bytes read: {}", m_file_buffer.get_total_bytes());
 
   if (logger.level() == spdlog::level::trace) {
     std::cout << "Tokens:" << std::endl;

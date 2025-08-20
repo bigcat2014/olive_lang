@@ -14,7 +14,7 @@ namespace pimento::tokenization {
 class InputBuffer {
 public:
   //! @brief The size in bytes of the chunks to read from the input stream.
-  constexpr static size_t BUFFER_SIZE = 19; // 4096;
+  constexpr static size_t BUFFER_SIZE = 4096;
 
 public:
   //! @brief Constructor for the InputBuffer
@@ -31,6 +31,14 @@ public:
 
   //! @brief Advance the file buffer.
   void advance();
+
+  //! @brief Get the current number of bytes read from input stream.
+  //! @return Current number of bytes read from input stream.
+  [[nodiscard]] inline size_t get_total_bytes() { return m_total_bytes; }
+
+  //! @brief Get the current number of chunks read from input stream.
+  //! @return Current number of chunks read from input stream.
+  [[nodiscard]] inline size_t get_total_chunks() { return m_total_chunks; }
 
   //! @brief Get the current offset in the input stream.
   //! @return Current offset in the input stream.
