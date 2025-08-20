@@ -17,10 +17,17 @@ Lexer::Lexer(std::istream &istream) : m_file_buffer(istream) {
 
 void Lexer::tokenize() {
   auto &logger = utils::get_logger();
+  size_t offset, line, column;
+  // bool flag = false;
 
-  // TODO(lthomas): Breaks when buffer ends right at the end of a token.
   while (!m_file_buffer.done()) {
-    if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
+    // Cache current offset, line number, and column number at start of parsing
+    // current token
+    if (m_token_buffer.str().length() == 0) {
+      offset = m_file_buffer.get_offset();
+      line = m_file_buffer.get_current_line();
+      column = m_file_buffer.get_current_column();
+    } else if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
       logger.error("Max token length of {} characters exceeded.",
                    MAX_TOKEN_LEN);
       exit(EXIT_FAILURE);
@@ -33,12 +40,6 @@ void Lexer::tokenize() {
       break;
     }
     m_token_buffer << current_char;
-
-    // Cache current offset, line number, and column number at start of parsing
-    // current token
-    std::streamsize offset = m_file_buffer.get_offset();
-    size_t line = m_file_buffer.get_current_line();
-    size_t column = m_file_buffer.get_current_column() - 1;
 
     // clang-format off
     // switch (current_char) {
@@ -125,6 +126,26 @@ void Lexer::tokenize() {
           create_token(TokenType::AMP, offset, line, column);
         }
       }
+      // std::optional<char> next = flag ? current_char : m_file_buffer.peek();
+      // if (next.has_value()) {
+      //   switch (next.value()) {
+      //   case '=':
+      //     if (!flag) {
+      //       if (auto current = m_file_buffer.consume()) {
+      //         m_token_buffer << current.value();
+      //       } else {
+      //         break;
+      //       }
+      //     }
+      //     create_token(TokenType::AMP_EQUAL, offset, line, column);
+      //     flag = false;
+      //     break;
+      //   default:
+      //     create_token(TokenType::AMP, offset, line, column);
+      //   }
+      // } else {
+      //   flag = true;
+      // }
       break;
     }
     // ^, ^=, ^^, ^^=
@@ -418,11 +439,15 @@ void Lexer::tokenize() {
     }
     // Comments
     case '#': {
-      std::optional<char> next = m_file_buffer.peek();
-      while (next.has_value() && next.value() != '\n') {
-        m_file_buffer.advance();
-        next = m_file_buffer.peek();
-      }
+      std::optional<char> next;
+      do {
+        next = m_file_buffer.consume();
+      } while (next.has_value() && next.value() != '\n');
+      // std::optional<char> next = m_file_buffer.peek();
+      // while (next.has_value() && next.value() != '\n') {
+      //   m_file_buffer.advance();
+      //   next = m_file_buffer.peek();
+      // }
       m_file_buffer.advance();
       m_token_buffer.str("");
       m_token_buffer.clear();
@@ -474,7 +499,7 @@ void Lexer::tokenize() {
   }
 }
 
-void Lexer::create_token(TokenType type, std::streamsize offset, size_t line,
+void Lexer::create_token(TokenType type, size_t offset, size_t line,
                          size_t column) noexcept {
   std::string lexme{m_token_buffer.str()};
   m_tokens.emplace_back(type, lexme, std::make_pair(offset, lexme.length()),

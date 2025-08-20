@@ -29,16 +29,12 @@ public:
   void tokenize();
 
 private:
-  //! @brief The size in bytes of the maximum token length.
-  constexpr static size_t MAX_TOKEN_LEN = 64;
-
-private:
   //! @brief Create a token of the specified type.
   //! @param type The TokenType to create.
   //! @param offset The offset of the token in the input.
   //! @param line The line number of the start of the token.
   //! @param column The column number of the start of the token.
-  void create_token(TokenType type, std::streamsize offset, size_t line,
+  void create_token(TokenType type, size_t offset, size_t line,
                     size_t column) noexcept;
 
   //! @brief Convert Scientific Notation to double precision float constant.
@@ -51,6 +47,9 @@ private:
                          const std::string &exponent_str);
 
 private:
+  //! @brief The size in bytes of the maximum token length.
+  constexpr static size_t MAX_TOKEN_LEN = 64;
+
   //! @brief The buffer of the input to tokenize.
   InputBuffer m_file_buffer;
   //! @brief The current characters representing the token.

@@ -4,21 +4,17 @@
 namespace pimento::tokenization {
 
 InputBuffer::InputBuffer(std::istream &istream) : m_stream(istream) {
-  m_stream.read(m_buffer.data(), static_cast<std::streamsize>(m_buffer.size()));
-  m_num_chars = static_cast<size_t>(m_stream.gcount());
-
-  if (m_num_chars == 0) {
-    m_done = true;
-    return;
-  }
-
-  m_total_bytes += m_num_chars;
+  read_chunk();
 }
 
 [[nodiscard]] std::optional<char> InputBuffer::peek() noexcept {
   if (m_index >= m_num_chars) {
+    // TODO(lthomas): I don't love that this technically advances the lexer, but
+    // it fixes the issues with tokens that bridge between chunks...
     read_chunk();
-    if (m_done) { return {}; }
+    if (m_done) {
+      return {};
+    }
   }
 
   return m_buffer[m_index];
@@ -27,8 +23,9 @@ InputBuffer::InputBuffer(std::istream &istream) : m_stream(istream) {
 [[nodiscard]] std::optional<char> InputBuffer::consume() {
   if (m_index >= m_num_chars) {
     read_chunk();
-    if (m_done) { return {}; }
-    return m_buffer[m_index];
+    if (m_done) {
+      return {};
+    }
   }
 
   char curr = m_buffer[m_index];
@@ -57,8 +54,7 @@ void InputBuffer::advance() {
   ++m_offset;
 }
 
-[[nodiscard]] std::string InputBuffer::get(std::streamsize offset,
-                                           size_t span) {
+[[nodiscard]] std::string InputBuffer::get(size_t offset, size_t span) {
   std::string out;
   m_stream.clear();
 

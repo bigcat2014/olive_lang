@@ -14,7 +14,7 @@ namespace pimento::tokenization {
 class InputBuffer {
 public:
   //! @brief The size in bytes of the chunks to read from the input stream.
-  constexpr static size_t BUFFER_SIZE = 19; //4096;
+  constexpr static size_t BUFFER_SIZE = 19; // 4096;
 
 public:
   //! @brief Constructor for the InputBuffer
@@ -34,7 +34,7 @@ public:
 
   //! @brief Get the current offset in the input stream.
   //! @return Current offset in the input stream.
-  [[nodiscard]] inline std::streamsize get_offset() { return m_offset; }
+  [[nodiscard]] inline size_t get_offset() { return m_offset; }
 
   //! @brief Get the current line of the input stream.
   //! @return The current line.
@@ -53,7 +53,7 @@ public:
   //! @param span The number of characters to get.
   //! @return String of characters from the input stream starting at `offset`
   //! and grabbing `span` number of characters.
-  [[nodiscard]] std::string get(std::streamsize offset, size_t span = 1);
+  [[nodiscard]] std::string get(size_t offset, size_t span = 1);
 
 private:
   void read_chunk();
@@ -76,7 +76,7 @@ private:
   //! @brief The current column of the current line of the input stream.
   size_t m_column{0};
   //! @brief The current offset in the input stream.
-  std::streamsize m_offset{-1};
+  size_t m_offset{0};
   //! @brief Whether or not we are done traversing the input stream.
   bool m_done{false};
 };
