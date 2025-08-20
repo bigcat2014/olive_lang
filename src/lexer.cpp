@@ -40,7 +40,6 @@ void Lexer::tokenize() {
     }
     m_token_buffer << current_char;
 
-    // clang-format off
     // switch (current_char) {
     switch (m_token_buffer.str()[0]) {
     case '_': {
@@ -49,34 +48,42 @@ void Lexer::tokenize() {
       m_token_buffer.clear();
       break;
     }
+      // clang-format off
     case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
     case 'g': case 'h': case 'i': case 'j': case 'k':
     case 'l': case 'm': case 'n': case 'o': case 'p':
     case 'q': case 'r': case 's': case 't': case 'u':
     case 'v': case 'w': case 'x': case 'y': case 'z': {
+      // clang-format on
       // TODO(lthomas): parse_ident or keyword
       m_token_buffer.str("");
       m_token_buffer.clear();
       break;
     }
+      // clang-format off
     case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
     case 'G': case 'H': case 'I': case 'J': case 'K':
     case 'L': case 'M': case 'N': case 'O': case 'P':
     case 'Q': case 'R': case 'S': case 'T': case 'U':
     case 'V': case 'W': case 'X': case 'Y': case 'Z': {
+      // clang-format on
       // TODO(lthomas): parse_ident or keyword
       m_token_buffer.str("");
       m_token_buffer.clear();
       break;
     }
+      // clang-format off
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9': {
+      // clang-format on
       // TODO(lthomas): parse_numeric_const(file_buffer.data());
       m_token_buffer.str("");
       m_token_buffer.clear();
       break;
     }
+      // clang-format off
     case '\n': case '\t': case '\v': case '\f': case ' ': {
+      // clang-format on
       // m_file_buffer.advance();
       m_token_buffer.str("");
       m_token_buffer.clear();
@@ -189,10 +196,10 @@ void Lexer::tokenize() {
     case '!':
       // TODO(lthomas): Not sure if this symbol is necessary
       if (auto current = m_file_buffer.consume()) {
-            m_token_buffer << current.value();
-          } else {
-            break;
-          }
+        m_token_buffer << current.value();
+      } else {
+        break;
+      }
       break;
     // /, //, /=, //=
     case '/':
@@ -212,7 +219,8 @@ void Lexer::tokenize() {
               } else {
                 break;
               }
-              create_token(TokenType::FSLASH_FSLASH_EQUAL, offset, line, column);
+              create_token(TokenType::FSLASH_FSLASH_EQUAL, offset, line,
+                           column);
               break;
             default:
               create_token(TokenType::FSLASH_FSLASH, offset, line, column);
@@ -427,7 +435,6 @@ void Lexer::tokenize() {
       m_token_buffer.str("");
       m_token_buffer.clear();
     }
-    // clang-format on
   }
 
   logger.trace("Finished final line: {} with {} columns",
