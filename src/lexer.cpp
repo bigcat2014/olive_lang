@@ -110,7 +110,7 @@ void Lexer::tokenize() {
       create_token(TokenType::SEMI, offset, line, column);
       break;
     // &, &=
-    case '&': {
+    case '&':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '=':
@@ -126,9 +126,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // ^, ^=, ^^, ^^=
-    case '^': {
+    case '^':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '^':
@@ -165,13 +164,12 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // .
     case '.':
       create_token(TokenType::DOT, offset, line, column);
       break;
     // =, ==
-    case '=': {
+    case '=':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '=':
@@ -187,7 +185,7 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
+    // !
     case '!':
       // TODO(lthomas): Not sure if this symbol is necessary
       if (auto current = m_file_buffer.consume()) {
@@ -196,9 +194,8 @@ void Lexer::tokenize() {
             break;
           }
       break;
-    
     // /, //, /=, //=
-    case '/': {
+    case '/':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '/':
@@ -235,9 +232,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // <, <=, <<
-    case '<': {
+    case '<':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '<':
@@ -261,9 +257,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // -, --, -=
-    case '-': {
+    case '-':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '-':
@@ -287,9 +282,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // %, %=
-    case '%': {
+    case '%':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '=':
@@ -305,9 +299,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // |, |=
-    case '|': {
+    case '|':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '=':
@@ -323,9 +316,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // +, ++, +=
-    case '+': {
+    case '+':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '+':
@@ -349,13 +341,12 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // ?
     case '?':
       create_token(TokenType::QUESTION, offset, line, column);
       break;
     // >, >=, >>
-    case '>': {
+    case '>':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '>':
@@ -379,9 +370,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // *, *=
-    case '*': {
+    case '*':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '=':
@@ -397,9 +387,8 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // ~, ~=
-    case '~': {
+    case '~':
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '=':
@@ -415,7 +404,6 @@ void Lexer::tokenize() {
         }
       }
       break;
-    }
     // Comments
     case '#': {
       std::optional<char> next;
