@@ -4,6 +4,11 @@
 
 #pragma once
 
+#if defined(__clang__)
+# pragma clang diagnostic push
+# pragma clang diagnostic ignored "-Wnested-anon-types"
+#endif
+
 #include <bit>
 #include <cmath>
 #include <cstdint>
@@ -246,22 +251,22 @@ public:
   [[nodiscard]] inline int64_t  as_int64()  const noexcept { return int64; }
   //! @brief Get the raw bits as unsigned 32-bit integer.
   //! @return The raw bits as unsigned 32-bit integer.
-  [[nodiscard]] inline uint32_t as_uint32() const noexcept { return std::bit_cast<uint32_t>(uint32_view.value); }
+  [[nodiscard]] inline uint32_t as_uint32() const noexcept { return uint32_view.value; }
   //! @brief Get the raw bits as signed 32-bit integer.
   //! @return The raw bits as signed 32-bit integer.
-  [[nodiscard]] inline uint32_t as_int32()  const noexcept { return std::bit_cast<uint32_t>(int32_view.value); }
+  [[nodiscard]] inline int32_t as_int32()  const noexcept { return int32_view.value; }
   //! @brief Get the raw bits as unsigned 16-bit integer.
   //! @return The raw bits as unsigned 16-bit integer.
-  [[nodiscard]] inline uint16_t as_uint16() const noexcept { return std::bit_cast<uint16_t>(uint16_view.value); }
+  [[nodiscard]] inline uint16_t as_uint16() const noexcept { return uint16_view.value; }
   //! @brief Get the raw bits as signed 16-bit integer.
   //! @return The raw bits as signed 16-bit integer.
-  [[nodiscard]] inline uint16_t as_int16()  const noexcept { return std::bit_cast<uint16_t>(int16_view.value); }
+  [[nodiscard]] inline int16_t as_int16()  const noexcept { return int16_view.value; }
   //! @brief Get the raw bits as unsigned 8-bit integer.
   //! @return The raw bits as unsigned 8-bit integer.
-  [[nodiscard]] inline uint8_t  as_uint8()  const noexcept { return std::bit_cast<uint8_t>(uint8_view.value); }
+  [[nodiscard]] inline uint8_t  as_uint8()  const noexcept { return uint8_view.value; }
   //! @brief Get the raw bits as signed 8-bit integer.
   //! @return The raw bits as signed 8-bit integer.
-  [[nodiscard]] inline uint8_t  as_int8()   const noexcept { return std::bit_cast<uint8_t>(int8_view.value); }
+  [[nodiscard]] inline int8_t  as_int8()   const noexcept { return int8_view.value; }
   // clang-format on
 
 private:
@@ -326,19 +331,19 @@ public:
   [[nodiscard]] inline uint32_t as_uint32() const noexcept { return static_cast<uint32_t>(uint64); }
   //! @brief Get the value as signed 32-bit integer.
   //! @return The value as signed 32-bit integer.
-  [[nodiscard]] inline uint32_t as_int32()  const noexcept { return static_cast<uint32_t>(int64); }
+  [[nodiscard]] inline int32_t as_int32()  const noexcept { return static_cast<int32_t>(int64); }
   //! @brief Get the value as unsigned 16-bit integer.
   //! @return The value as unsigned 16-bit integer.
   [[nodiscard]] inline uint16_t as_uint16() const noexcept { return static_cast<uint16_t>(uint64); }
   //! @brief Get the value as signed 16-bit integer.
   //! @return The value as signed 16-bit integer.
-  [[nodiscard]] inline uint16_t as_int16()  const noexcept { return static_cast<uint16_t>(int64); }
+  [[nodiscard]] inline int16_t as_int16()  const noexcept { return static_cast<int16_t>(int64); }
   //! @brief Get the value as unsigned 8-bit integer.
   //! @return The value as unsigned 8-bit integer.
   [[nodiscard]] inline uint8_t  as_uint8()  const noexcept { return static_cast<uint8_t>(uint64); }
   //! @brief Get the value as signed 8-bit integer.
   //! @return The value as signed 8-bit integer.
-  [[nodiscard]] inline uint8_t  as_int8()   const noexcept { return static_cast<uint8_t>(int64); }
+  [[nodiscard]] inline int8_t  as_int8()   const noexcept { return static_cast<int8_t>(int64); }
   // clang-format on
 
 private:
@@ -775,3 +780,7 @@ struct StringToken : public Token {
 };
 
 } // namespace pimento::tokenization
+
+#if defined(__clang__)
+# pragma clang diagnostic pop
+#endif
