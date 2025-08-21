@@ -37,7 +37,7 @@ add_library(${PROJECT_NAME}_utils STATIC
 target_include_directories(${PROJECT_NAME}_utils PRIVATE
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_utils PRIVATE spdlog::spdlog_header_only)
+target_link_libraries(${PROJECT_NAME}_utils PRIVATE spdlog::spdlog)
 
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
