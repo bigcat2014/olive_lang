@@ -1,4 +1,6 @@
+#include <cctype>
 #include <iostream>
+#include <unordered_set>
 #include <variant>
 
 #include <pimento/lexer.hpp>
@@ -40,26 +42,58 @@ void Lexer::tokenize() {
     }
     m_token_buffer << current_char;
 
-    // switch (current_char) {
     switch (m_token_buffer.str()[0]) {
-    case '_': {
-      // TODO(lthomas): parse_ident(file_buffer.data());
-      m_token_buffer.str("");
-      m_token_buffer.clear();
+    case '_':
+      // TODO(lthomas): I don't like this... Lots of reused code, not very clean.
+      if (auto next = m_file_buffer.peek()) {
+        switch (next.value()) {
+        case '_':
+          if (auto current = m_file_buffer.consume()) {
+            m_token_buffer << current.value();
+          } else {
+            break;
+          }
+          if (auto next = m_file_buffer.peek()) {
+            switch (next.value()) {
+            case '_':
+              logger.error("Line: {} Column: {}: Too many '_' at start of "
+                           "identifier. Max is 2.",
+                           line + 1, m_file_buffer.get_current_column());
+              exit(EXIT_FAILURE);
+            default:
+              if (!std::islower(next.value())) {
+                logger.error("Line: {} Column: {}: Expected character matching [a-z_].",
+                            line + 1, m_file_buffer.get_current_column());
+                exit(EXIT_FAILURE);
+              }
+              parse_ident(offset, line, column);
+            }
+          }
+          break;
+        default:
+          if (!std::islower(next.value())) {
+            logger.error("Line: {} Column: {}: Expected character matching [a-z_].",
+                        line + 1, m_file_buffer.get_current_column());
+            exit(EXIT_FAILURE);
+          }
+          parse_ident(offset, line, column);
+          break;
+        }
+      } else if (m_token_buffer.str().back() == '_') {
+        logger.error("Line: {} Column: {}: Expected character after '_'",
+                     line + 1, m_file_buffer.get_current_column());
+        exit(EXIT_FAILURE);
+      }
       break;
-    }
       // clang-format off
     case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
     case 'g': case 'h': case 'i': case 'j': case 'k':
     case 'l': case 'm': case 'n': case 'o': case 'p':
     case 'q': case 'r': case 's': case 't': case 'u':
-    case 'v': case 'w': case 'x': case 'y': case 'z': {
+    case 'v': case 'w': case 'x': case 'y': case 'z':
       // clang-format on
-      // TODO(lthomas): parse_ident or keyword
-      m_token_buffer.str("");
-      m_token_buffer.clear();
+      parse_ident(offset, line, column);
       break;
-    }
       // clang-format off
     case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
     case 'G': case 'H': case 'I': case 'J': case 'K':
@@ -68,17 +102,14 @@ void Lexer::tokenize() {
     case 'V': case 'W': case 'X': case 'Y': case 'Z': {
       // clang-format on
       // TODO(lthomas): parse_ident or keyword
-      m_token_buffer.str("");
-      m_token_buffer.clear();
+      parse_type(offset, line, column);
       break;
     }
       // clang-format off
     case '0': case '1': case '2': case '3': case '4':
     case '5': case '6': case '7': case '8': case '9': {
       // clang-format on
-      // TODO(lthomas): parse_numeric_const(file_buffer.data());
-      m_token_buffer.str("");
-      m_token_buffer.clear();
+      parse_numeric_const(offset, line, column);
       break;
     }
       // clang-format off
@@ -466,6 +497,63 @@ void Lexer::create_token(TokenType type, size_t offset, size_t line,
                         std::make_pair(line, column));
   m_token_buffer.str("");
   m_token_buffer.clear();
+}
+
+void Lexer::create_ident_token(const std::string &value, size_t offset,
+                               size_t line, size_t column) noexcept {
+  std::string lexme{m_token_buffer.str()};
+  // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
+  m_tokens.emplace_back(TokenType::IDENT, lexme,
+                        std::make_pair(offset, lexme.length()),
+                        std::make_pair(line, column));
+  m_token_buffer.str("");
+  m_token_buffer.clear();
+}
+
+void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
+  auto &logger = utils::get_logger();
+
+  if (auto next = m_file_buffer.peek()) {
+    // if (!std::islower(next.value())) {
+    //   logger.error("Line: {} Column: {}: Expected character matching [a-z_].",
+    //                line + 1, column);
+    //   exit(EXIT_FAILURE);
+    // }
+
+    do {
+      m_token_buffer << m_file_buffer.consume().value();
+      next = m_file_buffer.peek();
+    } while (next.has_value() && is_ident_char(next.value()));
+
+    if (next = m_file_buffer.peek()) {
+      if (!std::isspace(next.value())) {
+        logger.error("Line: {} Column: {}: Unexpected character: '{}'", line,
+                     m_file_buffer.get_current_column(), next.value());
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    create_ident_token(m_token_buffer.str(), offset, line, column);
+  }
+}
+
+void Lexer::parse_type(size_t offset, size_t line, size_t column) {
+  m_token_buffer.str("");
+  m_token_buffer.clear();
+}
+
+void Lexer::parse_numeric_const(size_t offset, size_t line, size_t column) {
+  m_token_buffer.str("");
+  m_token_buffer.clear();
+}
+
+bool Lexer::is_ident_char(char value) noexcept {
+  return std::islower(value) || std::isupper(value) || std::isdigit(value) ||
+         value == '_';
+}
+
+bool Lexer::is_type_char(char value) noexcept {
+  return std::islower(value) || std::isupper(value) || std::isdigit(value);
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.

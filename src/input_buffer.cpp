@@ -58,9 +58,9 @@ void InputBuffer::advance() {
   std::string out;
   m_stream.clear();
 
-  m_stream.seekg(offset, std::ios::beg);
+  m_stream.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
   out.resize(span);
-  m_stream.read(&out[0], span);
+  m_stream.read(&out[0], static_cast<std::streamsize>(span));
 
   return out;
 }

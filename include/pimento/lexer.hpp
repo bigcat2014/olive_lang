@@ -37,7 +37,17 @@ private:
   void create_token(TokenType type, size_t offset, size_t line,
                     size_t column) noexcept;
 
-  //! @brief Convert Scientific Notation to double precision float constant.
+  void create_ident_token(const std::string &value, size_t offset, size_t line,
+                          size_t column) noexcept;
+
+  void parse_ident(size_t offset, size_t line, size_t column);
+  void parse_type(size_t offset, size_t line, size_t column);
+  void parse_numeric_const(size_t offset, size_t line, size_t column);
+
+  bool is_ident_char(char value) noexcept;
+  bool is_type_char(char value) noexcept;
+
+  //! @brief Convert Scientific Notation to double precision float constant.  
   //! @param mantissa_str The mantissa of the scientific number.
   //! @param exponent_str The exponent of the scientific number.
   //! @return The double precision floating point number represented by the

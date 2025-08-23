@@ -55,7 +55,9 @@ add_library(${PROJECT_NAME}_parser STATIC
 target_include_directories(${PROJECT_NAME}_parser PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_parser PRIVATE ${PROJECT_NAME}_lexer)
+target_link_libraries(${PROJECT_NAME}_parser PRIVATE
+    ${PROJECT_NAME}_lexer
+    ${PROJECT_NAME}_utils)
 
 # Generator library target
 add_library(${PROJECT_NAME}_generator STATIC
@@ -63,7 +65,9 @@ add_library(${PROJECT_NAME}_generator STATIC
 target_include_directories(${PROJECT_NAME}_generator PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_generator PRIVATE ${PROJECT_NAME}_parser)
+target_link_libraries(${PROJECT_NAME}_generator PRIVATE
+    ${PROJECT_NAME}_parser
+    ${PROJECT_NAME}_utils)
 
 # Pimento executable target
 add_executable(${PROJECT_NAME}
@@ -72,7 +76,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    argparse ${PROJECT_NAME}_generator)
+    argparse
+    ${PROJECT_NAME}_generator
+    ${PROJECT_NAME}_utils)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
