@@ -8,6 +8,7 @@
 #include <istream>
 #include <optional>
 #include <sstream>
+#include <unordered_set>
 #include <vector>
 
 #include <pimento/input_buffer.hpp>
@@ -37,20 +38,98 @@ private:
   void create_token(TokenType type, size_t offset, size_t line,
                     size_t column) noexcept;
 
+  //! @brief Create an Identifier token.
+  //! @param offset The offset of the token in the input.
+  //! @param line The line number of the start of the token.
+  //! @param column The column number of the start of the token.
   void create_ident_token(const std::string &value, size_t offset, size_t line,
                           size_t column) noexcept;
 
+  //! @brief Create a Type Identifier token.
+  //! @param offset The offset of the token in the input.
+  //! @param line The line number of the start of the token.
+  //! @param column The column number of the start of the token.
   void create_type_token(const std::string &value, size_t offset, size_t line,
-                          size_t column) noexcept;
+                         size_t column) noexcept;
 
+  //! @brief Parse an identifier token from the input buffer.
+  //! @param offset The offset of the start of the token for token creation.
+  //! @param line The line number of the start of the token for token creation.
+  //! @param column The column number of the start of the token for token
+  //! creation.
   void parse_ident(size_t offset, size_t line, size_t column);
+
+  //! @brief Parse a type identifier token from the input buffer.
+  //! @param offset The offset of the start of the token for token creation.
+  //! @param line The line number of the start of the token for token creation.
+  //! @param column The column number of the start of the token for token
+  //! creation.
   void parse_type(size_t offset, size_t line, size_t column);
+
+  //! @brief Parse a numeric constant token from the input buffer.
+  //! @param offset The offset of the start of the token for token creation.
+  //! @param line The line number of the start of the token for token creation.
+  //! @param column The column number of the start of the token for token
+  //! creation.
   void parse_numeric_const(size_t offset, size_t line, size_t column);
 
-  bool is_ident_char(char value) noexcept;
-  bool is_type_char(char value) noexcept;
+  //! @brief Check if the specified character is valid for an identifier.
+  //! @param value The character to check.
+  //! @return True if the character is valid for an identifier, false otherwise.
+  [[nodiscard]] inline bool is_ident_char(char value) noexcept {
+    return std::islower(value) || std::isupper(value) || std::isdigit(value) ||
+           value == '_';
+  }
 
-  //! @brief Convert Scientific Notation to double precision float constant.  
+  //! @brief Check if the specified character is valid for a type identifier.
+  //! @param value The character to check.
+  //! @return True if the character is valid for a type identifier, false
+  //! otherwise.
+  [[nodiscard]] inline bool is_type_char(char value) noexcept {
+    return std::islower(value) || std::isupper(value) || std::isdigit(value);
+  }
+
+  //! @brief Check if the specified character is the hex specifier.
+  //! @param value The character to check.
+  //! @return True if the character is the hex specifier, false otherwise.
+  [[nodiscard]] inline bool is_hex_specifier(char value) noexcept {
+    return value == 'x' || value == 'X';
+  }
+
+  //! @brief Check if the specified character is the octal specifier.
+  //! @param value The character to check.
+  //! @return True if the character is the octal specifier, false otherwise.
+  [[nodiscard]] inline bool is_octal_specifier(char value) noexcept {
+    return value == 'o' || value == 'O';
+  }
+
+  //! @brief Check if the specified character is the binary specifier.
+  //! @param value The character to check.
+  //! @return True if the character is the binary specifier, false otherwise.
+  [[nodiscard]] inline bool is_binary_specifier(char value) noexcept {
+    return value == 'b' || value == 'B';
+  }
+
+  //! @brief Check if the specified character is a valid octal digit.
+  //! @param value The character to check.
+  //! @return True if the character is a valid octal digit, false otherwise.
+  [[nodiscard]] inline bool is_octal_digit(char value) noexcept {
+    const static std::unordered_set<char> chars{'0', '1', '2', '3',
+                                                '4', '5', '6', '7'};
+
+    return chars.contains(value);
+  }
+
+  //! @brief Check if the specified character is a valid binary digit.
+  //! @param value The character to check.
+  //! @return True if the character is a valid binary digit, false otherwise.
+  [[nodiscard]] inline bool is_binary_digit(char value) noexcept {
+    const static std::unordered_set<char> chars{'0', '1'};
+
+    return chars.contains(value);
+  }
+
+  //! @brief Convert Scientific Notation to double precision float constant.
   //! @param mantissa_str The mantissa of the scientific number.
   //! @param exponent_str The exponent of the scientific number.
   //! @return The double precision floating point number represented by the

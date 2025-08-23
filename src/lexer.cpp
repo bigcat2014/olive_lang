@@ -1,6 +1,5 @@
 #include <cctype>
 #include <iostream>
-#include <unordered_set>
 #include <variant>
 
 #include <pimento/lexer.hpp>
@@ -561,15 +560,6 @@ void Lexer::parse_type(size_t offset, size_t line, size_t column) {
 void Lexer::parse_numeric_const(size_t offset, size_t line, size_t column) {
   m_token_buffer.str("");
   m_token_buffer.clear();
-}
-
-bool Lexer::is_ident_char(char value) noexcept {
-  return std::islower(value) || std::isupper(value) || std::isdigit(value) ||
-         value == '_';
-}
-
-bool Lexer::is_type_char(char value) noexcept {
-  return std::islower(value) || std::isupper(value) || std::isdigit(value);
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.
