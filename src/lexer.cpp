@@ -532,6 +532,12 @@ void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
   if (auto next = m_file_buffer.peek()) {
     do {
       m_token_buffer << m_file_buffer.consume().value();
+      if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR, line + 1, column,
+             std::format("Max token length of {} characters exceeded.",
+                         MAX_TOKEN_LEN)});
+      }
       next = m_file_buffer.peek();
     } while (next.has_value() && is_ident_char(next.value()));
 
@@ -554,6 +560,12 @@ void Lexer::parse_type(size_t offset, size_t line, size_t column) {
   if (auto next = m_file_buffer.peek()) {
     do {
       m_token_buffer << m_file_buffer.consume().value();
+      if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR, line + 1, column,
+             std::format("Max token length of {} characters exceeded.",
+                         MAX_TOKEN_LEN)});
+      }
       next = m_file_buffer.peek();
     } while (next.has_value() && is_type_char(next.value()));
 
