@@ -30,10 +30,6 @@ void Lexer::tokenize() {
       line = m_file_buffer.get_current_line();
       column = m_file_buffer.get_current_column();
     } else if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
-      std::stringstream error_msg;
-      // error_msg << "Max token length of " << MAX_TOKEN_LEN
-      //           << " characters exceeded.";
-
       pimento::errors::raise(
           {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
            m_file_buffer.get_current_line() + 1,
