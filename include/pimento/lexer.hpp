@@ -114,7 +114,7 @@ private:
   //! @param value The character to check.
   //! @return True if the character is a valid octal digit, false otherwise.
   [[nodiscard]] inline bool is_octal_digit(char value) noexcept {
-    const static std::unordered_set<char> chars{'0', '1', '2', '3',
+    static const std::unordered_set<char> chars{'0', '1', '2', '3',
                                                 '4', '5', '6', '7'};
 
     return chars.contains(value);
@@ -124,7 +124,7 @@ private:
   //! @param value The character to check.
   //! @return True if the character is a valid binary digit, false otherwise.
   [[nodiscard]] inline bool is_binary_digit(char value) noexcept {
-    const static std::unordered_set<char> chars{'0', '1'};
+    static const std::unordered_set<char> chars{'0', '1'};
 
     return chars.contains(value);
   }

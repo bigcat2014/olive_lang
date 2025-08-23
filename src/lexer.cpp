@@ -2,6 +2,7 @@
 #include <iostream>
 #include <variant>
 
+#include <pimento/errors.hpp>
 #include <pimento/lexer.hpp>
 #include <pimento/utils.hpp>
 
@@ -28,9 +29,14 @@ void Lexer::tokenize() {
       line = m_file_buffer.get_current_line();
       column = m_file_buffer.get_current_column();
     } else if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
-      logger.error("Max token length of {} characters exceeded.",
-                   MAX_TOKEN_LEN);
-      exit(EXIT_FAILURE);
+      std::stringstream error_msg;
+      error_msg << "Max token length of " << MAX_TOKEN_LEN
+                << " characters exceeded.";
+
+      pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                              m_file_buffer.get_current_line() + 1,
+                              m_file_buffer.get_current_column(),
+                              error_msg.str()});
     }
 
     char current_char;
@@ -43,7 +49,8 @@ void Lexer::tokenize() {
 
     switch (m_token_buffer.str()[0]) {
     case '_':
-      // TODO(lthomas): I don't like this... Lots of reused code, not very clean.
+      // TODO(lthomas): I don't like this... Lots of reused code, not very
+      // clean.
       if (auto next = m_file_buffer.peek()) {
         switch (next.value()) {
         case '_':
@@ -55,15 +62,18 @@ void Lexer::tokenize() {
           if (auto next = m_file_buffer.peek()) {
             switch (next.value()) {
             case '_':
-              logger.error("Line: {} Column: {}: Too many '_' at start of "
-                           "identifier. Max is 2.",
-                           line + 1, m_file_buffer.get_current_column());
-              exit(EXIT_FAILURE);
+              pimento::errors::raise(
+                  {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                   m_file_buffer.get_current_line() + 1,
+                   m_file_buffer.get_current_column(),
+                   "Too many '_' at start of identifier. Max is 2."});
             default:
               if (!std::islower(next.value())) {
-                logger.error("Line: {} Column: {}: Expected character matching [a-z_].",
-                            line + 1, m_file_buffer.get_current_column());
-                exit(EXIT_FAILURE);
+                pimento::errors::raise(
+                    {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                     m_file_buffer.get_current_line() + 1,
+                     m_file_buffer.get_current_column(),
+                     "Expected character matching [a-z_]."});
               }
               parse_ident(offset, line, column);
             }
@@ -71,17 +81,20 @@ void Lexer::tokenize() {
           break;
         default:
           if (!std::islower(next.value())) {
-            logger.error("Line: {} Column: {}: Expected character matching [a-z_].",
-                        line + 1, m_file_buffer.get_current_column());
-            exit(EXIT_FAILURE);
+            pimento::errors::raise(
+                {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                 m_file_buffer.get_current_line() + 1,
+                 m_file_buffer.get_current_column(),
+                 "Expected character matching [a-z_]."});
           }
           parse_ident(offset, line, column);
           break;
         }
       } else if (m_token_buffer.str().back() == '_') {
-        logger.error("Line: {} Column: {}: Expected character after '_'",
-                     line + 1, m_file_buffer.get_current_column());
-        exit(EXIT_FAILURE);
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                m_file_buffer.get_current_line() + 1,
+                                m_file_buffer.get_current_column(),
+                                "Expected character after '_'"});
       }
       break;
       // clang-format off
@@ -223,14 +236,14 @@ void Lexer::tokenize() {
       }
       break;
     // !
-    case '!':
-      // TODO(lthomas): Not sure if this symbol is necessary
-      if (auto current = m_file_buffer.consume()) {
-        m_token_buffer << current.value();
-      } else {
-        break;
-      }
-      break;
+    // case '!':
+    //   // TODO(lthomas): Not sure if this symbol is necessary
+    //   if (auto current = m_file_buffer.consume()) {
+    //     m_token_buffer << current.value();
+    //   } else {
+    //     break;
+    //   }
+    //   break;
     // /, //, /=, //=
     case '/':
       if (auto next = m_file_buffer.peek()) {
@@ -455,10 +468,17 @@ void Lexer::tokenize() {
     }
     // Unknown symbol
     default:
-      logger.error("Unknown symbol {}", current_char);
-      m_file_buffer.advance();
-      m_token_buffer.str("");
-      m_token_buffer.clear();
+      std::stringstream error_msg;
+      error_msg << "Unknown symbol '" << current_char << "'.";
+
+      pimento::errors::raise({pimento::errors::ErrorType::SYMBOL_ERROR,
+                              m_file_buffer.get_current_line() + 1,
+                              m_file_buffer.get_current_column(),
+                              error_msg.str()});
+      // logger.error("Unknown symbol {}", current_char);
+      // m_file_buffer.advance();
+      // m_token_buffer.str("");
+      // m_token_buffer.clear();
     }
   }
 
@@ -505,7 +525,7 @@ void Lexer::create_ident_token(const std::string &value, size_t offset,
 }
 
 void Lexer::create_type_token(const std::string &value, size_t offset,
-                               size_t line, size_t column) noexcept {
+                              size_t line, size_t column) noexcept {
   std::string lexme{m_token_buffer.str()};
   // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
   m_tokens.emplace_back(TokenType::TYPE_IDENT, lexme,
@@ -516,19 +536,22 @@ void Lexer::create_type_token(const std::string &value, size_t offset,
 }
 
 void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
-  auto &logger = utils::get_logger();
-
   if (auto next = m_file_buffer.peek()) {
     do {
       m_token_buffer << m_file_buffer.consume().value();
       next = m_file_buffer.peek();
     } while (next.has_value() && is_ident_char(next.value()));
 
-    if (next = m_file_buffer.peek()) {
+    next = m_file_buffer.peek();
+    if (next.has_value()) {
       if (!std::isspace(next.value())) {
-        logger.error("Line: {} Column: {}: Unexpected character: '{}'", line,
-                     m_file_buffer.get_current_column(), next.value());
-        exit(EXIT_FAILURE);
+        std::stringstream error_msg;
+        error_msg << "Unexpected character: '" << next.value() << "'.";
+
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                m_file_buffer.get_current_line() + 1,
+                                m_file_buffer.get_current_column(),
+                                error_msg.str()});
       }
     }
 
@@ -537,19 +560,22 @@ void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
 }
 
 void Lexer::parse_type(size_t offset, size_t line, size_t column) {
-  auto &logger = utils::get_logger();
-
   if (auto next = m_file_buffer.peek()) {
     do {
       m_token_buffer << m_file_buffer.consume().value();
       next = m_file_buffer.peek();
     } while (next.has_value() && is_type_char(next.value()));
 
-    if (next = m_file_buffer.peek()) {
+    next = m_file_buffer.peek();
+    if (next.has_value()) {
       if (!std::isspace(next.value())) {
-        logger.error("Line: {} Column: {}: Unexpected character: '{}'", line,
-                     m_file_buffer.get_current_column(), next.value());
-        exit(EXIT_FAILURE);
+        std::stringstream error_msg;
+        error_msg << "Unexpected character: '" << next.value() << "'.";
+
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                m_file_buffer.get_current_line() + 1,
+                                m_file_buffer.get_current_column(),
+                                error_msg.str()});
       }
     }
 
