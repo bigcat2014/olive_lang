@@ -40,6 +40,9 @@ private:
   void create_ident_token(const std::string &value, size_t offset, size_t line,
                           size_t column) noexcept;
 
+  void create_type_token(const std::string &value, size_t offset, size_t line,
+                          size_t column) noexcept;
+
   void parse_ident(size_t offset, size_t line, size_t column);
   void parse_type(size_t offset, size_t line, size_t column);
   void parse_numeric_const(size_t offset, size_t line, size_t column);

@@ -449,12 +449,7 @@ void Lexer::tokenize() {
       do {
         next = m_file_buffer.consume();
       } while (next.has_value() && next.value() != '\n');
-      // std::optional<char> next = m_file_buffer.peek();
-      // while (next.has_value() && next.value() != '\n') {
-      //   m_file_buffer.advance();
-      //   next = m_file_buffer.peek();
-      // }
-      m_file_buffer.advance();
+
       m_token_buffer.str("");
       m_token_buffer.clear();
       break;
@@ -510,16 +505,21 @@ void Lexer::create_ident_token(const std::string &value, size_t offset,
   m_token_buffer.clear();
 }
 
+void Lexer::create_type_token(const std::string &value, size_t offset,
+                               size_t line, size_t column) noexcept {
+  std::string lexme{m_token_buffer.str()};
+  // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
+  m_tokens.emplace_back(TokenType::TYPE_IDENT, lexme,
+                        std::make_pair(offset, lexme.length()),
+                        std::make_pair(line, column));
+  m_token_buffer.str("");
+  m_token_buffer.clear();
+}
+
 void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
   auto &logger = utils::get_logger();
 
   if (auto next = m_file_buffer.peek()) {
-    // if (!std::islower(next.value())) {
-    //   logger.error("Line: {} Column: {}: Expected character matching [a-z_].",
-    //                line + 1, column);
-    //   exit(EXIT_FAILURE);
-    // }
-
     do {
       m_token_buffer << m_file_buffer.consume().value();
       next = m_file_buffer.peek();
@@ -538,8 +538,24 @@ void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
 }
 
 void Lexer::parse_type(size_t offset, size_t line, size_t column) {
-  m_token_buffer.str("");
-  m_token_buffer.clear();
+  auto &logger = utils::get_logger();
+
+  if (auto next = m_file_buffer.peek()) {
+    do {
+      m_token_buffer << m_file_buffer.consume().value();
+      next = m_file_buffer.peek();
+    } while (next.has_value() && is_type_char(next.value()));
+
+    if (next = m_file_buffer.peek()) {
+      if (!std::isspace(next.value())) {
+        logger.error("Line: {} Column: {}: Unexpected character: '{}'", line,
+                     m_file_buffer.get_current_column(), next.value());
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    create_type_token(m_token_buffer.str(), offset, line, column);
+  }
 }
 
 void Lexer::parse_numeric_const(size_t offset, size_t line, size_t column) {
