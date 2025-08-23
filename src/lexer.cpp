@@ -1,4 +1,5 @@
 #include <cctype>
+#include <format>
 #include <iostream>
 #include <variant>
 
@@ -30,13 +31,15 @@ void Lexer::tokenize() {
       column = m_file_buffer.get_current_column();
     } else if (m_token_buffer.str().length() + 1 > MAX_TOKEN_LEN) {
       std::stringstream error_msg;
-      error_msg << "Max token length of " << MAX_TOKEN_LEN
-                << " characters exceeded.";
+      // error_msg << "Max token length of " << MAX_TOKEN_LEN
+      //           << " characters exceeded.";
 
-      pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                              m_file_buffer.get_current_line() + 1,
-                              m_file_buffer.get_current_column(),
-                              error_msg.str()});
+      pimento::errors::raise(
+          {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+           m_file_buffer.get_current_line() + 1,
+           m_file_buffer.get_current_column(),
+           std::format("Max token length of {} characters exceeded.",
+                       MAX_TOKEN_LEN)});
     }
 
     char current_char;
@@ -468,17 +471,11 @@ void Lexer::tokenize() {
     }
     // Unknown symbol
     default:
-      std::stringstream error_msg;
-      error_msg << "Unknown symbol '" << current_char << "'.";
-
-      pimento::errors::raise({pimento::errors::ErrorType::SYMBOL_ERROR,
-                              m_file_buffer.get_current_line() + 1,
-                              m_file_buffer.get_current_column(),
-                              error_msg.str()});
-      // logger.error("Unknown symbol {}", current_char);
-      // m_file_buffer.advance();
-      // m_token_buffer.str("");
-      // m_token_buffer.clear();
+      pimento::errors::raise(
+          {pimento::errors::ErrorType::SYMBOL_ERROR,
+           m_file_buffer.get_current_line() + 1,
+           m_file_buffer.get_current_column(),
+           std::format("Unknown symbol '{}'.", current_char)});
     }
   }
 
@@ -545,13 +542,11 @@ void Lexer::parse_ident(size_t offset, size_t line, size_t column) {
     next = m_file_buffer.peek();
     if (next.has_value()) {
       if (!std::isspace(next.value())) {
-        std::stringstream error_msg;
-        error_msg << "Unexpected character: '" << next.value() << "'.";
-
-        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                m_file_buffer.get_current_line() + 1,
-                                m_file_buffer.get_current_column(),
-                                error_msg.str()});
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             m_file_buffer.get_current_line() + 1,
+             m_file_buffer.get_current_column(),
+             std::format("Unexpected character: '{}'.", next.value())});
       }
     }
 
@@ -569,13 +564,11 @@ void Lexer::parse_type(size_t offset, size_t line, size_t column) {
     next = m_file_buffer.peek();
     if (next.has_value()) {
       if (!std::isspace(next.value())) {
-        std::stringstream error_msg;
-        error_msg << "Unexpected character: '" << next.value() << "'.";
-
-        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                m_file_buffer.get_current_line() + 1,
-                                m_file_buffer.get_current_column(),
-                                error_msg.str()});
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             m_file_buffer.get_current_line() + 1,
+             m_file_buffer.get_current_column(),
+             std::format("Unexpected character: '{}'.", next.value())});
       }
     }
 
