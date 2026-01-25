@@ -1,4 +1,121 @@
 ---
-Checks: 'google-*,readability-function-size,readability-identifier-naming,readability-braces-around-statements,readability-make-member-function-const,readability-convert-member-functions-to-static,readability-redundant-member-init,modernize-use-nullptr,misc-definitions-in-headers,misc-misplaced-const,modernize-loop-convert,modernize-use-using,modernize-use-auto,modernize-use-equals-default,modernize-use-default-member-init,performance-*'
-WarningsAsErrors: ''
-FormatStyle: Google
+Checks: >
+    bugprone-*,
+    performance-*,
+    readability-*,
+    cppcoreguidelines-avoid-const-or-ref-data-members,
+    cppcoreguidelines-avoid-do-while
+    cppcoreguidelines-avoid-goto,
+    cppcoreguidelines-avoid-non-const-global-variables,
+    cppcoreguidelines-avoid-reference-corouotine-parameters,
+    cppcoreguidelines-interfaces-global-init,
+    cppcoreguidelines-macro-usage,
+    cppcoreguidelines-misleading-capture-default-by-value,
+    cppcoreguidelines-missing-std-forward,
+    cppcoreguidelines-no-malloc
+    cppcoreguidelines-no-suspend-with-lock,
+    cppcoreguidelines-prefer-member-initializer,
+    cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+    cppcoreguidelines-pro-type-const-cast,
+    cppcoreguidelines-pro-type-static-cast-downcast,
+    cppcoreguidelines-slicing,
+    cppcoreguidelines-use-enum-class,
+    cppcoreguidelines-virtual-class-destructor,
+    google-explicit-constructor,
+    google-runtime-int,
+    llvm-include-order,
+    llvm-namespace-comment,
+    misc-confusable-identifiers,
+    misc-const-correctness,
+    misc-definitions-in-headers,
+    misc-header-include-cycle,
+    misc-include-cleaner.
+    misc-misleading-identifier,
+    misc-misplaced-const,
+    misc-non-private-member-variables-in-classes,
+    misc-redundant-expression,
+    misc-static-assert,
+    misc-throw-by-value-catch-by-reference,
+    misc-unconventional-assign-operator,
+    misc-uniqueptr-reset-release,
+    misc-unused-alias-decls,
+    misc-unused-parameters,
+    misc-unused-using-decls,
+    misc-use-anonymous-namespace,
+    misc-use-internal-linkage,
+    modernize-avoid-c-arrays,
+    modernize-avoid-c-style-cast,
+    modernize-avoid-setjmp-longjmp,
+    modernize-avoid-variadic-functions,
+    modernize-concat-nested-namespaces,
+    modernize-deprecated-headers,
+    modernize-deprecated-ios-base-aliases,
+    modernize-loop-convert,
+    modernize-macro-to-enum,
+    modernize-make-shared,
+    modernize-make-unique,
+    modernize-min-max-use-initializer-list,
+    modernize-pass-by-value,
+    modernize-raw-string-literal,
+    modernize-redundant-void-arg,
+    modernize-replace-auto-ptr,
+    modernize-replace-disallow-copy-and-assign-macro,
+    modernize-replace-random-shuffle,
+    modernize-return-braced-init-list,
+    modernize-shrink-to-fit,
+    modernize-type-traits,
+    modernize-unary-static-assert,
+    modernize-use-auto,
+    modernize-use-bool-literals,
+    modernize-use-default-member-init,
+    modernize-use-emplace,
+    modernize-use-equals-default,
+    modernize-use-equals-delete,
+    modernize-use-integer-sign-comparison,
+    modernize-use-nodiscard,
+    modernize-use-noexcept,
+    modernize-use-nullptr,
+    modernize-use-override,
+    modernize-use-ranges,
+    modernize-use-scoped-lock,
+    modernize-use-starts-ends-with,
+    modernize-use-uncaught-exceptions,
+    modernize-use-using,
+    -readability-magic-numbers,
+    -readability-redundant-access-specifiers
+
+HeaderFilterRegex: '^<pimento/.*\.(hpp|h)>$'
+FormatStyle: file
+
+CheckOptions:
+    - { key: readability-identifier-naming.ParameterCase, value: camelBack }
+    - { key: readability-identifier-naming.FunctionCase, value: camelBack }
+    - { key: readability-identifier-naming.LocalVariableCase, value: camelBack }
+    - { key: readability-identifier-naming.GlobalVariableCase, value: camelBack }
+
+    - { key: readability-identifier-naming.PublicMemberCase, value: camelBack }
+    - { key: readability-identifier-naming.ProtectedMemberPrefix, value: m }
+    - { key: readability-identifier-naming.ProtectedMemberCase, value: camelBack }
+    - { key: readability-identifier-naming.PrivateMemberPrefix, value: m }
+    - { key: readability-identifier-naming.PrivateMemberCase, value: camelBack }
+
+    - { key: readability-identifier-naming.StaticConstexprVariableCase, value: CamelCase }
+    - { key: readability-identifier-naming.StaticConstantCase, value: CamelCase }
+    - { key: readability-identifier-naming.StaticVariableCase, value: CamelCase }
+    - { key: readability-identifier-naming.StaticVariablePrefix, value: s }
+
+    - { key: readability-identifier-naming.ClasCase, value: CamelCase }
+    - { key: readability-identifier-naming.StructCase, value: CamelCase }
+    - { key: readability-identifier-naming.EnumCase, value: CamelCase }
+    - { key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.TypedefCase, value: CamelCase }
+    - { key: readability-identifier-naming.NamespaceCase, value: camelBack }
+    - { key: readability-identifier-naming.MacroDefinitionCase, value: UPPER_CASE }
+
+    - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
+
+    - { key: readability-uppercase-literal-suffix.NewSuffixes, value: "L;LL;UL;ULL;U" }
+
+    - { key: cppcoreguidelines-pro-type-const-cast.StrictMode, value: true }
+    - { key: modernize-deprecated-headers.CheckHeaderFile, value: true }
+
