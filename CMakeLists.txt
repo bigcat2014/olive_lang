@@ -28,7 +28,7 @@ FetchContent_MakeAvailable(argparse)
 FetchContent_Declare(
   spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog.git
-  GIT_TAG        v1.15.3)
+  GIT_TAG        v1.17.0)
 FetchContent_MakeAvailable(spdlog)
 
 # Utils library target
@@ -37,7 +37,7 @@ add_library(${PROJECT_NAME}_utils STATIC
 target_include_directories(${PROJECT_NAME}_utils PRIVATE
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_utils PRIVATE spdlog)
+target_link_libraries(${PROJECT_NAME}_utils PUBLIC spdlog::spdlog_header_only)
 
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
@@ -170,7 +170,9 @@ if (BUILD_TESTING)
             clang-tidy-16
             clang-tidy-17
             clang-tidy-18
-            clang-tidy-19)
+            clang-tidy-19
+            clang-tidy-20
+            clang-tidy-21)
     if(NOT CLANG_TIDY_PATH)
         message(FATAL_ERROR "clang-tidy not found! Aborting...")
     endif() # NOT CLANG_TIDY_PATH
@@ -308,7 +310,9 @@ if (BUILD_TESTING)
                 llvm-cov-16
                 llvm-cov-17
                 llvm-cov-18
-                llvm-cov-19)
+                llvm-cov-19
+                llvm-cov-20
+                llvm-cov-21)
         if(NOT LLVM_COV_PATH)
             message(FATAL_ERROR "llvm-cov not found! Aborting...")
         endif() # NOT LLVM_COV_PATH
