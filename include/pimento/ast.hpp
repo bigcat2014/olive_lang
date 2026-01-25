@@ -34,12 +34,12 @@ struct TermExprNode
 struct TermIdentNode
 {
     //! @brief The identifier token.
-    tokenization::Token identifier_token;
+    tokenization::Token identifierToken;
 
     //! @brief Constructor for the Term Identifier AST node.
     //! @param token The identifier token.
     explicit TermIdentNode(tokenization::Token token)
-        : identifier_token(std::move(token))
+        : identifierToken(std::move(token))
     {}
 };
 
@@ -47,12 +47,12 @@ struct TermIdentNode
 struct TermIntLitNode
 {
     //! @brief The int literal token.
-    tokenization::Token int_lit_token;
+    tokenization::Token intLitToken;
 
     //! @brief Constructor for the Term Int Literal AST node.
     //! @param token The int literal token.
     explicit TermIntLitNode(tokenization::Token token)
-        : int_lit_token(std::move(token))
+        : intLitToken(std::move(token))
     {}
 };
 

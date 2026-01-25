@@ -17,16 +17,16 @@ namespace pimento::ast {
 //! @brief Token parser.
 class Parser
 {
-   public:
+public:
     //! @brief Construct a new Parser object.
     //! @param istream The stream of characters to tokenize and parse.
     explicit Parser(std::istream& istream);
 
     //! @brief Getter for the top level program AST node.
     //! @return The top level program AST node.
-    [[nodiscard]] const node::ProgNode& get_program() const noexcept;
+    [[nodiscard]] const node::ProgNode& getProgram() const noexcept;
 
-   private:
+private:
     //! @brief Parse all tokens.
     void parse();
 
@@ -41,41 +41,41 @@ class Parser
 
     //! @brief Attempt to consume the next token.
     //! @return The token that was consumed.
-    [[nodiscard]] inline std::optional<tokenization::Token> try_consume() noexcept;
+    [[nodiscard]] inline std::optional<tokenization::Token> tryConsume() noexcept;
 
     //! @brief Try to consume the next token if it is the provided TokenType.
     //! @details Try to consume the next token if it is a specific TokenType. If
     //! the token type matches, consume it, otherwise log an error and exit.
     //! @param token_type The token type we are asserting is next.
-    inline tokenization::Token try_consume(tokenization::TokenType token_type) noexcept;
+    inline tokenization::Token tryConsume(tokenization::TokenType tokenType) noexcept;
 
     //! @brief Parse a Statement into the AST.
     //! @return The Statement node of the AST.
-    std::shared_ptr<node::StmtNode> parse_statement();
+    std::shared_ptr<node::StmtNode> parseStatement();
 
     //! @brief Parse an Expression into the AST.
     //! @return The Expression node of the AST.
-    std::shared_ptr<node::ExprNode> parse_expression(uint8_t min_precedence = 0);
+    std::shared_ptr<node::ExprNode> parseExpression(uint8_t minPrecedence = 0);
 
     //! @brief Parse a Scope into the AST.
     //! @return The Scope node of the AST.
-    std::shared_ptr<node::ScopeNode> parse_scope();
+    std::shared_ptr<node::ScopeNode> parseScope();
 
     //! @brief Parse an If Predicate into the AST.
     //! @return The If Predicate node of the AST.
-    std::optional<std::shared_ptr<node::IfPredNode>> parse_ifpred();
+    std::optional<std::shared_ptr<node::IfPredNode>> parseIfPred();
 
     //! @brief Parse a Term into the AST.
     //! @return The Term node of the AST.
-    std::shared_ptr<node::TermNode> parse_term();
+    std::shared_ptr<node::TermNode> parseTerm();
 
-   private:
+private:
     //! @brief The lexer used by this parser.
-    tokenization::Lexer m_lexer;
+    tokenization::Lexer mLexer;
     //! @brief The current parsing index.
-    size_t m_index{0};
+    size_t mIndex{0};
     //! @brief The root node of the ast.
-    node::ProgNode m_prog;
+    node::ProgNode mProg;
 };
 
 }  // namespace pimento::ast

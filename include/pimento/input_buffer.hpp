@@ -13,11 +13,11 @@ namespace pimento::tokenization {
 
 class InputBuffer
 {
-   public:
+public:
     //! @brief The size in bytes of the chunks to read from the input stream.
     constexpr static size_t BUFFER_SIZE = 4096;
 
-   public:
+public:
     //! @brief Constructor for the InputBuffer
     //! @param istream The stream of characters to buffer.
     explicit InputBuffer(std::istream& istream);
@@ -35,27 +35,27 @@ class InputBuffer
 
     //! @brief Get the current number of bytes read from input stream.
     //! @return Current number of bytes read from input stream.
-    [[nodiscard]] inline size_t get_total_bytes() { return m_total_bytes; }
+    [[nodiscard]] size_t getTotalBytes() const { return mTotalBytes; }
 
     //! @brief Get the current number of chunks read from input stream.
     //! @return Current number of chunks read from input stream.
-    [[nodiscard]] inline size_t get_total_chunks() { return m_total_chunks; }
+    [[nodiscard]] size_t getTotalChunks() const { return mTotalChunks; }
 
     //! @brief Get the current offset in the input stream.
     //! @return Current offset in the input stream.
-    [[nodiscard]] inline size_t get_offset() { return m_offset; }
+    [[nodiscard]] size_t getOffset() const { return mOffset; }
 
     //! @brief Get the current line of the input stream.
     //! @return The current line.
-    [[nodiscard]] inline size_t get_current_line() { return m_line; }
+    [[nodiscard]] size_t getCurrentLine() const { return mLine; }
 
     //! @brief Get the current column in the current line.
     //! @return The current column in the current line.
-    [[nodiscard]] inline size_t get_current_column() { return m_column; }
+    [[nodiscard]] size_t getCurrentColumn() const { return mColumn; }
 
     //! @brief Whether or not we are done traversing the input stream.
     //! @return True if done, false if there is more data.
-    [[nodiscard]] inline bool done() { return m_done; }
+    [[nodiscard]] bool done() const { return mDone; }
 
     //! @brief Get characters from the input stream.
     //! @param offset The offset of the input stream to start at.
@@ -64,30 +64,30 @@ class InputBuffer
     //! and grabbing `span` number of characters.
     [[nodiscard]] std::string get(size_t offset, size_t span = 1);
 
-   private:
-    void read_chunk();
+private:
+    void readChunk();
 
-   private:
+private:
     //! @brief The input stream to tokenize.
-    std::istream& m_stream;
+    std::istream& mStream;
     //! @brief The buffer to read characters into.
-    std::array<char, BUFFER_SIZE> m_buffer;
+    std::array<char, BUFFER_SIZE> mBuffer;
     //! @brief The number of characters read into the buffer.
-    size_t m_num_chars{0};
+    size_t mNumChars{0};
     //! @brief Total bytes read from the input stream.
-    size_t m_total_bytes{0};
+    size_t mTotalBytes{0};
     //! @brief Total chunks of size BUFFER_SIZE read from the input stream.
-    size_t m_total_chunks{0};
+    size_t mTotalChunks{0};
     //! @brief Current index in the buffer.
-    size_t m_index{0};
+    size_t mIndex{0};
     //! @brief The current line of the input stream.
-    size_t m_line{0};
+    size_t mLine{0};
     //! @brief The current column of the current line of the input stream.
-    size_t m_column{0};
+    size_t mColumn{0};
     //! @brief The current offset in the input stream.
-    size_t m_offset{0};
+    size_t mOffset{0};
     //! @brief Whether or not we are done traversing the input stream.
-    bool m_done{false};
+    bool mDone{false};
 };
 
 }  // namespace pimento::tokenization

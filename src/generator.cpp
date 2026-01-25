@@ -1,3 +1,4 @@
+#include <utility>
 #include <variant>
 
 #include <pimento/generator.hpp>
@@ -6,21 +7,21 @@
 namespace pimento::generation {
 
 Generator::Generator(std::istream& istream, std::ostream& ostream)
-    : m_parser(istream)
-    , m_output(ostream)
+    : mParser(istream)
+    , mOutput(ostream)
 {}
 
 void Generator::generate() noexcept
 {
-    m_output << "global _start\n_start:\n";
+    mOutput << "global _start\n_start:\n";
 
-    const ast::node::ProgNode program = m_parser.get_program();
-    for (const auto& statement : program.statements) {
-        gen_statement(statement);
+    const ast::node::ProgNode PROGRAM = mParser.getProgram();
+    for (const auto& statement : PROGRAM.statements) {
+        genStatement(statement);
     }
 }
 
-void Generator::gen_statement(const std::shared_ptr<ast::node::StmtNode>& node) noexcept
+void Generator::genStatement(const std::shared_ptr<ast::node::StmtNode>& node) noexcept
 {
     struct Visitor
     {
@@ -28,127 +29,124 @@ void Generator::gen_statement(const std::shared_ptr<ast::node::StmtNode>& node) 
 
         void operator()(const std::shared_ptr<ast::node::StmtExitNode>& stmt) const
         {
-            gen.gen_expression(stmt->expression);
-            gen.m_output << "    mov rax, 60\n";
+            gen.genExpression(stmt->expression);
+            gen.mOutput << "    mov rax, 60\n";
             gen.pop("rdi");
-            gen.m_output << "    syscall\n";
+            gen.mOutput << "    syscall\n";
         }
 
-        void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt) const
+        void operator()(const std::shared_ptr<ast::node::StmtLetNode>& stmt) const
         {
             // TODO(lthomas): Not implemented
         }
 
-        void operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt) const
+        void operator()(const std::shared_ptr<ast::node::StmtAssignNode>& stmt) const
         {
             // TODO(lthomas): Not implemented
         }
 
         void operator()(const std::shared_ptr<ast::node::ScopeNode>& stmt) const
         {
-            gen.m_output << "    ;; scope\n";
-            gen.gen_scope(stmt);
-            gen.m_output << "    ;; /scope\n";
+            gen.mOutput << "    ;; scope\n";
+            gen.genScope(stmt);
+            gen.mOutput << "    ;; /scope\n";
         }
 
         void operator()(const std::shared_ptr<ast::node::StmtIfNode>& stmt) const
         {
-            gen.gen_expression(stmt->expression);
+            gen.genExpression(stmt->expression);
             gen.pop("rax");
-            const std::string label = gen.create_label();
-            gen.m_output << "    test rax, rax\n";
+            const std::string LABEL = pimento::generation::Generator::createLabel();
+            gen.mOutput << "    test rax, rax\n";
             // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
             // true
-            gen.m_output << "    jz " << label << "\n";
-            gen.gen_scope(stmt->scope);
+            gen.mOutput << "    jz " << LABEL << "\n";
+            gen.genScope(stmt->scope);
             if (stmt->ifpred.has_value()) {
-                const std::string end_label = gen.create_label();
-                gen.m_output << "    jmp " << end_label << "\n";
-                gen.m_output << label << ":\n";
-                gen.gen_ifpred(stmt->ifpred.value(), end_label);
-                gen.m_output << end_label << ":\n";
+                const std::string END_LABEL = pimento::generation::Generator::createLabel();
+                gen.mOutput << "    jmp " << END_LABEL << "\n";
+                gen.mOutput << LABEL << ":\n";
+                gen.genIfpred(stmt->ifpred.value(), END_LABEL);
+                gen.mOutput << END_LABEL << ":\n";
             }
             else {
-                gen.m_output << label << ":\n";
+                gen.mOutput << LABEL << ":\n";
             }
         }
 
         void operator()(const std::shared_ptr<ast::node::StmtWhileNode>& stmt) const
         {
-            const std::string loop_label = gen.create_label();
-            const std::string end_label  = gen.create_label();
+            const std::string LOOP_LABEL = pimento::generation::Generator::createLabel();
+            const std::string END_LABEL  = pimento::generation::Generator::createLabel();
 
-            gen.m_output << loop_label << ":\n";
-            gen.gen_expression(stmt->expression);
+            gen.mOutput << LOOP_LABEL << ":\n";
+            gen.genExpression(stmt->expression);
             gen.pop("rax");
-            gen.m_output << "    test rax, rax\n";
-            gen.m_output << "    jz " << end_label << "\n";
-            gen.gen_scope(stmt->scope);
-            gen.m_output << "    jmp " << loop_label << "\n";
-            gen.m_output << end_label << ":\n";
+            gen.mOutput << "    test rax, rax\n";
+            gen.mOutput << "    jz " << END_LABEL << "\n";
+            gen.genScope(stmt->scope);
+            gen.mOutput << "    jmp " << LOOP_LABEL << "\n";
+            gen.mOutput << END_LABEL << ":\n";
         }
     };
 
     std::visit(Visitor{.gen = *this}, node->node);
 }
 
-void Generator::gen_expression(const std::shared_ptr<ast::node::ExprNode>& node) noexcept
+void Generator::genExpression(const std::shared_ptr<ast::node::ExprNode>& node) noexcept
 {
     struct Visitor
     {
         Generator& gen;
 
-        void operator()(const std::shared_ptr<ast::node::TermNode>& expr) const { gen.gen_term(expr); }
+        void operator()(const std::shared_ptr<ast::node::TermNode>& expr) const { gen.genTerm(expr); }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprNode>& expr) const { gen.gen_bin_expr(expr); }
+        void operator()(const std::shared_ptr<ast::node::BinExprNode>& expr) const { gen.genBinExpr(expr); }
     };
 
     std::visit(Visitor{.gen = *this}, node->node);
 }
 
-void Generator::gen_scope(const std::shared_ptr<ast::node::ScopeNode>& node) noexcept
+void Generator::genScope(const std::shared_ptr<ast::node::ScopeNode>& node) noexcept
 {
     for (const auto& stmt : node->statements) {
-        begin_scope();
-        gen_statement(stmt);
-        end_scope();
+        beginScope();
+        genStatement(stmt);
+        endScope();
     }
 }
 
-void Generator::gen_ifpred(const std::shared_ptr<ast::node::IfPredNode>& node, const std::string& end_label) noexcept
+void Generator::genIfpred(const std::shared_ptr<ast::node::IfPredNode>& node, const std::string& endLabel) noexcept
 {
     struct Visitor
     {
         Generator& gen;
-        const std::string& end_label;
+        const std::string& endLabel;
 
         void operator()(const std::shared_ptr<ast::node::IfPredElifNode>& ifpred) const
         {
-            gen.gen_expression(ifpred->expression);
+            gen.genExpression(ifpred->expression);
             gen.pop("rax");
-            const std::string label = gen.create_label();
-            gen.m_output << "    test rax, rax\n";
+            const std::string LABEL = pimento::generation::Generator::createLabel();
+            gen.mOutput << "    test rax, rax\n";
             // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
             // true
-            gen.m_output << "    jz " << label << "\n";
-            gen.gen_scope(ifpred->scope);
-            gen.m_output << "    jmp " << end_label << "\n";
-            gen.m_output << label << ":\n";
+            gen.mOutput << "    jz " << LABEL << "\n";
+            gen.genScope(ifpred->scope);
+            gen.mOutput << "    jmp " << endLabel << "\n";
+            gen.mOutput << LABEL << ":\n";
             if (ifpred->ifpred.has_value()) {
-                gen.gen_ifpred(ifpred->ifpred.value(), end_label);
+                gen.genIfpred(ifpred->ifpred.value(), endLabel);
             }
         }
 
-        void operator()(const std::shared_ptr<ast::node::IfPredElseNode>& ifpred) const
-        {
-            gen.gen_scope(ifpred->scope);
-        }
+        void operator()(const std::shared_ptr<ast::node::IfPredElseNode>& ifpred) const { gen.genScope(ifpred->scope); }
     };
 
-    std::visit(Visitor{.gen = *this, .end_label = end_label}, node->node);
+    std::visit(Visitor{.gen = *this, .endLabel = endLabel}, node->node);
 }
 
-void Generator::gen_term(const std::shared_ptr<ast::node::TermNode>& node) noexcept
+void Generator::genTerm(const std::shared_ptr<ast::node::TermNode>& node) noexcept
 {
     struct Visitor
     {
@@ -159,137 +157,137 @@ void Generator::gen_term(const std::shared_ptr<ast::node::TermNode>& node) noexc
             // TODO(lthomas): Not implemented
         }
 
-        void operator()(std::shared_ptr<ast::node::TermIdentNode> term) const
+        void operator()(const std::shared_ptr<ast::node::TermIdentNode>& term) const
         {
             // TODO(lthomas): Not implemented
         }
 
         void operator()(const std::shared_ptr<ast::node::TermExprNode>& term) const
         {
-            gen.gen_expression(term->expression);
+            gen.genExpression(term->expression);
         }
     };
 
     std::visit(Visitor{.gen = *this}, node->node);
 }
 
-void Generator::gen_bin_expr(const std::shared_ptr<ast::node::BinExprNode>& node) noexcept
+void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) noexcept
 {
     struct Visitor
     {
         Generator& gen;
 
-        void operator()(const std::shared_ptr<ast::node::BinExprPowerNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprPowerNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
 
-            std::string loop_label = gen.create_label();
-            std::string neg_label  = gen.create_label();
-            std::string end_label  = gen.create_label();
+            std::string const loopLabel = pimento::generation::Generator::createLabel();
+            std::string const negLabel  = pimento::generation::Generator::createLabel();
+            std::string const endLabel  = pimento::generation::Generator::createLabel();
 
             gen.pop("rax");
-            gen.m_output << "    mov rbx, rax\n";
+            gen.mOutput << "    mov rbx, rax\n";
             gen.pop("rcx");
-            gen.m_output << loop_label << ":\n";
-            gen.m_output << "    sub rcx, 1\n";
-            gen.m_output << "    jc " << neg_label << "\n";
-            gen.m_output << "    jz " << end_label << "\n";
-            gen.m_output << "    mul rbx\n";
-            gen.m_output << "    jmp " << loop_label << "\n";
-            gen.m_output << neg_label << ":\n";
-            gen.m_output << "    mov rax, 1\n";
-            gen.m_output << end_label << ":\n";
+            gen.mOutput << loopLabel << ":\n";
+            gen.mOutput << "    sub rcx, 1\n";
+            gen.mOutput << "    jc " << negLabel << "\n";
+            gen.mOutput << "    jz " << endLabel << "\n";
+            gen.mOutput << "    mul rbx\n";
+            gen.mOutput << "    jmp " << loopLabel << "\n";
+            gen.mOutput << negLabel << ":\n";
+            gen.mOutput << "    mov rax, 1\n";
+            gen.mOutput << endLabel << ":\n";
             gen.push("rax");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprModNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprModNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    div rbx\n";
+            gen.mOutput << "    div rbx\n";
             gen.push("rdx");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprMulNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprMulNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    mul rbx\n";
+            gen.mOutput << "    mul rbx\n";
             gen.push("rax");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprDivNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprDivNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    div rbx\n";
+            gen.mOutput << "    div rbx\n";
             gen.push("rax");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprPlusNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprPlusNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    add rax, rbx\n";
+            gen.mOutput << "    add rax, rbx\n";
             gen.push("rax");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprMinusNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprMinusNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    sub rax, rbx\n";
+            gen.mOutput << "    sub rax, rbx\n";
             gen.push("rax");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprLessThanNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprLessThanNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
 
-            std::string label     = gen.create_label();
-            std::string end_label = gen.create_label();
+            std::string const label    = pimento::generation::Generator::createLabel();
+            std::string const endLabel = pimento::generation::Generator::createLabel();
 
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    cmp rax, rbx\n";
-            gen.m_output << "    jl " << label << "\n";
-            gen.m_output << "    mov rax, 0\n";
-            gen.m_output << "    jmp " << end_label << "\n";
-            gen.m_output << label << ":\n";
-            gen.m_output << "    mov rax, 1\n";
-            gen.m_output << end_label << ":\n";
+            gen.mOutput << "    cmp rax, rbx\n";
+            gen.mOutput << "    jl " << label << "\n";
+            gen.mOutput << "    mov rax, 0\n";
+            gen.mOutput << "    jmp " << endLabel << "\n";
+            gen.mOutput << label << ":\n";
+            gen.mOutput << "    mov rax, 1\n";
+            gen.mOutput << endLabel << ":\n";
             gen.push("rax");
         }
 
-        void operator()(const std::shared_ptr<ast::node::BinExprGreaterThanNode>& bin_expr) const
+        void operator()(const std::shared_ptr<ast::node::BinExprGreaterThanNode>& binExpr) const
         {
-            gen.gen_expression(bin_expr->right);
-            gen.gen_expression(bin_expr->left);
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
 
-            std::string label     = gen.create_label();
-            std::string end_label = gen.create_label();
+            std::string const label    = pimento::generation::Generator::createLabel();
+            std::string const endLabel = pimento::generation::Generator::createLabel();
 
             gen.pop("rax");
             gen.pop("rbx");
-            gen.m_output << "    cmp rax, rbx\n";
-            gen.m_output << "    jg " << label << "\n";
-            gen.m_output << "    mov rax, 0\n";
-            gen.m_output << "    jmp " << end_label << "\n";
-            gen.m_output << label << ":\n";
-            gen.m_output << "    mov rax, 1\n";
-            gen.m_output << end_label << ":\n";
+            gen.mOutput << "    cmp rax, rbx\n";
+            gen.mOutput << "    jg " << label << "\n";
+            gen.mOutput << "    mov rax, 0\n";
+            gen.mOutput << "    jmp " << endLabel << "\n";
+            gen.mOutput << label << ":\n";
+            gen.mOutput << "    mov rax, 1\n";
+            gen.mOutput << endLabel << ":\n";
             gen.push("rax");
         }
     };
@@ -299,46 +297,46 @@ void Generator::gen_bin_expr(const std::shared_ptr<ast::node::BinExprNode>& node
 
 void Generator::push(const std::string& reg) noexcept
 {
-    m_output << "    push " << reg << "\n";
-    m_stack_size++;
+    mOutput << "    push " << reg << "\n";
+    mStackSize++;
 }
 
 void Generator::pop(const std::string& reg) noexcept
 {
-    m_output << "    pop " << reg << "\n";
-    m_stack_size--;
+    mOutput << "    pop " << reg << "\n";
+    mStackSize--;
 }
 
-void Generator::begin_scope() noexcept
+void Generator::beginScope() noexcept
 {
-    m_scopes.emplace_back(m_vars.size());
+    mScopes.emplace_back(mVars.size());
 }
 
-void Generator::end_scope() noexcept
+void Generator::endScope() noexcept
 {
-    const size_t pop_count = m_vars.size() - m_scopes.back();
-    if (pop_count != 0) {
-        m_output << "    add rsp, " << pop_count * 8 << "\n";
+    const size_t POP_COUNT = mVars.size() - mScopes.back();
+    if (POP_COUNT != 0) {
+        mOutput << "    add rsp, " << POP_COUNT * 8 << "\n";
     }
-    m_stack_size -= pop_count;
-    for (size_t i = 0; i < pop_count; i++) {
-        m_vars.pop_back();
+    mStackSize -= POP_COUNT;
+    for (size_t i = 0; i < POP_COUNT; i++) {
+        mVars.pop_back();
     }
-    m_scopes.pop_back();
+    mScopes.pop_back();
 }
 
-std::string Generator::create_label() noexcept
+std::string Generator::createLabel() noexcept
 {
-    static size_t label_count{0};
+    static size_t sLabelCount{0};
 
     std::ostringstream oss;
-    oss << "label" << std::to_string(label_count++);
+    oss << "label" << std::to_string(sLabelCount++);
     return oss.str();
 }
 
-Generator::Var::Var(const std::string& name, size_t stack_loc)
-    : name(name)
-    , stack_loc(stack_loc)
+Generator::Var::Var(std::string name, size_t stackLoc)
+    : name(std::move(name))
+    , stackLoc(stackLoc)
 {}
 
 }  // namespace pimento::generation

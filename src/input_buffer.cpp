@@ -4,35 +4,35 @@
 namespace pimento::tokenization {
 
 InputBuffer::InputBuffer(std::istream& istream)
-    : m_stream(istream)
+    : mStream(istream)
 {
-    read_chunk();
+    readChunk();
 }
 
 [[nodiscard]] std::optional<char> InputBuffer::peek() noexcept
 {
-    if (m_index >= m_num_chars) {
+    if (mIndex >= mNumChars) {
         // TODO(lthomas): I don't love that this technically advances the lexer, but
         // it fixes the issues with tokens that bridge between chunks...
-        read_chunk();
-        if (m_done) {
+        readChunk();
+        if (mDone) {
             return {};
         }
     }
 
-    return m_buffer[m_index];
+    return mBuffer[mIndex];
 }
 
 [[nodiscard]] std::optional<char> InputBuffer::consume()
 {
-    if (m_index >= m_num_chars) {
-        read_chunk();
-        if (m_done) {
+    if (mIndex >= mNumChars) {
+        readChunk();
+        if (mDone) {
             return {};
         }
     }
 
-    char curr = m_buffer[m_index];
+    char curr = mBuffer[mIndex];
     advance();
 
     return curr;
@@ -41,50 +41,50 @@ InputBuffer::InputBuffer(std::istream& istream)
 void InputBuffer::advance()
 {
     // End of chunk or EoF
-    if (m_index >= m_num_chars) {
-        read_chunk();
+    if (mIndex >= mNumChars) {
+        readChunk();
         return;
     }
 
-    char current = m_buffer[m_index++];
+    char const current = mBuffer[mIndex++];
     if (current == '\n') {
-        auto& logger = utils::get_logger();
-        logger.trace("Finished line: {} with {} columns", m_line, m_column);
-        ++m_line;
-        m_column = 0;
+        auto& logger = utils::getLogger();
+        logger.trace("Finished line: {} with {} columns", mLine, mColumn);
+        ++mLine;
+        mColumn = 0;
     }
     else {
-        ++m_column;
+        ++mColumn;
     }
 
-    ++m_offset;
+    ++mOffset;
 }
 
 [[nodiscard]] std::string InputBuffer::get(size_t offset, size_t span)
 {
     std::string out;
-    m_stream.clear();
+    mStream.clear();
 
-    m_stream.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
+    mStream.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
     out.resize(span);
-    m_stream.read(&out[0], static_cast<std::streamsize>(span));
+    mStream.read(out.data(), static_cast<std::streamsize>(span));
 
     return out;
 }
 
-void InputBuffer::read_chunk()
+void InputBuffer::readChunk()
 {
-    m_stream.read(m_buffer.data(), static_cast<std::streamsize>(m_buffer.size()));
-    m_num_chars = static_cast<size_t>(m_stream.gcount());
+    mStream.read(mBuffer.data(), static_cast<std::streamsize>(mBuffer.size()));
+    mNumChars = static_cast<size_t>(mStream.gcount());
 
-    if (m_num_chars == 0) {
-        m_done = true;
+    if (mNumChars == 0) {
+        mDone = true;
         return;
     }
 
-    m_total_bytes += m_num_chars;
-    ++m_total_chunks;
-    m_index = 0;
+    mTotalBytes += mNumChars;
+    ++mTotalChunks;
+    mIndex = 0;
 }
 
 }  // namespace pimento::tokenization

@@ -21,35 +21,35 @@ enum class ErrorType
 //! @brief Static utility class for interacting with error types.
 class ErrorTypeUtil
 {
-   public:
+public:
     ErrorTypeUtil() = delete;
 
     //! @brief Get a human-readable string representing the error type.
     //! @param error_type The error type for which to return the string.
     //! @return The human-readable string representation of the error.
-    [[nodiscard]] static inline std::string get_error_type_str(ErrorType error_type)
+    [[nodiscard]] static std::string getErrorTypeStr(ErrorType errorType)
     {
         try {
-            return get_error_str_map().at(error_type);
+            return getErrorStrMap().at(errorType);
         } catch (const std::out_of_range&) {
             return "Unknown Error";
         }
     }
 
-   private:
+private:
     using ErrorStrMap = std::unordered_map<ErrorType, std::string>;
 
     //! @brief Get the map from error types to human-readable strings.
-    [[nodiscard]] static ErrorStrMap get_error_str_map() noexcept
+    [[nodiscard]] static ErrorStrMap getErrorStrMap() noexcept
     {
         // clang-format off
-    static const ErrorStrMap token_str{
+    static const ErrorStrMap TokenStr{
       {ErrorType::INVALID_TOKEN_ERROR, "Invalid Token Error"},
       {ErrorType::SYMBOL_ERROR,        "Symbol Error"}
     };
         // clang-format on
 
-        return token_str;
+        return TokenStr;
     }
 };
 
@@ -61,15 +61,12 @@ struct Error
     std::string msg;
 };
 
-void raise(const Error& error)
+inline void raise(const Error& error)
 {
-    auto& logger = pimento::utils::get_logger();
+    auto& logger = pimento::utils::getLogger();
 
-    logger.error("Line: {} Column: {}: {}. {}",
-                 error.line,
-                 error.column,
-                 ErrorTypeUtil::get_error_type_str(error.type),
-                 error.msg);
+    logger.error(
+        "Line: {} Column: {}: {}. {}", error.line, error.column, ErrorTypeUtil::getErrorTypeStr(error.type), error.msg);
     exit(EXIT_FAILURE);
 }
 

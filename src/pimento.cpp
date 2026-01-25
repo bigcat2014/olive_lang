@@ -50,53 +50,53 @@ int main(int argc, char* argv[])
 
     // Set log level based on flags
     if (program.get<bool>("--trace")) {
-        pimento::utils::configure_logger(spdlog::level::trace);
+        pimento::utils::configureLogger(spdlog::level::trace);
     }
     else if (program.get<bool>("--debug")) {
-        pimento::utils::configure_logger(spdlog::level::debug);
+        pimento::utils::configureLogger(spdlog::level::debug);
     }
     else if (program.get<bool>("--verbose")) {
-        pimento::utils::configure_logger(spdlog::level::info);
+        pimento::utils::configureLogger(spdlog::level::info);
     }
     else {
-        pimento::utils::configure_logger(spdlog::level::warn);
+        pimento::utils::configureLogger(spdlog::level::warn);
     }
 
-    auto& logger = pimento::utils::get_logger();
+    auto& logger = pimento::utils::getLogger();
 
-    auto in_file_str = program.get<std::string>("file");
-    logger.debug("Input file path: {}", in_file_str);
+    auto inFileStr = program.get<std::string>("file");
+    logger.debug("Input file path: {}", inFileStr);
 
-    auto input_resolved_path = pimento::utils::sanitize_path(in_file_str);
-    if (!input_resolved_path.has_value()) {
+    auto inputResolvedPath = pimento::utils::sanitizePath(inFileStr);
+    if (!inputResolvedPath.has_value()) {
         return EXIT_FAILURE;
     }
-    logger.debug("Sanitized input file path: {}", input_resolved_path.value().string());
+    logger.debug("Sanitized input file path: {}", inputResolvedPath.value().string());
 
-    std::ifstream input_file{input_resolved_path.value()};
-    if (!input_file) {
-        throw std::runtime_error("cannot open " + input_resolved_path.value().string());
+    std::ifstream inputFile{inputResolvedPath.value()};
+    if (!inputFile) {
+        throw std::runtime_error("cannot open " + inputResolvedPath.value().string());
     }
 
     if (program.get<bool>("--stdout")) {
-        pimento::generation::Generator generator(input_file, std::cout);
+        pimento::generation::Generator generator(inputFile, std::cout);
         generator.generate();
     }
     else {
-        auto out_file_str = program.get<std::string>("output");
-        logger.debug("Output file path: {}", out_file_str);
+        auto outFileStr = program.get<std::string>("output");
+        logger.debug("Output file path: {}", outFileStr);
 
-        auto output_resolved_path = pimento::utils::expand_vars(out_file_str);
-        output_resolved_path      = std::filesystem::absolute(output_resolved_path);
-        output_resolved_path      = output_resolved_path.lexically_normal();
-        logger.debug("Sanitized output file path: {}", output_resolved_path.string());
+        auto outputResolvedPath = pimento::utils::expandVars(outFileStr);
+        outputResolvedPath      = std::filesystem::absolute(outputResolvedPath);
+        outputResolvedPath      = outputResolvedPath.lexically_normal();
+        logger.debug("Sanitized output file path: {}", outputResolvedPath.string());
 
-        std::ofstream output_file{output_resolved_path};
-        if (!output_file) {
-            throw std::runtime_error("cannot open " + output_resolved_path.string());
+        std::ofstream outputFile{outputResolvedPath};
+        if (!outputFile) {
+            throw std::runtime_error("cannot open " + outputResolvedPath.string());
         }
 
-        pimento::generation::Generator generator(input_file, output_file);
+        pimento::generation::Generator generator(inputFile, outputFile);
         generator.generate();
     }
 
