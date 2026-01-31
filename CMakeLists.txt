@@ -5,12 +5,12 @@ set(${PROJECT_NAME}_MAJOR_VERSION 0)
 set(${PROJECT_NAME}_MINOR_VERSION 1)
 set(${PROJECT_NAME}_PATCH_VERSION 0)
 set(${PROJECT_NAME}_VERSION
-    ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})  # cmake-lint: disable=C0301
+    ${${PROJECT_NAME}_MAJOR_VERSION}.${${PROJECT_NAME}_MINOR_VERSION}.${${PROJECT_NAME}_PATCH_VERSION})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS
-    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -fno-fast-math")  # cmake-lint: disable=C0301
+    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -fno-fast-math")
 if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
@@ -153,6 +153,7 @@ if (BUILD_TESTING)
         COMMAND ${CMAKE_LINT_PATH}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
         --tab-size 4
+        --line-width 120
         --disabled-codes C0103
         -o ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_cmake_linter.txt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -189,7 +190,7 @@ if (BUILD_TESTING)
         --use-color
         --warnings-as-errors=*
         --export-fixes
-        ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml  # cmake-lint: disable=C0301
+        ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml
         ${${PROJECT_NAME}_SOURCE_FILES}
         ${${PROJECT_NAME}_HEADER_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
