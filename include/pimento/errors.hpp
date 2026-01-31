@@ -42,12 +42,8 @@ private:
     //! @brief Get the map from error types to human-readable strings.
     [[nodiscard]] static ErrorStrMap getErrorStrMap() noexcept
     {
-        // clang-format off
-    static const ErrorStrMap TokenStr{
-      {ErrorType::INVALID_TOKEN_ERROR, "Invalid Token Error"},
-      {ErrorType::SYMBOL_ERROR,        "Symbol Error"}
-    };
-        // clang-format on
+        static const ErrorStrMap TokenStr{{ErrorType::INVALID_TOKEN_ERROR, "Invalid Token Error"},
+                                          {ErrorType::SYMBOL_ERROR, "Symbol Error"}};
 
         return TokenStr;
     }

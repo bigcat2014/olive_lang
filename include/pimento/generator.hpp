@@ -58,12 +58,10 @@ private:
     //! @param reg The registry to pop the value into.
     void pop(const std::string& reg) noexcept;
 
-    //! @brief Helper function to manage variables in the stack when entering a
-    //! scope.
+    //! @brief Helper function to manage variables in the stack when entering a scope.
     void beginScope() noexcept;
 
-    //! @brief Helper function to manage variables in the stack when exiting a
-    //! scope.
+    //! @brief Helper function to manage variables in the stack when exiting a scope.
     void endScope() noexcept;
 
     //! @brief Helper function to create unique assembly labels.

@@ -239,8 +239,7 @@ private:
 #endif
 
 //! @brief Constant value as raw bits.
-//! @details Generally to be used with values specified in hex, octal, or
-//! binary.
+//! @details Generally to be used with values specified in hex, octal, or binary.
 class RawBits
 {
 public:
@@ -260,33 +259,37 @@ public:
     }
 
 public:
-    // clang-format off
-  //! @brief Get the raw bits as unsigned 64-bit integer.
-  //! @return The raw bits as unsigned 64-bit integer.
-  [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
-  //! @brief Get the raw bits as signed 64-bit integer.
-  //! @return The raw bits as signed 64-bit integer.
-  [[nodiscard]] int64_t  asInt64()  const noexcept { return int64; }
-  //! @brief Get the raw bits as unsigned 32-bit integer.
-  //! @return The raw bits as unsigned 32-bit integer.
-  [[nodiscard]] uint32_t asUint32() const noexcept { return uint32View.value; }
-  //! @brief Get the raw bits as signed 32-bit integer.
-  //! @return The raw bits as signed 32-bit integer.
-  [[nodiscard]] int32_t asInt32()  const noexcept { return int32View.value; }
-  //! @brief Get the raw bits as unsigned 16-bit integer.
-  //! @return The raw bits as unsigned 16-bit integer.
-  [[nodiscard]] uint16_t asUint16() const noexcept { return uint16View.value; }
-  //! @brief Get the raw bits as signed 16-bit integer.
-  //! @return The raw bits as signed 16-bit integer.
-  [[nodiscard]] int16_t asInt16()  const noexcept { return int16View.value; }
-  //! @brief Get the raw bits as unsigned 8-bit integer.
-  //! @return The raw bits as unsigned 8-bit integer.
-  [[nodiscard]] uint8_t  asUint8()  const noexcept { return uint8View.value; }
-  //! @brief Get the raw bits as signed 8-bit integer.
-  //! @return The raw bits as signed 8-bit integer.
-  [[nodiscard]] int8_t  asInt8()   const noexcept { return int8View.value; }
+    //! @brief Get the raw bits as unsigned 64-bit integer.
+    //! @return The raw bits as unsigned 64-bit integer.
+    [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
 
-    // clang-format on
+    //! @brief Get the raw bits as signed 64-bit integer.
+    //! @return The raw bits as signed 64-bit integer.
+    [[nodiscard]] int64_t asInt64() const noexcept { return int64; }
+
+    //! @brief Get the raw bits as unsigned 32-bit integer.
+    //! @return The raw bits as unsigned 32-bit integer.
+    [[nodiscard]] uint32_t asUint32() const noexcept { return uint32View.value; }
+
+    //! @brief Get the raw bits as signed 32-bit integer.
+    //! @return The raw bits as signed 32-bit integer.
+    [[nodiscard]] int32_t asInt32() const noexcept { return int32View.value; }
+
+    //! @brief Get the raw bits as unsigned 16-bit integer.
+    //! @return The raw bits as unsigned 16-bit integer.
+    [[nodiscard]] uint16_t asUint16() const noexcept { return uint16View.value; }
+
+    //! @brief Get the raw bits as signed 16-bit integer.
+    //! @return The raw bits as signed 16-bit integer.
+    [[nodiscard]] int16_t asInt16() const noexcept { return int16View.value; }
+
+    //! @brief Get the raw bits as unsigned 8-bit integer.
+    //! @return The raw bits as unsigned 8-bit integer.
+    [[nodiscard]] uint8_t asUint8() const noexcept { return uint8View.value; }
+
+    //! @brief Get the raw bits as signed 8-bit integer.
+    //! @return The raw bits as signed 8-bit integer.
+    [[nodiscard]] int8_t asInt8() const noexcept { return int8View.value; }
 
 private:
     //! @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
@@ -351,33 +354,37 @@ public:
     }
 
 public:
-    // clang-format off
-  //! @brief Get the value as unsigned 64-bit integer.
-  //! @return The value as unsigned 64-bit integer.
-  [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
-  //! @brief Get the value as signed 64-bit integer.
-  //! @return The value as signed 64-bit integer.
-  [[nodiscard]] int64_t  asInt64()  const noexcept { return int64; }
-  //! @brief Get the value as unsigned 32-bit integer.
-  //! @return The value as unsigned 32-bit integer.
-  [[nodiscard]] uint32_t asUint32() const noexcept { return static_cast<uint32_t>(uint64); }
-  //! @brief Get the value as signed 32-bit integer.
-  //! @return The value as signed 32-bit integer.
-  [[nodiscard]] int32_t asInt32()  const noexcept { return static_cast<int32_t>(int64); }
-  //! @brief Get the value as unsigned 16-bit integer.
-  //! @return The value as unsigned 16-bit integer.
-  [[nodiscard]] uint16_t asUint16() const noexcept { return static_cast<uint16_t>(uint64); }
-  //! @brief Get the value as signed 16-bit integer.
-  //! @return The value as signed 16-bit integer.
-  [[nodiscard]] int16_t asInt16()  const noexcept { return static_cast<int16_t>(int64); }
-  //! @brief Get the value as unsigned 8-bit integer.
-  //! @return The value as unsigned 8-bit integer.
-  [[nodiscard]] uint8_t  asUint8()  const noexcept { return static_cast<uint8_t>(uint64); }
-  //! @brief Get the value as signed 8-bit integer.
-  //! @return The value as signed 8-bit integer.
-  [[nodiscard]] int8_t  asInt8()   const noexcept { return static_cast<int8_t>(int64); }
+    //! @brief Get the value as unsigned 64-bit integer.
+    //! @return The value as unsigned 64-bit integer.
+    [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
 
-    // clang-format on
+    //! @brief Get the value as signed 64-bit integer.
+    //! @return The value as signed 64-bit integer.
+    [[nodiscard]] int64_t asInt64() const noexcept { return int64; }
+
+    //! @brief Get the value as unsigned 32-bit integer.
+    //! @return The value as unsigned 32-bit integer.
+    [[nodiscard]] uint32_t asUint32() const noexcept { return static_cast<uint32_t>(uint64); }
+
+    //! @brief Get the value as signed 32-bit integer.
+    //! @return The value as signed 32-bit integer.
+    [[nodiscard]] int32_t asInt32() const noexcept { return static_cast<int32_t>(int64); }
+
+    //! @brief Get the value as unsigned 16-bit integer.
+    //! @return The value as unsigned 16-bit integer.
+    [[nodiscard]] uint16_t asUint16() const noexcept { return static_cast<uint16_t>(uint64); }
+
+    //! @brief Get the value as signed 16-bit integer.
+    //! @return The value as signed 16-bit integer.
+    [[nodiscard]] int16_t asInt16() const noexcept { return static_cast<int16_t>(int64); }
+
+    //! @brief Get the value as unsigned 8-bit integer.
+    //! @return The value as unsigned 8-bit integer.
+    [[nodiscard]] uint8_t asUint8() const noexcept { return static_cast<uint8_t>(uint64); }
+
+    //! @brief Get the value as signed 8-bit integer.
+    //! @return The value as signed 8-bit integer.
+    [[nodiscard]] int8_t asInt8() const noexcept { return static_cast<int8_t>(int64); }
 
 private:
     //! @brief Union of signed and signed and unsigned 64-bit values to be used
@@ -407,11 +414,9 @@ public:
         : mValue(IntConst(value))
     {}
 
-    // TODO(lthomas): Not sure if I should always be creating these as
-    // double-precision float, I think this has the potential for a double round
-    // error.
-    //! @brief Constructor for floating point value represented in scientific
-    //! notation.
+    // TODO(lthomas): Not sure if I should always be creating these as double-precision float, I think this has the
+    // potential for a double round error.
+    //! @brief Constructor for floating point value represented in scientific notation.
     //! @param mantissa The mantissa of the floating point value.
     //! @param exponent The exponent of the floating point value.
     //! @param negative Whether or not the value is negative.
@@ -703,117 +708,113 @@ private:
     //! @brief Get the map from token types to human-readable strings.
     [[nodiscard]] static TokenStrMap getTokenStrMap() noexcept
     {
-        // clang-format off
-    static const TokenStrMap TokenStr{
-      {TokenType::AMP_EQUAL,           "AMP_EQUAL"},
-      {TokenType::AMP,                 "AMP"},
-      {TokenType::AND,                 "AND"},
-      {TokenType::BOOL,                "BOOL"},
-      {TokenType::BREAK,               "BREAK"},
-      {TokenType::CARET_CARET_EQUAL,   "CARET_CARET_EQUAL"},
-      {TokenType::CARET_CARET,         "CARET_CARET"},
-      {TokenType::CARET_EQUAL,         "CARET_EQUAL"},
-      {TokenType::CARET,               "CARET"},
-      {TokenType::CLASS,               "CLASS"},
-      {TokenType::COLON,               "COLON"},
-      {TokenType::COMMA,               "COMMA"},
-      {TokenType::COMMENT,             "COMMENT"},
-      {TokenType::DOT,                 "DOT"},
-      {TokenType::ELIF,                "ELIF"},
-      {TokenType::ELSE,                "ELSE"},
-      {TokenType::ENUM,                "ENUM"},
-      {TokenType::EQUAL_EQUAL,         "EQUAL_EQUAL"},
-      {TokenType::EQUAL,               "EQUAL"},
-      {TokenType::EXCLAIM_EQUAL,       "EXCLAIM_EQUAL"},
-      {TokenType::EXIT,                "EXIT"},
-      {TokenType::FALSE,               "FALSE"},
-      {TokenType::FLOAT_CONST,         "FLOAT_CONST"},
-      {TokenType::FLOAT_NAN,           "FLOAT_NAN"},
-      {TokenType::FLOAT32_T_MAX,       "FLOAT32_T_MAX"},
-      {TokenType::FLOAT32_T_MIN,       "FLOAT32_T_MIN"},
-      {TokenType::FLOAT32_T,           "FLOAT32_T"},
-      {TokenType::FLOAT64_T_MAX,       "FLOAT64_T_MAX"},
-      {TokenType::FLOAT64_T_MIN,       "FLOAT64_T_MIN"},
-      {TokenType::FLOAT64_T,           "FLOAT64_T"},
-      {TokenType::FOR,                 "FOR"},
-      {TokenType::FSLASH_EQUAL,        "FSLASH_EQUAL"},
-      {TokenType::FSLASH_FSLASH_EQUAL, "FSLASH_FSLASH_EQUAL"},
-      {TokenType::FSLASH_FSLASH,       "FSLASH_FSLASH"},
-      {TokenType::FSLASH,              "FSLASH"},
-      {TokenType::FUNCTION,            "FUNCTION"},
-      {TokenType::IDENT,               "IDENT"},
-      {TokenType::IF,                  "IF"},
-      {TokenType::IN,                  "IN"},
-      {TokenType::INT16_T_MAX,         "INT16_T_MAX"},
-      {TokenType::INT16_T_MIN,         "INT16_T_MIN"},
-      {TokenType::INT16_T,             "INT16_T"},
-      {TokenType::INT32_T_MAX,         "INT32_T_MAX"},
-      {TokenType::INT32_T_MIN,         "INT32_T_MIN"},
-      {TokenType::INT32_T,             "INT32_T"},
-      {TokenType::INT64_T_MAX,         "INT64_T_MAX"},
-      {TokenType::INT64_T_MIN,         "INT64_T_MIN"},
-      {TokenType::INT64_T,             "INT64_T"},
-      {TokenType::INT8_T_MAX,          "INT8_T_MAX"},
-      {TokenType::INT8_T_MIN,          "INT8_T_MIN"},
-      {TokenType::INT8_T,              "INT8_T"},
-      {TokenType::INTEGER_CONST,       "INTEGER_CONST"},
-      {TokenType::INTERFACE,           "INTERFACE"},
-      {TokenType::LANGLE_EQUAL,        "LANGLE_EQUAL"},
-      {TokenType::LANGLE_LANGLE,       "LANGLE_LANGLE"},
-      {TokenType::LANGLE,              "LANGLE"},
-      {TokenType::LEFT_CURLY,          "LEFT_CURLY"},
-      {TokenType::LEFT_PAREN,          "LEFT_PAREN"},
-      {TokenType::LEFT_SQUARE,         "LEFT_SQUARE"},
-      {TokenType::MINUS_EQUAL,         "MINUS_EQUAL"},
-      {TokenType::MINUS_MINUS,         "MINUS_MINUS"},
-      {TokenType::MINUS,               "MINUS"},
-      {TokenType::MUTABLE,             "MUTABLE"},
-      {TokenType::NEG_INF,             "NEG_INF"},
-      {TokenType::NOT,                 "NOT"},
-      {TokenType::NUMERIC_CONST,       "NUMERIC_CONST"},
-      {TokenType::OR,                  "OR"},
-      {TokenType::PERCENT_EQUAL,       "PERCENT_EQUAL"},
-      {TokenType::PERCENT,             "PERCENT"},
-      {TokenType::PIPE_EQUAL,          "PIPE_EQUAL"},
-      {TokenType::PIPE,                "PIPE"},
-      {TokenType::PLUS_EQUAL,          "PLUS_EQUAL"},
-      {TokenType::PLUS_PLUS,           "PLUS_PLUS"},
-      {TokenType::PLUS,                "PLUS"},
-      {TokenType::POS_INF,             "POS_INF"},
-      {TokenType::PRIVATE,             "PRIVATE"},
-      {TokenType::PUBLIC,              "PUBLIC"},
-      {TokenType::QUESTION,            "QUESTION"},
-      {TokenType::RANGLE_EQUAL,        "RANGLE_EQUAL"},
-      {TokenType::RANGLE_RANGLE,       "RANGLE_RANGLE"},
-      {TokenType::RANGLE,              "RANGLE"},
-      {TokenType::RETURN,              "RETURN"},
-      {TokenType::RIGHT_CURLY,         "RIGHT_CURLY"},
-      {TokenType::RIGHT_PAREN,         "RIGHT_PAREN"},
-      {TokenType::RIGHT_SQUARE,        "RIGHT_SQUARE"},
-      {TokenType::SEMI,                "SEMI"},
-      {TokenType::STAR_EQUAL,          "STAR_EQUAL"},
-      {TokenType::STAR,                "STAR"},
-      {TokenType::STRING_LITERAL,      "STRING_LITERAL"},
-      {TokenType::STRING,              "STRING"},
-      {TokenType::TILDE_EQUAL,         "TILDE_EQUAL"},
-      {TokenType::TILDE,               "TILDE"},
-      {TokenType::TRUE,                "TRUE"},
-      {TokenType::TYPE_IDENT,          "TYPE_IDENT"},
-      {TokenType::UINT16_T_MAX,        "UINT16_T_MAX"},
-      {TokenType::UINT16_T_MIN,        "UINT16_T_MIN"},
-      {TokenType::UINT16_T,            "UINT16_T"},
-      {TokenType::UINT32_T_MAX,        "UINT32_T_MAX"},
-      {TokenType::UINT32_T_MIN,        "UINT32_T_MIN"},
-      {TokenType::UINT32_T,            "UINT32_T"},
-      {TokenType::UINT64_T_MAX,        "UINT64_T_MAX"},
-      {TokenType::UINT64_T_MIN,        "UINT64_T_MIN"},
-      {TokenType::UINT64_T,            "UINT64_T"},
-      {TokenType::UINT8_T_MAX,         "UINT8_T_MAX"},
-      {TokenType::UINT8_T_MIN,         "UINT8_T_MIN"},
-      {TokenType::UINT8_T,             "UINT8_T"},
-      {TokenType::WHILE,               "WHILE"}
-    };
-        // clang-format on
+        static const TokenStrMap TokenStr{{TokenType::AMP_EQUAL, "AMP_EQUAL"},
+                                          {TokenType::AMP, "AMP"},
+                                          {TokenType::AND, "AND"},
+                                          {TokenType::BOOL, "BOOL"},
+                                          {TokenType::BREAK, "BREAK"},
+                                          {TokenType::CARET_CARET_EQUAL, "CARET_CARET_EQUAL"},
+                                          {TokenType::CARET_CARET, "CARET_CARET"},
+                                          {TokenType::CARET_EQUAL, "CARET_EQUAL"},
+                                          {TokenType::CARET, "CARET"},
+                                          {TokenType::CLASS, "CLASS"},
+                                          {TokenType::COLON, "COLON"},
+                                          {TokenType::COMMA, "COMMA"},
+                                          {TokenType::COMMENT, "COMMENT"},
+                                          {TokenType::DOT, "DOT"},
+                                          {TokenType::ELIF, "ELIF"},
+                                          {TokenType::ELSE, "ELSE"},
+                                          {TokenType::ENUM, "ENUM"},
+                                          {TokenType::EQUAL_EQUAL, "EQUAL_EQUAL"},
+                                          {TokenType::EQUAL, "EQUAL"},
+                                          {TokenType::EXCLAIM_EQUAL, "EXCLAIM_EQUAL"},
+                                          {TokenType::EXIT, "EXIT"},
+                                          {TokenType::FALSE, "FALSE"},
+                                          {TokenType::FLOAT_CONST, "FLOAT_CONST"},
+                                          {TokenType::FLOAT_NAN, "FLOAT_NAN"},
+                                          {TokenType::FLOAT32_T_MAX, "FLOAT32_T_MAX"},
+                                          {TokenType::FLOAT32_T_MIN, "FLOAT32_T_MIN"},
+                                          {TokenType::FLOAT32_T, "FLOAT32_T"},
+                                          {TokenType::FLOAT64_T_MAX, "FLOAT64_T_MAX"},
+                                          {TokenType::FLOAT64_T_MIN, "FLOAT64_T_MIN"},
+                                          {TokenType::FLOAT64_T, "FLOAT64_T"},
+                                          {TokenType::FOR, "FOR"},
+                                          {TokenType::FSLASH_EQUAL, "FSLASH_EQUAL"},
+                                          {TokenType::FSLASH_FSLASH_EQUAL, "FSLASH_FSLASH_EQUAL"},
+                                          {TokenType::FSLASH_FSLASH, "FSLASH_FSLASH"},
+                                          {TokenType::FSLASH, "FSLASH"},
+                                          {TokenType::FUNCTION, "FUNCTION"},
+                                          {TokenType::IDENT, "IDENT"},
+                                          {TokenType::IF, "IF"},
+                                          {TokenType::IN, "IN"},
+                                          {TokenType::INT16_T_MAX, "INT16_T_MAX"},
+                                          {TokenType::INT16_T_MIN, "INT16_T_MIN"},
+                                          {TokenType::INT16_T, "INT16_T"},
+                                          {TokenType::INT32_T_MAX, "INT32_T_MAX"},
+                                          {TokenType::INT32_T_MIN, "INT32_T_MIN"},
+                                          {TokenType::INT32_T, "INT32_T"},
+                                          {TokenType::INT64_T_MAX, "INT64_T_MAX"},
+                                          {TokenType::INT64_T_MIN, "INT64_T_MIN"},
+                                          {TokenType::INT64_T, "INT64_T"},
+                                          {TokenType::INT8_T_MAX, "INT8_T_MAX"},
+                                          {TokenType::INT8_T_MIN, "INT8_T_MIN"},
+                                          {TokenType::INT8_T, "INT8_T"},
+                                          {TokenType::INTEGER_CONST, "INTEGER_CONST"},
+                                          {TokenType::INTERFACE, "INTERFACE"},
+                                          {TokenType::LANGLE_EQUAL, "LANGLE_EQUAL"},
+                                          {TokenType::LANGLE_LANGLE, "LANGLE_LANGLE"},
+                                          {TokenType::LANGLE, "LANGLE"},
+                                          {TokenType::LEFT_CURLY, "LEFT_CURLY"},
+                                          {TokenType::LEFT_PAREN, "LEFT_PAREN"},
+                                          {TokenType::LEFT_SQUARE, "LEFT_SQUARE"},
+                                          {TokenType::MINUS_EQUAL, "MINUS_EQUAL"},
+                                          {TokenType::MINUS_MINUS, "MINUS_MINUS"},
+                                          {TokenType::MINUS, "MINUS"},
+                                          {TokenType::MUTABLE, "MUTABLE"},
+                                          {TokenType::NEG_INF, "NEG_INF"},
+                                          {TokenType::NOT, "NOT"},
+                                          {TokenType::NUMERIC_CONST, "NUMERIC_CONST"},
+                                          {TokenType::OR, "OR"},
+                                          {TokenType::PERCENT_EQUAL, "PERCENT_EQUAL"},
+                                          {TokenType::PERCENT, "PERCENT"},
+                                          {TokenType::PIPE_EQUAL, "PIPE_EQUAL"},
+                                          {TokenType::PIPE, "PIPE"},
+                                          {TokenType::PLUS_EQUAL, "PLUS_EQUAL"},
+                                          {TokenType::PLUS_PLUS, "PLUS_PLUS"},
+                                          {TokenType::PLUS, "PLUS"},
+                                          {TokenType::POS_INF, "POS_INF"},
+                                          {TokenType::PRIVATE, "PRIVATE"},
+                                          {TokenType::PUBLIC, "PUBLIC"},
+                                          {TokenType::QUESTION, "QUESTION"},
+                                          {TokenType::RANGLE_EQUAL, "RANGLE_EQUAL"},
+                                          {TokenType::RANGLE_RANGLE, "RANGLE_RANGLE"},
+                                          {TokenType::RANGLE, "RANGLE"},
+                                          {TokenType::RETURN, "RETURN"},
+                                          {TokenType::RIGHT_CURLY, "RIGHT_CURLY"},
+                                          {TokenType::RIGHT_PAREN, "RIGHT_PAREN"},
+                                          {TokenType::RIGHT_SQUARE, "RIGHT_SQUARE"},
+                                          {TokenType::SEMI, "SEMI"},
+                                          {TokenType::STAR_EQUAL, "STAR_EQUAL"},
+                                          {TokenType::STAR, "STAR"},
+                                          {TokenType::STRING_LITERAL, "STRING_LITERAL"},
+                                          {TokenType::STRING, "STRING"},
+                                          {TokenType::TILDE_EQUAL, "TILDE_EQUAL"},
+                                          {TokenType::TILDE, "TILDE"},
+                                          {TokenType::TRUE, "TRUE"},
+                                          {TokenType::TYPE_IDENT, "TYPE_IDENT"},
+                                          {TokenType::UINT16_T_MAX, "UINT16_T_MAX"},
+                                          {TokenType::UINT16_T_MIN, "UINT16_T_MIN"},
+                                          {TokenType::UINT16_T, "UINT16_T"},
+                                          {TokenType::UINT32_T_MAX, "UINT32_T_MAX"},
+                                          {TokenType::UINT32_T_MIN, "UINT32_T_MIN"},
+                                          {TokenType::UINT32_T, "UINT32_T"},
+                                          {TokenType::UINT64_T_MAX, "UINT64_T_MAX"},
+                                          {TokenType::UINT64_T_MIN, "UINT64_T_MIN"},
+                                          {TokenType::UINT64_T, "UINT64_T"},
+                                          {TokenType::UINT8_T_MAX, "UINT8_T_MAX"},
+                                          {TokenType::UINT8_T_MIN, "UINT8_T_MIN"},
+                                          {TokenType::UINT8_T, "UINT8_T"},
+                                          {TokenType::WHILE, "WHILE"}};
 
         return TokenStr;
     }
@@ -852,7 +853,7 @@ struct NumConstToken : public Token
 };
 
 //! @brief Token for representing string values.
-//! This could be string literals, identifiers, or type identifiers.
+//! @details This could be string literals, identifiers, or type identifiers.
 struct StringToken : public Token
 {
     //! @brief The string value stored, either string literal or identifier.

@@ -32,8 +32,8 @@ private:
 
     //! @brief Peek at a token at an offset from the current token in the buffer.
     //! @param lookahead Optional lookahead distance to peek.
-    //! @return The token at `lookahead` offset from the current index or {} if
-    //! attempting to peek out of bounds.
+    //! @return The token at `lookahead` offset from the current index or std::nullopt if attempting to peek out of
+    //! bounds.
     [[nodiscard]] inline std::optional<tokenization::Token> peek(size_t lookahead = 0) const noexcept;
 
     //! @brief Advance the parser.
@@ -44,8 +44,8 @@ private:
     [[nodiscard]] inline std::optional<tokenization::Token> tryConsume() noexcept;
 
     //! @brief Try to consume the next token if it is the provided TokenType.
-    //! @details Try to consume the next token if it is a specific TokenType. If
-    //! the token type matches, consume it, otherwise log an error and exit.
+    //! @details Try to consume the next token if it is a specific TokenType. If the token type matches, consume it,
+    //! otherwise log an error and exit.
     //! @param token_type The token type we are asserting is next.
     inline tokenization::Token tryConsume(tokenization::TokenType tokenType) noexcept;
 

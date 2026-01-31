@@ -126,8 +126,7 @@ private:
     //! @brief Convert Scientific Notation to double precision float constant.
     //! @param mantissa_str The mantissa of the scientific number.
     //! @param exponent_str The exponent of the scientific number.
-    //! @return The double precision floating point number represented by the
-    //! scientific notation.
+    //! @return The double precision floating point number represented by the scientific notation.
     [[nodiscard]] static FloatConst doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr);
 
 private:

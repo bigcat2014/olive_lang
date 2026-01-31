@@ -60,8 +60,8 @@ public:
     //! @brief Get characters from the input stream.
     //! @param offset The offset of the input stream to start at.
     //! @param span The number of characters to get.
-    //! @return String of characters from the input stream starting at `offset`
-    //! and grabbing `span` number of characters.
+    //! @return String of characters from the input stream starting at `offset` and grabbing `span` number of
+    //! characters.
     [[nodiscard]] std::string get(size_t offset, size_t span = 1);
 
 private:

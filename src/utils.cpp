@@ -15,16 +15,14 @@ spdlog::logger& getLogger()
 }
 
 //! @brief Configures the logger.
-//! @param level spdlog::level::level_enum The log level to configure the logger
-//! with.
+//! @param level spdlog::level::level_enum The log level to configure the logger with.
 void configureLogger(spdlog::level::level_enum level)
 {
     getLogger().set_level(level);
 }
 
 //! @brief Expands `~` and environment variables in input path.
-//! @param input_path const std::string& The file path in which to expand the
-//! variables.
+//! @param input_path const std::string& The file path in which to expand the variables.
 //! @return std::filesystem::path The file path with variables expanded.
 std::filesystem::path expandVars(const std::string& inputPath)
 {
@@ -79,10 +77,8 @@ std::filesystem::path expandVars(const std::string& inputPath)
 
 //! @brief Sanitize the input path.
 //!
-//! Sanitize the input path by expanding `~` and environment variables,
-//! normalizing the path, and ensuring it is a file. Additionally checks the
-//! file extension and warns the user if the extension is not the expected
-//! `.oil` extension.
+//! Sanitize the input path by expanding `~` and environment variables, normalizing the path, and ensuring it is a file.
+//! Additionally checks the file extension and warns the user if the extension is not the expected `.oil` extension.
 //! @param input_path const std::string& The file path to sanitize.
 //! @return std::optional<std::filesystem::path> The sanitized path.
 std::optional<std::filesystem::path> sanitizePath(const std::string& inputPath)
@@ -113,4 +109,5 @@ std::optional<std::filesystem::path> sanitizePath(const std::string& inputPath)
 
     return resolvedPath;
 }
+
 }  // namespace pimento::utils

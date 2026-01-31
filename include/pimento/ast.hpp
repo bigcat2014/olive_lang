@@ -64,8 +64,7 @@ struct BinExprLessThanNode
     //! @brief The operator's right-side expression.
     std::shared_ptr<ExprNode> right;
 
-    //! @brief Constructor for the Binary Expression Less Than Comparison AST
-    //! node.
+    //! @brief Constructor for the Binary Expression Less Than Comparison AST node.
     //! @param left The operator's left-side expression.
     //! @param right The operator's right-side expression.
     BinExprLessThanNode(std::shared_ptr<ExprNode> left, std::shared_ptr<ExprNode> right)
@@ -82,8 +81,7 @@ struct BinExprGreaterThanNode
     //! @brief The operator's right-side expression.
     std::shared_ptr<ExprNode> right;
 
-    //! @brief Constructor for the Binary Expression Greater Than Comparison AST
-    //! node.
+    //! @brief Constructor for the Binary Expression Greater Than Comparison AST node.
     //! @param left The operator's left-side expression.
     //! @param right The operator's right-side expression.
     BinExprGreaterThanNode(std::shared_ptr<ExprNode> left, std::shared_ptr<ExprNode> right)
@@ -308,8 +306,7 @@ struct StmtIfNode
         , ifpred(std::move(ifpred))
     {}
 
-    //! @brief Constructor for the Statement If AST node without a chained If
-    //! Predicate.
+    //! @brief Constructor for the Statement If AST node without a chained If Predicate.
     //! @param expression The Expression for this node.
     //! @param scope The scope of this node.
     StmtIfNode(std::shared_ptr<ExprNode> expression, std::shared_ptr<ScopeNode> scope)
