@@ -31,13 +31,19 @@ FetchContent_Declare(
   GIT_TAG        v1.17.0)
 FetchContent_MakeAvailable(spdlog)
 
+# Create an interface library wrapper for spdlog to mark it as a system header and avoid clang-tidy errors
+add_library(spdlog_system INTERFACE)
+target_link_libraries(spdlog_system INTERFACE spdlog::spdlog_header_only)
+set_target_properties(spdlog_system PROPERTIES
+    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:spdlog::spdlog_header_only,INTERFACE_INCLUDE_DIRECTORIES>")
+
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
     src/utils.cpp)
 target_include_directories(${PROJECT_NAME}_utils PRIVATE
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_utils PUBLIC spdlog::spdlog_header_only)
+target_link_libraries(${PROJECT_NAME}_utils PUBLIC spdlog_system)
 
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
@@ -159,40 +165,39 @@ if (BUILD_TESTING)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
     ## Clang Tidy
+    include(ProcessorCount)
+    ProcessorCount(N_PROC)
     find_program(
         CLANG_TIDY_PATH
         NAMES
-            clang-tidy
-            clang-tidy-11
-            clang-tidy-12
-            clang-tidy-13
-            clang-tidy-14
-            clang-tidy-15
-            clang-tidy-16
-            clang-tidy-17
-            clang-tidy-18
-            clang-tidy-19
-            clang-tidy-20
-            clang-tidy-21)
+            run-clang-tidy
+            run-clang-tidy-11
+            run-clang-tidy-12
+            run-clang-tidy-13
+            run-clang-tidy-14
+            run-clang-tidy-15
+            run-clang-tidy-16
+            run-clang-tidy-17
+            run-clang-tidy-18
+            run-clang-tidy-19
+            run-clang-tidy-20
+            run-clang-tidy-21)
     if(NOT CLANG_TIDY_PATH)
         message(FATAL_ERROR "clang-tidy not found! Aborting...")
     endif() # NOT CLANG_TIDY_PATH
     file(GLOB_RECURSE
         ${PROJECT_NAME}_SOURCE_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
-    file(GLOB_RECURSE
-        ${PROJECT_NAME}_HEADER_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/pimento/*)
     add_test(NAME ${PROJECT_NAME}_clang_tidy_linter
         COMMAND ${CLANG_TIDY_PATH}
-        --config-file ${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy
+        -config-file ${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy
         -p ${CMAKE_CURRENT_BINARY_DIR}
-        --use-color
-        --warnings-as-errors=*
-        --export-fixes
+        -j ${N_PROC}
+        -use-color
+        -warnings-as-errors=*
+        -export-fixes
         ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml
         ${${PROJECT_NAME}_SOURCE_FILES}
-        ${${PROJECT_NAME}_HEADER_FILES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
     # Valgrind Memcheck Tests

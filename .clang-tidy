@@ -4,7 +4,7 @@ Checks: >
     performance-*,
     readability-*,
     cppcoreguidelines-avoid-const-or-ref-data-members,
-    cppcoreguidelines-avoid-do-while
+    cppcoreguidelines-avoid-do-while,
     cppcoreguidelines-avoid-goto,
     cppcoreguidelines-avoid-non-const-global-variables,
     cppcoreguidelines-avoid-reference-corouotine-parameters,
@@ -12,7 +12,7 @@ Checks: >
     cppcoreguidelines-macro-usage,
     cppcoreguidelines-misleading-capture-default-by-value,
     cppcoreguidelines-missing-std-forward,
-    cppcoreguidelines-no-malloc
+    cppcoreguidelines-no-malloc,
     cppcoreguidelines-no-suspend-with-lock,
     cppcoreguidelines-prefer-member-initializer,
     cppcoreguidelines-pro-bounds-array-to-pointer-decay,
@@ -29,7 +29,7 @@ Checks: >
     misc-const-correctness,
     misc-definitions-in-headers,
     misc-header-include-cycle,
-    misc-include-cleaner.
+    misc-include-cleaner,
     misc-misleading-identifier,
     misc-misplaced-const,
     misc-non-private-member-variables-in-classes,
@@ -84,7 +84,7 @@ Checks: >
     -readability-magic-numbers,
     -readability-redundant-access-specifiers
 
-HeaderFilterRegex: '^<pimento/.*\.(hpp|h)>$'
+HeaderFilterRegex: '.*/include/pimento/.*'
 FormatStyle: file
 
 CheckOptions:
@@ -119,4 +119,5 @@ CheckOptions:
     - { key: cppcoreguidelines-pro-type-const-cast.StrictMode, value: true }
     - { key: modernize-deprecated-headers.CheckHeaderFile, value: true }
     - { key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: true }
+    - { key: misc-include-cleaner.MissingIncludes, value: false }
 
