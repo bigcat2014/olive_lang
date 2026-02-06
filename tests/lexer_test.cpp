@@ -3,11 +3,9 @@
 //! @author Logan Thomas
 
 #include <fstream>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <variant>
 
 #include "lexer_test.hpp"
 #include "test_settings.hpp"
@@ -18,182 +16,196 @@
 
 using namespace pimento::tokenization;
 
-class TestingFile {
+class TestingFile
+{
 public:
-  TestingFile(const std::string_view &file_path_sv)
-      : m_input_file(std::string(file_path_sv)) {
-    if (!m_input_file) {
-      throw std::runtime_error("cannot open " + std::string(file_path_sv));
+    explicit TestingFile(const std::string_view& filePath)
+        : mInputFile(std::string(filePath))
+    {
+        if (!mInputFile) {
+            throw std::runtime_error("cannot open " + std::string(filePath));
+        }
     }
-  }
 
-  virtual ~TestingFile() {}
+    virtual ~TestingFile() {}
 
-  inline bool advance() {
-    m_token.clear();
-    return (bool)std::getline(m_input_file, m_token);
-  }
+    bool advance()
+    {
+        m_token.clear();
+        return (bool)std::getline(mInputFile, m_token);
+    }
 
-  [[nodiscard]] inline std::string get_token() const noexcept {
-    return m_token;
-  }
+    [[nodiscard]] std::string getToken() const noexcept { return m_token; }
 
 private:
-  std::ifstream m_input_file;
-  std::string m_token;
+    std::ifstream mInputFile;
+    std::string m_token;
 };
 
-std::vector<std::string> parse_csv_row(std::istringstream &input) {
-  std::vector<std::string> parsed;
-  std::string value;
-  while (std::getline(input, value, ',')) {
-    parsed.push_back(std::move(value));
-  }
-
-  return parsed;
-}
-
-TEST(Lexer, FloatPass) {
-  TestingFile testing_file{FLOAT_PASS_PATH};
-
-  while (testing_file.advance()) {
-    std::istringstream test_stream{std::move(testing_file.get_token())};
-    std::vector<std::string> parsed = parse_csv_row(test_stream);
-    ASSERT_GE(parsed.size(), 2);
-
-    std::istringstream input{std::move(parsed[0])};
-    Lexer lexer{input};
-    for (const auto &token : lexer.tokens()) {
-      EXPECT_EQ(token.token_type, TokenType::NUMERIC_CONST);
-      // TODO(lthomas): Placeholder code. Will need updating for token type
-      // EXPECT_EQ(token.value, std::stod(parsed[1]));
+std::vector<std::string> parseCSVRow(std::istringstream& input)
+{
+    std::vector<std::string> parsed;
+    std::string value;
+    while (std::getline(input, value, ',')) {
+        parsed.push_back(std::move(value));
     }
-  }
+
+    return parsed;
 }
 
-TEST(Lexer, IntegerPass) {
-  TestingFile testing_file{INTEGER_PASS_PATH};
+TEST(Lexer, FloatPass)
+{
+    TestingFile testingFile{FLOAT_PASS_PATH};
 
-  while (testing_file.advance()) {
-    std::istringstream test_stream{std::move(testing_file.get_token())};
-    std::vector<std::string> parsed = parse_csv_row(test_stream);
-    ASSERT_GE(parsed.size(), 2);
+    while (testingFile.advance()) {
+        std::istringstream testStream{testingFile.getToken()};
+        std::vector<std::string> parsed = parseCSVRow(testStream);
+        ASSERT_GE(parsed.size(), 2);
 
-    std::istringstream input{std::move(parsed[0])};
-    Lexer lexer{input};
-    for (const auto &token : lexer.tokens()) {
-      // TODO(lthomas): Placeholder code. Will need updating for token type
-      EXPECT_EQ(token.token_type, TokenType::NUMERIC_CONST);
-      // EXPECT_EQ(token.value, std::stoll(parsed[1]));
+        std::istringstream input{std::move(parsed[0])};
+        Lexer lexer{input};
+        for (const auto& token : lexer.tokens()) {
+            EXPECT_EQ(token.tokenType, TokenType::NUMERIC_CONST);
+            // TODO(lthomas): Placeholder code. Will need updating for token type
+            // EXPECT_EQ(token.value, std::stod(parsed[1]));
+        }
     }
-  }
 }
 
-TEST(Lexer, ScientificPass) {
-  TestingFile testing_file{SCIENTIFIC_PASS_PATH};
+TEST(Lexer, IntegerPass)
+{
+    TestingFile testingFile{INTEGER_PASS_PATH};
 
-  while (testing_file.advance()) {
-    std::istringstream test_stream{std::move(testing_file.get_token())};
-    std::vector<std::string> parsed = parse_csv_row(test_stream);
-    ASSERT_GE(parsed.size(), 3);
+    while (testingFile.advance()) {
+        std::istringstream testStream{testingFile.getToken()};
+        std::vector<std::string> parsed = parseCSVRow(testStream);
+        ASSERT_GE(parsed.size(), 2);
 
-    std::istringstream input{std::move(parsed[0])};
-    Lexer lexer{input};
-    for (const auto &token : lexer.tokens()) {
-      // TODO(lthomas): Placeholder code. Will need updating for token type
-      EXPECT_EQ(token.token_type, TokenType::NUMERIC_CONST);
-      // EXPECT_EQ(token.value, std::stoll(parsed[1]));
-      // EXPECT_EQ(token.value, std::stoll(parsed[2]));
+        std::istringstream input{std::move(parsed[0])};
+        Lexer lexer{input};
+        for (const auto& token : lexer.tokens()) {
+            // TODO(lthomas): Placeholder code. Will need updating for token type
+            EXPECT_EQ(token.tokenType, TokenType::NUMERIC_CONST);
+            // EXPECT_EQ(token.value, std::stoll(parsed[1]));
+        }
     }
-  }
 }
 
-TEST(Lexer, FloatFail) {
-  TestingFile testing_file{FLOAT_FAIL_PATH};
+TEST(Lexer, ScientificPass)
+{
+    TestingFile testingFile{SCIENTIFIC_PASS_PATH};
 
-  while (testing_file.advance()) {
-    std::istringstream token_stream{testing_file.get_token()};
-    Lexer lexer{token_stream};
+    while (testingFile.advance()) {
+        std::istringstream testStream{testingFile.getToken()};
+        std::vector<std::string> parsed = parseCSVRow(testStream);
+        ASSERT_GE(parsed.size(), 3);
 
-    for (const auto &token : lexer.tokens()) {
-      EXPECT_NE(token.token_type, TokenType::NUMERIC_CONST);
+        std::istringstream input{std::move(parsed[0])};
+        Lexer lexer{input};
+        for (const auto& token : lexer.tokens()) {
+            // TODO(lthomas): Placeholder code. Will need updating for token type
+            EXPECT_EQ(token.tokenType, TokenType::NUMERIC_CONST);
+            // EXPECT_EQ(token.value, std::stoll(parsed[1]));
+            // EXPECT_EQ(token.value, std::stoll(parsed[2]));
+        }
     }
-  }
 }
 
-TEST(Lexer, IntegerFail) {
-  TestingFile testing_file{INTEGER_FAIL_PATH};
+TEST(Lexer, FloatFail)
+{
+    TestingFile testingFile{FLOAT_FAIL_PATH};
 
-  while (testing_file.advance()) {
-    std::istringstream token_stream{testing_file.get_token()};
-    Lexer lexer{token_stream};
+    while (testingFile.advance()) {
+        std::istringstream testStream{testingFile.getToken()};
+        Lexer lexer{testStream};
 
-    for (const auto &token : lexer.tokens()) {
-      // TODO(lthomas): Will need updating for token type
-      EXPECT_NE(token.token_type, TokenType::NUMERIC_CONST);
+        for (const auto& token : lexer.tokens()) {
+            EXPECT_NE(token.tokenType, TokenType::NUMERIC_CONST);
+        }
     }
-  }
 }
 
-TEST(Lexer, ScientificFail) {
-  TestingFile testing_file{SCIENTIFIC_FAIL_PATH};
+TEST(Lexer, IntegerFail)
+{
+    TestingFile testingFile{INTEGER_FAIL_PATH};
 
-  while (testing_file.advance()) {
-    std::istringstream token_stream{testing_file.get_token()};
-    Lexer lexer{token_stream};
+    while (testingFile.advance()) {
+        std::istringstream testStream{testingFile.getToken()};
+        Lexer lexer{testStream};
 
-    for (const auto &token : lexer.tokens()) {
-      // TODO(lthomas): Will need updating for token type
-      EXPECT_NE(token.token_type, TokenType::NUMERIC_CONST);
+        for (const auto& token : lexer.tokens()) {
+            // TODO(lthomas): Will need updating for token type
+            EXPECT_NE(token.tokenType, TokenType::NUMERIC_CONST);
+        }
     }
-  }
 }
 
-TEST(Lexer, EmptyStream) {
-  std::istringstream iss;
-  Lexer lexer(iss);
+TEST(Lexer, ScientificFail)
+{
+    TestingFile testingFile{SCIENTIFIC_FAIL_PATH};
 
-  EXPECT_TRUE(lexer.tokens().empty());
+    while (testingFile.advance()) {
+        std::istringstream testStream{testingFile.getToken()};
+        Lexer lexer{testStream};
+
+        for (const auto& token : lexer.tokens()) {
+            // TODO(lthomas): Will need updating for token type
+            EXPECT_NE(token.tokenType, TokenType::NUMERIC_CONST);
+        }
+    }
 }
 
-TEST(Lexer, ELSE) {
-  std::istringstream iss{"else"};
-  Lexer lexer(iss);
+TEST(Lexer, EmptyStream)
+{
+    std::istringstream iss;
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELSE);
+    EXPECT_TRUE(lexer.tokens().empty());
 }
 
-TEST(Lexer, EXIT) {
-  std::istringstream iss{"exit"};
-  Lexer lexer(iss);
+TEST(Lexer, ELSE)
+{
+    std::istringstream iss{"else"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EXIT);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELSE);
 }
 
-TEST(Lexer, WHILE) {
-  std::istringstream iss{"while"};
-  Lexer lexer(iss);
+TEST(Lexer, EXIT)
+{
+    std::istringstream iss{"exit"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::WHILE);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EXIT);
 }
 
-TEST(Lexer, IF) {
-  std::istringstream iss{"if"};
-  Lexer lexer(iss);
+TEST(Lexer, WHILE)
+{
+    std::istringstream iss{"while"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::IF);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::WHILE);
 }
 
-TEST(Lexer, ELIF) {
-  std::istringstream iss{"elif"};
-  Lexer lexer(iss);
+TEST(Lexer, IF)
+{
+    std::istringstream iss{"if"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELIF);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::IF);
+}
+
+TEST(Lexer, ELIF)
+{
+    std::istringstream iss{"elif"};
+    Lexer lexer(iss);
+
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELIF);
 }
 
 // TEST(Lexer, LET) {
@@ -204,36 +216,40 @@ TEST(Lexer, ELIF) {
 //   TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LET);
 // }
 
-TEST(Lexer, LEFT_CURLY) {
-  std::istringstream iss{"{"};
-  Lexer lexer(iss);
+TEST(Lexer, LEFT_CURLY)
+{
+    std::istringstream iss{"{"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_CURLY);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_CURLY);
 }
 
-TEST(Lexer, LEFT_PAREN) {
-  std::istringstream iss{"("};
-  Lexer lexer(iss);
+TEST(Lexer, LEFT_PAREN)
+{
+    std::istringstream iss{"("};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_PAREN);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_PAREN);
 }
 
-TEST(Lexer, RIGHT_CURLY) {
-  std::istringstream iss{"}"};
-  Lexer lexer(iss);
+TEST(Lexer, RIGHT_CURLY)
+{
+    std::istringstream iss{"}"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_CURLY);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_CURLY);
 }
 
-TEST(Lexer, RIGHT_PAREN) {
-  std::istringstream iss{")"};
-  Lexer lexer(iss);
+TEST(Lexer, RIGHT_PAREN)
+{
+    std::istringstream iss{")"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_PAREN);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_PAREN);
 }
 
 // TEST(Lexer, DOUBLE_CARET) {
@@ -316,12 +332,13 @@ TEST(Lexer, RIGHT_PAREN) {
 //   TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EQUAL);
 // }
 
-TEST(Lexer, SEMI) {
-  std::istringstream iss{";"};
-  Lexer lexer(iss);
+TEST(Lexer, SEMI)
+{
+    std::istringstream iss{";"};
+    Lexer lexer(iss);
 
-  ASSERT_EQ(lexer.tokens().size(), 1);
-  // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::SEMI);
+    ASSERT_EQ(lexer.tokens().size(), 1);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::SEMI);
 }
 
 // TEST(Lexer, INT_LITERAL) {
@@ -340,10 +357,9 @@ TEST(Lexer, SEMI) {
 //   TEST_IDENTIFIER_TOKEN(lexer.tokens()[0], iss.str());
 // }
 
-TEST(Lexer, MAX_TOKEN_LENGTH) {
-  std::istringstream iss{
-      "MaxTokenLengthExceededMaxTokenLengthExceededMaxTokenLengthExceeded"};
-  EXPECT_EXIT(pimento::tokenization::Lexer lexer(iss),
-              testing::ExitedWithCode(EXIT_FAILURE),
-              "Max token length .*exceeded.");
+TEST(Lexer, MAX_TOKEN_LENGTH)
+{
+    std::istringstream iss{"MaxTokenLengthExceededMaxTokenLengthExceededMaxTokenLengthExceeded"};
+    EXPECT_EXIT(
+        pimento::tokenization::Lexer lexer(iss), testing::ExitedWithCode(EXIT_FAILURE), "Max token length .*exceeded.");
 }
