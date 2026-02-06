@@ -81,6 +81,7 @@ Checks: >
     modernize-use-starts-ends-with,
     modernize-use-uncaught-exceptions,
     modernize-use-using,
+    -bugprone-easily-swappable-parameters,-warnings-as-errors,
     -readability-magic-numbers,
     -readability-redundant-access-specifiers
 

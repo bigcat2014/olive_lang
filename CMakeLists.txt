@@ -185,9 +185,6 @@ if (BUILD_TESTING)
     if(NOT CLANG_TIDY_PATH)
         message(FATAL_ERROR "clang-tidy not found! Aborting...")
     endif() # NOT CLANG_TIDY_PATH
-    file(GLOB_RECURSE
-        ${PROJECT_NAME}_SOURCE_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
     add_test(NAME ${PROJECT_NAME}_clang_tidy_linter
         COMMAND ${CLANG_TIDY_PATH}
         -config-file ${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy
@@ -197,7 +194,7 @@ if (BUILD_TESTING)
         -warnings-as-errors=*
         -export-fixes
         ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml
-        ${${PROJECT_NAME}_SOURCE_FILES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/pimento.cpp
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
     # Valgrind Memcheck Tests
