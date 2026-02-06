@@ -48,15 +48,27 @@ inline void Parser::advance() noexcept
     return {};
 }
 
+// NOLINTNEXTLINE(bugprone-exception-escape)
 inline tokenization::Token Parser::tryConsume(tokenization::TokenType tokenType) noexcept
 {
     auto next = tryConsume();
-    if (!next.has_value() || next.value().tokenType != tokenType) {
-        // TODO(lthomas): I don't know if I want to log and exit here
-        // auto& logger = utils::getLogger();
-        // TODO(lthomas): Implement logging
+
+    if (!next.has_value()) {
+        auto& logger = utils::getLogger();
+        logger.error("nexpected EOF in \"{}\"", __FUNCTION__);
         exit(EXIT_FAILURE);
     }
+
+    if (next.value().tokenType != tokenType) {
+        // TODO(lthomas): I don't know if I want to log and exit here
+        auto& logger = utils::getLogger();
+        logger.error("Token mismatch in \"{}\": expected {}, got {}",
+                     __FUNCTION__,
+                     tokenization::TokenTypeUtil::getTypeAsStr(tokenType),
+                     tokenization::TokenTypeUtil::getTypeAsStr(next.value().tokenType));
+        exit(EXIT_FAILURE);
+    }
+
     return next.value();
 }
 
@@ -156,7 +168,7 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
     return stmt;
 }
 
-std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t  /*minPrecedence*/)
+std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*/)
 {
     auto& logger = utils::getLogger();
     std::shared_ptr<node::ExprNode> expr;

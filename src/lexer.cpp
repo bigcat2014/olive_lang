@@ -1,7 +1,6 @@
 #include <cctype>
 #include <format>
 #include <iostream>
-#include <variant>
 
 #include <pimento/errors.hpp>
 #include <pimento/lexer.hpp>
@@ -21,6 +20,7 @@ Lexer::Lexer(std::istream& istream)
     return mTokens;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void Lexer::tokenize()
 {
     auto& logger = utils::getLogger();
@@ -480,10 +480,10 @@ void Lexer::tokenize()
                 break;
             // Comments
             case '#': {
-                std::optional<char> next;
-                do {
+                std::optional<char> next = mFileBuffer.consume();
+                while (next.has_value() && next.value() != '\n') {
                     next = mFileBuffer.consume();
-                } while (next.has_value() && next.value() != '\n');
+                }
 
                 mTokenBuffer.str("");
                 mTokenBuffer.clear();
@@ -547,8 +547,14 @@ void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t 
 void Lexer::parseIdent(size_t offset, size_t line, size_t column)
 {
     if (auto next = mFileBuffer.peek()) {
-        do {
-            mTokenBuffer << mFileBuffer.consume().value();
+        while (next.has_value() && isIdentChar(next.value())) {
+            auto consumed = mFileBuffer.consume();
+            if (!consumed.has_value()) {
+                auto& logger = utils::getLogger();
+                logger.error("Unexpected EOF in \"{}\"", __FUNCTION__);
+                exit(EXIT_FAILURE);
+            }
+            mTokenBuffer << consumed.value();
             if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
                 pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
                                         line + 1,
@@ -556,7 +562,7 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
                                         std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
             }
             next = mFileBuffer.peek();
-        } while (next.has_value() && isIdentChar(next.value()));
+        }
 
         next = mFileBuffer.peek();
         if (next.has_value()) {
@@ -575,8 +581,14 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
 void Lexer::parseType(size_t offset, size_t line, size_t column)
 {
     if (auto next = mFileBuffer.peek()) {
-        do {
-            mTokenBuffer << mFileBuffer.consume().value();
+        while (next.has_value() && isTypeChar(next.value())) {
+            auto consumed = mFileBuffer.consume();
+            if (!consumed.has_value()) {
+                auto& logger = utils::getLogger();
+                logger.error("Unexpected EOF in \"{}\"", __FUNCTION__);
+                exit(EXIT_FAILURE);
+            }
+            mTokenBuffer << consumed.value();
             if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
                 pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
                                         line + 1,
@@ -584,7 +596,7 @@ void Lexer::parseType(size_t offset, size_t line, size_t column)
                                         std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
             }
             next = mFileBuffer.peek();
-        } while (next.has_value() && isTypeChar(next.value()));
+        }
 
         next = mFileBuffer.peek();
         if (next.has_value()) {
@@ -610,7 +622,7 @@ void Lexer::parseNumericConst(size_t /*offset*/, size_t /*line*/, size_t /*colum
 FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr)
 {
     uint64_t mantissa;
-    int exponent;
+    int32_t exponent;
     bool negative = false;
     size_t pos    = 0;
 
@@ -626,20 +638,20 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     exponent = std::stoi(exponentStr);
 
     // 3. Normalize mantissa (remove decimal point)
-    size_t const dotPos = mantissaStr.find('.');
-    int decimalShift    = 0;
+    size_t const dotPos  = mantissaStr.find('.');
+    int32_t decimalShift = 0;
     if (dotPos != std::string::npos) {
-        decimalShift = mantissaStr.size() - dotPos - 1;
+        decimalShift = static_cast<int32_t>(mantissaStr.size()) - static_cast<int32_t>(dotPos) - 1;
         mantissaStr.erase(dotPos, 1);  // remove '.'
     }
 
     // Convert mantissa digits to integer
     uint64_t decimalMantissa = 0;
-    for (char const c : mantissaStr) {
-        if (c < '0' || c > '9') {
+    for (char const character : mantissaStr) {
+        if (character < '0' || character > '9') {
             throw std::invalid_argument("Invalid digit in float");
         }
-        decimalMantissa = (decimalMantissa * 10) + (c - '0');
+        decimalMantissa = (decimalMantissa * 10) + static_cast<uint64_t>(character - '0');
     }
 
     // Effective base-10 exponent

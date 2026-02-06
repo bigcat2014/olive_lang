@@ -12,7 +12,7 @@
 
 namespace pimento::errors {
 
-enum class ErrorType
+enum class ErrorType : uint8_t
 {
     INVALID_TOKEN_ERROR,
     SYMBOL_ERROR,

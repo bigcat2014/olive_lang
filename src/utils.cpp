@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 #include <pimento/utils.hpp>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/stdout_color_sinks.h>  // NOLINT(misc-include-cleaner)
 
 namespace pimento::utils {
 

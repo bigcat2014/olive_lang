@@ -12,6 +12,7 @@
 #include <bit>
 #include <cmath>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -138,7 +139,7 @@ enum class TokenType : uint8_t
 class FloatConst
 {
 public:
-    enum class Precision
+    enum class Precision : uint8_t
     {
         FLOAT32,
         FLOAT64
@@ -148,7 +149,8 @@ public:
     //! @param mantissa The mantissa of the value.
     //! @param exponent The exponent of the value.
     //! @param negative Whether or not the value is negative.
-    FloatConst(uint64_t mantissa, int exponent, bool negative, Precision precision)
+    //! @param precision The precision of the floating point value.
+    FloatConst(uint64_t mantissa, int32_t exponent, bool negative, Precision precision)
         : mMantissa(mantissa)
         , mExponent(exponent)
         , mNegative(negative)
@@ -209,7 +211,7 @@ public:
                 result = static_cast<float>(asFloat64());
                 break;
             case Precision::FLOAT32:
-                result = std::ldexp(static_cast<double>(mMantissa), mExponent);
+                result = static_cast<float>(std::ldexp(static_cast<double>(mMantissa), mExponent));
                 result = mNegative ? -result : result;
                 break;
         }
@@ -232,10 +234,21 @@ private:
     static constexpr uint8_t FLOAT32_MANTISSA_BITS = 24;
 };
 
+//! @brief Template wrapper for packed struct members.
+//! @tparam T The type to wrap in a packed struct.
+template <typename T>
 #ifdef _MSC_VER
-#define PACKED_STRUCT() __pragma(pack(push, 1)) struct __pragma(pack(pop))
+#pragma pack(push, 1)
+struct PackedView
+{
+    T value;
+};
+#pragma pack(pop)
 #else
-#define PACKED_STRUCT() struct __attribute__((packed))
+struct [[gnu::packed]] PackedView
+{
+    T value;
+};
 #endif
 
 //! @brief Constant value as raw bits.
@@ -302,34 +315,22 @@ private:
         int64_t int64;
 
         //! @brief View of lower 32-bits of unsigned value.
-        PACKED_STRUCT() { uint32_t value; }
-
-        uint32View;
+        PackedView<uint32_t> uint32View;
 
         //! @brief View of lower 32-bits of signed value.
-        PACKED_STRUCT() { int32_t value; }
-
-        int32View;
+        PackedView<int32_t> int32View;
 
         //! @brief View of lower 16-bits of unsigned value.
-        PACKED_STRUCT() { uint16_t value; }
-
-        uint16View;
+        PackedView<uint16_t> uint16View;
 
         //! @brief View of lower 16-bits of signed value.
-        PACKED_STRUCT() { int16_t value; }
-
-        int16View;
+        PackedView<int16_t> int16View;
 
         //! @brief View of lower 8-bits of unsigned value.
-        PACKED_STRUCT() { uint8_t value; }
-
-        uint8View;
+        PackedView<uint8_t> uint8View;
 
         //! @brief View of lower 8-bits of signed value.
-        PACKED_STRUCT() { int8_t value; }
-
-        int8View;
+        PackedView<int8_t> int8View;
     };
 };
 
@@ -427,13 +428,13 @@ public:
     //! @brief Constructor for value specified in raw bits.
     //! @param raw The raw bits from which to construct the value.
     explicit NumericConst(const RawBits& raw)
-        : mValue(std::move(raw))
+        : mValue(raw)
     {}
 
     //! @brief Constructor for value specified as FloatConst.
     //! @param raw The floating point constant from which to construct the value.
     explicit NumericConst(const FloatConst& floatConst)
-        : mValue(std::move(floatConst))
+        : mValue(floatConst)
     {}
 
     //! @brief Constructor for double-precision floating point values.
@@ -454,19 +455,19 @@ public:
     [[nodiscard]] double asFloat64() const
     {
         return std::visit(
-            [](auto&& v) -> double {
-                using T = std::decay_t<decltype(v)>;
+            [](auto&& element) -> double {
+                using T = std::decay_t<decltype(element)>;
                 if constexpr (std::is_same_v<T, RawBits>) {
                     // std::cout << "RawBits" << std::endl;
-                    return std::bit_cast<double>(v.asUint64());
+                    return std::bit_cast<double>(element.asUint64());
                 }
                 else if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return v.asFloat64();
+                    return element.asFloat64();
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return static_cast<double>(v.asInt64());
+                    return static_cast<double>(element.asInt64());
                 }
             },
             mValue);
@@ -477,19 +478,19 @@ public:
     [[nodiscard]] float asFloat32() const
     {
         return std::visit(
-            [](auto&& v) -> float {
-                using T = std::decay_t<decltype(v)>;
+            [](auto&& element) -> float {
+                using T = std::decay_t<decltype(element)>;
                 if constexpr (std::is_same_v<T, RawBits>) {
                     // std::cout << "RawBits" << std::endl;
-                    return std::bit_cast<float>(v.asUint32());
+                    return std::bit_cast<float>(element.asUint32());
                 }
                 else if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return v.asFloat32();
+                    return element.asFloat32();
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return static_cast<float>(v.asInt64());
+                    return static_cast<float>(element.asInt64());
                 }
             },
             mValue);
@@ -500,19 +501,15 @@ public:
     [[nodiscard]] uint64_t asUint64() const
     {
         return std::visit(
-            [](auto&& v) -> uint64_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asUint64();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> uint64_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<uint64_t>(v.asFloat64());
+                    return static_cast<uint64_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asUint64();
+                    return element.asUint64();
                 }
             },
             mValue);
@@ -523,19 +520,15 @@ public:
     [[nodiscard]] int64_t asInt64() const
     {
         return std::visit(
-            [](auto&& v) -> int64_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asInt64();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> int64_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<int64_t>(v.asFloat64());
+                    return static_cast<int64_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asInt64();
+                    return element.asInt64();
                 }
             },
             mValue);
@@ -546,19 +539,15 @@ public:
     [[nodiscard]] uint32_t asUint32() const
     {
         return std::visit(
-            [](auto&& v) -> uint32_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asUint32();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> uint32_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<uint32_t>(v.asFloat64());
+                    return static_cast<uint32_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asUint32();
+                    return element.asUint32();
                 }
             },
             mValue);
@@ -569,19 +558,15 @@ public:
     [[nodiscard]] int32_t asInt32() const
     {
         return std::visit(
-            [](auto&& v) -> int32_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asInt32();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> int32_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<int32_t>(v.asFloat64());
+                    return static_cast<int32_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asInt32();
+                    return element.asInt32();
                 }
             },
             mValue);
@@ -592,19 +577,15 @@ public:
     [[nodiscard]] uint16_t asUint16() const
     {
         return std::visit(
-            [](auto&& v) -> uint16_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asUint16();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> uint16_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<uint16_t>(v.asFloat64());
+                    return static_cast<uint16_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asUint16();
+                    return element.asUint16();
                 }
             },
             mValue);
@@ -615,19 +596,15 @@ public:
     [[nodiscard]] int16_t asInt16() const
     {
         return std::visit(
-            [](auto&& v) -> int16_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asInt16();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> int16_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<int16_t>(v.asFloat64());
+                    return static_cast<int16_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asInt16();
+                    return element.asInt16();
                 }
             },
             mValue);
@@ -638,19 +615,15 @@ public:
     [[nodiscard]] uint8_t asUint8() const
     {
         return std::visit(
-            [](auto&& v) -> uint8_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asUint8();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> uint8_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<uint8_t>(v.asFloat64());
+                    return static_cast<uint8_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asUint8();
+                    return element.asUint8();
                 }
             },
             mValue);
@@ -661,19 +634,15 @@ public:
     [[nodiscard]] int8_t asInt8() const
     {
         return std::visit(
-            [](auto&& v) -> int8_t {
-                using T = std::decay_t<decltype(v)>;
-                if constexpr (std::is_same_v<T, RawBits>) {
-                    // std::cout << "RawBits" << std::endl;
-                    return v.asInt8();
-                }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
+            [](auto&& element) -> int8_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
                     // std::cout << "FloatConst" << std::endl;
-                    return static_cast<int8_t>(v.asFloat64());
+                    return static_cast<int8_t>(element.asFloat64());
                 }
                 else {
                     // std::cout << "IntConst" << std::endl;
-                    return v.asInt8();
+                    return element.asInt8();
                 }
             },
             mValue);

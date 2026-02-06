@@ -15,12 +15,18 @@ class InputBuffer
 {
 public:
     //! @brief The size in bytes of the chunks to read from the input stream.
-    constexpr static size_t BUFFER_SIZE = 4096;
+    static constexpr size_t BUFFER_SIZE = 4096;
 
 public:
     //! @brief Constructor for the InputBuffer
     //! @param istream The stream of characters to buffer.
     explicit InputBuffer(std::istream& istream);
+
+    //! @brief Deleted copy constructor.
+    InputBuffer(const InputBuffer& other) = delete;
+
+    //! @brief Deleted move constructor.
+    InputBuffer(InputBuffer&& other) = delete;
 
     //! @brief Peek at the next character in the buffer without consuming it.
     //! @return The next character in the buffer.

@@ -32,7 +32,7 @@ InputBuffer::InputBuffer(std::istream& istream)
         }
     }
 
-    char curr = mBuffer[mIndex];
+    const char curr = mBuffer[mIndex];
     advance();
 
     return curr;

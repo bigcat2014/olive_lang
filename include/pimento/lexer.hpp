@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include <array>
 #include <istream>
-#include <optional>
 #include <sstream>
 #include <unordered_set>
 #include <vector>
@@ -131,7 +129,7 @@ private:
 
 private:
     //! @brief The size in bytes of the maximum token length.
-    constexpr static size_t MAX_TOKEN_LEN = 64;
+    static constexpr size_t MAX_TOKEN_LEN = 64;
 
     //! @brief The buffer of the input to tokenize.
     InputBuffer mFileBuffer;

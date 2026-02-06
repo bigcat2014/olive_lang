@@ -25,6 +25,13 @@ void Generator::genStatement(const std::shared_ptr<ast::node::StmtNode>& node) n
 {
     struct Visitor
     {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
+
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
         Generator& gen;
 
         void operator()(const std::shared_ptr<ast::node::StmtExitNode>& stmt) const
@@ -38,11 +45,13 @@ void Generator::genStatement(const std::shared_ptr<ast::node::StmtNode>& node) n
         void operator()(const std::shared_ptr<ast::node::StmtLetNode>& stmt) const
         {
             // TODO(lthomas): Not implemented
+            (void)stmt;
         }
 
         void operator()(const std::shared_ptr<ast::node::StmtAssignNode>& stmt) const
         {
             // TODO(lthomas): Not implemented
+            (void)stmt;
         }
 
         void operator()(const std::shared_ptr<ast::node::ScopeNode>& stmt) const
@@ -90,13 +99,27 @@ void Generator::genStatement(const std::shared_ptr<ast::node::StmtNode>& node) n
         }
     };
 
-    std::visit(Visitor{.gen = *this}, node->node);
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
 void Generator::genExpression(const std::shared_ptr<ast::node::ExprNode>& node) noexcept
 {
     struct Visitor
     {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
+
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
         Generator& gen;
 
         void operator()(const std::shared_ptr<ast::node::TermNode>& expr) const { gen.genTerm(expr); }
@@ -104,7 +127,14 @@ void Generator::genExpression(const std::shared_ptr<ast::node::ExprNode>& node) 
         void operator()(const std::shared_ptr<ast::node::BinExprNode>& expr) const { gen.genBinExpr(expr); }
     };
 
-    std::visit(Visitor{.gen = *this}, node->node);
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
 void Generator::genScope(const std::shared_ptr<ast::node::ScopeNode>& node) noexcept
@@ -120,8 +150,16 @@ void Generator::genIfpred(const std::shared_ptr<ast::node::IfPredNode>& node, co
 {
     struct Visitor
     {
+        Visitor(Generator& gen, const std::string& endLabel)
+            : gen(gen)
+            , endLabel(endLabel)
+        {}
+
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
         Generator& gen;
-        const std::string& endLabel;
+        const std::string endLabel;
 
         void operator()(const std::shared_ptr<ast::node::IfPredElifNode>& ifpred) const
         {
@@ -143,23 +181,39 @@ void Generator::genIfpred(const std::shared_ptr<ast::node::IfPredNode>& node, co
         void operator()(const std::shared_ptr<ast::node::IfPredElseNode>& ifpred) const { gen.genScope(ifpred->scope); }
     };
 
-    std::visit(Visitor{.gen = *this, .endLabel = endLabel}, node->node);
+    try {
+        std::visit(Visitor(*this, endLabel), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
 void Generator::genTerm(const std::shared_ptr<ast::node::TermNode>& node) noexcept
 {
     struct Visitor
     {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
+
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
         Generator& gen;
 
         void operator()(const std::shared_ptr<ast::node::TermIntLitNode>& term) const
         {
             // TODO(lthomas): Not implemented
+            (void)term;
         }
 
         void operator()(const std::shared_ptr<ast::node::TermIdentNode>& term) const
         {
             // TODO(lthomas): Not implemented
+            (void)term;
         }
 
         void operator()(const std::shared_ptr<ast::node::TermExprNode>& term) const
@@ -168,13 +222,27 @@ void Generator::genTerm(const std::shared_ptr<ast::node::TermNode>& node) noexce
         }
     };
 
-    std::visit(Visitor{.gen = *this}, node->node);
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
 void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) noexcept
 {
     struct Visitor
     {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
+
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
         Generator& gen;
 
         void operator()(const std::shared_ptr<ast::node::BinExprPowerNode>& binExpr) const
@@ -292,7 +360,14 @@ void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) 
         }
     };
 
-    std::visit(Visitor{.gen = *this}, node->node);
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
 void Generator::push(const std::string& reg) noexcept

@@ -42,48 +42,62 @@ int main(int argc, char* argv[])
 
     try {
         program.parse_args(argc, argv);
-    } catch (const std::runtime_error& err) {
+    } catch (const std::exception& err) {
         std::cerr << "Argument parsing error: " << err.what() << '\n';
         std::cerr << program;
         return EXIT_FAILURE;
     }
 
-    // Set log level based on flags
-    if (program.get<bool>("--trace")) {
-        pimento::utils::configureLogger(spdlog::level::trace);
-    }
-    else if (program.get<bool>("--debug")) {
-        pimento::utils::configureLogger(spdlog::level::debug);
-    }
-    else if (program.get<bool>("--verbose")) {
-        pimento::utils::configureLogger(spdlog::level::info);
-    }
-    else {
-        pimento::utils::configureLogger(spdlog::level::warn);
+    std::string inFileStr;
+    std::string outFileStr;
+    bool toStdout;
+
+    try {
+        // Set log level based on flags
+        if (program.get<bool>("--trace")) {
+            pimento::utils::configureLogger(spdlog::level::trace);
+        }
+        else if (program.get<bool>("--debug")) {
+            pimento::utils::configureLogger(spdlog::level::debug);
+        }
+        else if (program.get<bool>("--verbose")) {
+            pimento::utils::configureLogger(spdlog::level::info);
+        }
+        else {
+            pimento::utils::configureLogger(spdlog::level::warn);
+        }
+
+        // Get additional cli arguments
+        inFileStr  = program.get<std::string>("file");
+        outFileStr = program.get<std::string>("output");
+        toStdout   = program.get<bool>("--stdout");
+    } catch (const std::exception& err) {
+        std::cerr << "Argument retrieval error: " << err.what() << '\n';
+        return EXIT_FAILURE;
     }
 
     auto& logger = pimento::utils::getLogger();
 
-    auto inFileStr = program.get<std::string>("file");
     logger.debug("Input file path: {}", inFileStr);
 
     auto inputResolvedPath = pimento::utils::sanitizePath(inFileStr);
     if (!inputResolvedPath.has_value()) {
+        logger.error("Cannot resolve path {}", inFileStr);
         return EXIT_FAILURE;
     }
     logger.debug("Sanitized input file path: {}", inputResolvedPath.value().string());
 
     std::ifstream inputFile{inputResolvedPath.value()};
     if (!inputFile) {
-        throw std::runtime_error("cannot open " + inputResolvedPath.value().string());
+        logger.error("Cannot open {}", inputResolvedPath.value().string());
+        return EXIT_FAILURE;
     }
 
-    if (program.get<bool>("--stdout")) {
+    if (toStdout) {
         pimento::generation::Generator generator(inputFile, std::cout);
         generator.generate();
     }
     else {
-        auto outFileStr = program.get<std::string>("output");
         logger.debug("Output file path: {}", outFileStr);
 
         auto outputResolvedPath = pimento::utils::expandVars(outFileStr);
@@ -93,7 +107,8 @@ int main(int argc, char* argv[])
 
         std::ofstream outputFile{outputResolvedPath};
         if (!outputFile) {
-            throw std::runtime_error("cannot open " + outputResolvedPath.string());
+            logger.error("Cannot open {}", outputResolvedPath.string());
+            return EXIT_FAILURE;
         }
 
         pimento::generation::Generator generator(inputFile, outputFile);
