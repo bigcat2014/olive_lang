@@ -19,40 +19,52 @@ int main(int argc, char* argv[])
 {
     argparse::ArgumentParser program("pimento", PROJECT_VERSION);
 
-    program.add_argument("file").help("Path to the .oil file to compile").required();
-
-    auto& group = program.add_mutually_exclusive_group();
-    group.add_argument("-o", "--output")
-        .help("Path for assembly output file. Cannot be combined with `--stdout`.")
-        .nargs(1)
-        .default_value(std::string{"out.asm"});
-
-    group.add_argument("--stdout")
-        .default_value(false)
-        .implicit_value(true)
-        .nargs(0)
-        .help("Output to stdout. Cannot be combined with `-o` | `--output`.");
-
-    program.add_argument("--trace").default_value(false).implicit_value(true).nargs(0).help(
-        "Enable trace logging. WARNING: This will spam output!");
-
-    program.add_argument("--debug").default_value(false).implicit_value(true).nargs(0).help("Enable debug logging");
-
-    program.add_argument("--verbose").default_value(false).implicit_value(true).nargs(0).help("Enable verbose logging");
-
-    try {
-        program.parse_args(argc, argv);
-    } catch (const std::exception& err) {
-        std::cerr << "Argument parsing error: " << err.what() << '\n';
-        std::cerr << program;
-        return EXIT_FAILURE;
-    }
-
     std::string inFileStr;
     std::string outFileStr;
     bool toStdout;
 
     try {
+        // clang-format off
+        program.add_argument("file")
+            .required()
+            .help("Path to the .oil file to compile")
+            .store_into(inFileStr);
+
+        auto& outputGroup = program.add_mutually_exclusive_group();
+        outputGroup.add_argument("-o", "--output")
+            .default_value(std::string{"out.asm"})
+            .help("Path for assembly output file.")
+            .store_into(outFileStr);
+
+        outputGroup.add_argument("--stdout")
+            .default_value(false)
+            .implicit_value(true)
+            .nargs(0)
+            .help("Output to stdout.")
+            .store_into(toStdout);
+
+        auto& logGroup = program.add_mutually_exclusive_group();
+        logGroup.add_argument("--trace")
+            .default_value(false)
+            .implicit_value(true)
+            .nargs(0)
+            .help("Enable trace logging. WARNING: This will spam output!");
+
+        logGroup.add_argument("--debug")
+            .default_value(false)
+            .implicit_value(true)
+            .nargs(0)
+            .help("Enable debug logging");
+
+        logGroup.add_argument("--verbose")
+            .default_value(false)
+            .implicit_value(true)
+            .nargs(0)
+            .help("Enable verbose logging");
+        // clang-format on
+
+        program.parse_args(argc, argv);
+
         // Set log level based on flags
         if (program.get<bool>("--trace")) {
             pimento::utils::configureLogger(spdlog::level::trace);
@@ -66,13 +78,9 @@ int main(int argc, char* argv[])
         else {
             pimento::utils::configureLogger(spdlog::level::warn);
         }
-
-        // Get additional cli arguments
-        inFileStr  = program.get<std::string>("file");
-        outFileStr = program.get<std::string>("output");
-        toStdout   = program.get<bool>("--stdout");
     } catch (const std::exception& err) {
         std::cerr << "Argument retrieval error: " << err.what() << '\n';
+        std::cerr << program << '\n';
         return EXIT_FAILURE;
     }
 
