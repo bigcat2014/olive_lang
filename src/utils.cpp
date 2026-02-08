@@ -1,30 +1,22 @@
 #include <regex>
-#include <stdexcept>
 
 #include <pimento/utils.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>  // NOLINT(misc-include-cleaner)
 
 namespace pimento::utils {
 
-//! @brief Gets the global logger.
-//! @return spdlog::logger& Global logger.
-spdlog::logger& getLogger()
+spdlog::logger& getLogger() noexcept
 {
     static const auto SLogger = spdlog::stderr_color_mt("pimento");
     return *SLogger;
 }
 
-//! @brief Configures the logger.
-//! @param level spdlog::level::level_enum The log level to configure the logger with.
-void configureLogger(spdlog::level::level_enum level)
+void configureLogger(spdlog::level::level_enum level) noexcept
 {
     getLogger().set_level(level);
 }
 
-//! @brief Expands `~` and environment variables in input path.
-//! @param input_path const std::string& The file path in which to expand the variables.
-//! @return std::filesystem::path The file path with variables expanded.
-std::filesystem::path expandVars(const std::string& inputPath)
+std::filesystem::path expandVars(const std::string& inputPath) noexcept
 {
     auto& logger = getLogger();
 
@@ -34,7 +26,8 @@ std::filesystem::path expandVars(const std::string& inputPath)
     if (!path.empty() && path[0] == '~') {
         const char* home = std::getenv("HOME");
         if (home == nullptr) {
-            throw std::runtime_error("Unable to determine home directory.");
+            logger.error("Unable to determine home directory.");
+            exit(EXIT_FAILURE);
         }
         logger.debug("Expanded `~` to: {}", home);
 
@@ -45,7 +38,8 @@ std::filesystem::path expandVars(const std::string& inputPath)
             path = std::string(home) + path.substr(1);  // replace "~" prefix
         }
         else {
-            throw std::runtime_error("Unsupported ~ expansion (e.g. ~username is not supported).");
+            logger.error("Unsupported ~ expansion (e.g. ~username is not supported).");
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -62,7 +56,8 @@ std::filesystem::path expandVars(const std::string& inputPath)
         const char* value         = std::getenv(varName.c_str());
 
         if (value == nullptr) {
-            throw std::runtime_error("Environment variable not set: $" + varName);
+            logger.error("Environment variable not set: ${}", varName);
+            exit(EXIT_FAILURE);
         }
 
         result.append(value);
@@ -75,39 +70,35 @@ std::filesystem::path expandVars(const std::string& inputPath)
     return {result};
 }
 
-//! @brief Sanitize the input path.
-//!
-//! Sanitize the input path by expanding `~` and environment variables, normalizing the path, and ensuring it is a file.
-//! Additionally checks the file extension and warns the user if the extension is not the expected `.oil` extension.
-//! @param input_path const std::string& The file path to sanitize.
-//! @return std::optional<std::filesystem::path> The sanitized path.
-std::optional<std::filesystem::path> sanitizePath(const std::string& inputPath)
+std::filesystem::path sanitizePath(const std::string& inputPath) noexcept
+{
+    return std::filesystem::canonical(expandVars(inputPath));
+}
+
+bool fileExists(const std::filesystem::path& path)
 {
     auto& logger = getLogger();
 
-    std::filesystem::path resolvedPath = expandVars(inputPath);
     try {
-        resolvedPath = std::filesystem::canonical(resolvedPath);
-
-        if (!std::filesystem::exists(resolvedPath)) {
-            logger.error("File does not exist: {}", resolvedPath.string());
-            return {};
+        if (!std::filesystem::exists(path)) {
+            logger.error("File does not exist: {}", path.string());
+            return false;
         }
 
-        if (!std::filesystem::is_regular_file(resolvedPath)) {
-            logger.error("Path is not a regular file: {}", resolvedPath.string());
-            return {};
+        if (!std::filesystem::is_regular_file(path)) {
+            logger.error("Path is not a regular file: {}", path.string());
+            return false;
         }
 
-        if (resolvedPath.extension() != ".oil") {
+        if (path.extension() != ".oil") {
             logger.warn("File is not a .oil file.");
         }
     } catch (const std::filesystem::filesystem_error& e) {
         logger.error("Filesystem error: {}", e.what());
-        return {};
+        return false;
     }
 
-    return resolvedPath;
+    return true;
 }
 
 }  // namespace pimento::utils

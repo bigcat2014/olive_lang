@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
     std::string inFileStr;
     std::string outFileStr;
     bool toStdout;
+    spdlog::level::level_enum logLevel = spdlog::level::warn;
 
     try {
         // clang-format off
@@ -33,51 +34,37 @@ int main(int argc, char* argv[])
         auto& outputGroup = program.add_mutually_exclusive_group();
         outputGroup.add_argument("-o", "--output")
             .default_value(std::string{"out.asm"})
+            .nargs(1)
             .help("Path for assembly output file.")
             .store_into(outFileStr);
 
         outputGroup.add_argument("--stdout")
-            .default_value(false)
-            .implicit_value(true)
-            .nargs(0)
+            .flag()
             .help("Output to stdout.")
             .store_into(toStdout);
 
         auto& logGroup = program.add_mutually_exclusive_group();
         logGroup.add_argument("--trace")
-            .default_value(false)
-            .implicit_value(true)
-            .nargs(0)
+            .flag()
+            .action([&](const auto&) { logLevel = spdlog::level::trace; })
             .help("Enable trace logging. WARNING: This will spam output!");
 
         logGroup.add_argument("--debug")
-            .default_value(false)
-            .implicit_value(true)
-            .nargs(0)
+            .flag()
+            .action([&](const auto&) { logLevel = spdlog::level::debug; })
             .help("Enable debug logging");
 
         logGroup.add_argument("--verbose")
-            .default_value(false)
-            .implicit_value(true)
-            .nargs(0)
+            .flag()
+            .action([&](const auto&) { logLevel = spdlog::level::info; })
             .help("Enable verbose logging");
         // clang-format on
 
         program.parse_args(argc, argv);
 
         // Set log level based on flags
-        if (program.get<bool>("--trace")) {
-            pimento::utils::configureLogger(spdlog::level::trace);
-        }
-        else if (program.get<bool>("--debug")) {
-            pimento::utils::configureLogger(spdlog::level::debug);
-        }
-        else if (program.get<bool>("--verbose")) {
-            pimento::utils::configureLogger(spdlog::level::info);
-        }
-        else {
-            pimento::utils::configureLogger(spdlog::level::warn);
-        }
+        pimento::utils::configureLogger(logLevel);
+
     } catch (const std::exception& err) {
         std::cerr << "Argument retrieval error: " << err.what() << '\n';
         std::cerr << program << '\n';
@@ -85,32 +72,31 @@ int main(int argc, char* argv[])
     }
 
     auto& logger = pimento::utils::getLogger();
-
+    logger.info("Pimento version {}", PROJECT_VERSION);
     logger.debug("Input file path: {}", inFileStr);
 
     auto inputResolvedPath = pimento::utils::sanitizePath(inFileStr);
-    if (!inputResolvedPath.has_value()) {
-        logger.error("Cannot resolve path {}", inFileStr);
+    logger.debug("Sanitized input file path: {}", inputResolvedPath.string());
+    if (!pimento::utils::fileExists(inputResolvedPath)) {
+        logger.error("Input file check failed: {}", inFileStr);
         return EXIT_FAILURE;
     }
-    logger.debug("Sanitized input file path: {}", inputResolvedPath.value().string());
 
-    std::ifstream inputFile{inputResolvedPath.value()};
+    std::ifstream inputFile{inputResolvedPath};
     if (!inputFile) {
-        logger.error("Cannot open {}", inputResolvedPath.value().string());
+        logger.error("Cannot open {}", inputResolvedPath.string());
         return EXIT_FAILURE;
     }
 
     if (toStdout) {
+        logger.info("Outputting to stdout");
         pimento::generation::Generator generator(inputFile, std::cout);
         generator.generate();
     }
     else {
         logger.debug("Output file path: {}", outFileStr);
 
-        auto outputResolvedPath = pimento::utils::expandVars(outFileStr);
-        outputResolvedPath      = std::filesystem::absolute(outputResolvedPath);
-        outputResolvedPath      = outputResolvedPath.lexically_normal();
+        auto outputResolvedPath = pimento::utils::sanitizePath(outFileStr);
         logger.debug("Sanitized output file path: {}", outputResolvedPath.string());
 
         std::ofstream outputFile{outputResolvedPath};
