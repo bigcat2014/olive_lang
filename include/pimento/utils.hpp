@@ -5,7 +5,6 @@
 #pragma once
 
 #include <filesystem>
-#include <optional>
 #include <string>
 
 #include <spdlog/spdlog.h>

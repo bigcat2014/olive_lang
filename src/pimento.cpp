@@ -2,12 +2,10 @@
 //! @brief Pimento executable
 //! @author Logan Thomas
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <string>
 
 #include <argparse/argparse.hpp>
+#include <pimento/file_stream.hpp>
 #include <pimento/generator.hpp>
 #include <pimento/utils.hpp>
 
@@ -75,6 +73,7 @@ int main(int argc, char* argv[])
     logger.info("Pimento version {}", PROJECT_VERSION);
     logger.debug("Input file path: {}", inFileStr);
 
+    // Sanitize and validate input file path
     auto inputResolvedPath = pimento::utils::sanitizePath(inFileStr);
     logger.debug("Sanitized input file path: {}", inputResolvedPath.string());
     if (!pimento::utils::fileExists(inputResolvedPath)) {
@@ -82,32 +81,33 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    std::ifstream inputFile{inputResolvedPath};
+    // Open and validate input file stream
+    pimento::tokenization::InputStream inputFile = pimento::tokenization::makeInputStreamFromPath(inputResolvedPath);
     if (!inputFile) {
         logger.error("Cannot open {}", inputResolvedPath.string());
         return EXIT_FAILURE;
     }
 
+    // Sanitize output file path, open, and validate output file stream
+    auto outputResolvedPath = pimento::utils::sanitizePath(outFileStr);
+    pimento::tokenization::OutputStream outputFile
+        = toStdout ? pimento::tokenization::makeFileStreamFromStdout()
+                   : pimento::tokenization::makeOutputStreamFromPath(outputResolvedPath);
+    if (!outputFile) {
+        logger.error("Cannot open {}", outputResolvedPath.string());
+        return EXIT_FAILURE;
+    }
+
     if (toStdout) {
         logger.info("Outputting to stdout");
-        pimento::generation::Generator generator(inputFile, std::cout);
-        generator.generate();
     }
     else {
         logger.debug("Output file path: {}", outFileStr);
-
-        auto outputResolvedPath = pimento::utils::sanitizePath(outFileStr);
         logger.debug("Sanitized output file path: {}", outputResolvedPath.string());
-
-        std::ofstream outputFile{outputResolvedPath};
-        if (!outputFile) {
-            logger.error("Cannot open {}", outputResolvedPath.string());
-            return EXIT_FAILURE;
-        }
-
-        pimento::generation::Generator generator(inputFile, outputFile);
-        generator.generate();
     }
+
+    pimento::generation::Generator generator(inputFile.getStream(), outputFile.getStream());
+    generator.generate();
 
     // system("nasm -felf64 out.asm");
     // system("ld -o out out.o");

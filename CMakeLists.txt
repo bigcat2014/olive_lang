@@ -10,7 +10,7 @@ set(${PROJECT_NAME}_VERSION
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS
-    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -fno-fast-math")
+    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -Wno-unused-function -fno-fast-math")
 if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()

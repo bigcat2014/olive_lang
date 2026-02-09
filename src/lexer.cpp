@@ -72,6 +72,7 @@ void Lexer::tokenize()
                                                                 mFileBuffer.getCurrentLine() + 1,
                                                                 mFileBuffer.getCurrentColumn(),
                                                                 "Too many '_' at start of identifier. Max is 2."});
+                                        break;
                                     default:
                                         if (std::islower(next.value()) == 0) {
                                             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,

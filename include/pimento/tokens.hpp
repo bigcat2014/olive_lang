@@ -236,8 +236,8 @@ private:
 
 //! @brief Template wrapper for packed struct members.
 //! @tparam T The type to wrap in a packed struct.
-template <typename T>
 #ifdef _MSC_VER
+template <typename T>
 #pragma pack(push, 1)
 struct PackedView
 {
@@ -245,6 +245,7 @@ struct PackedView
 };
 #pragma pack(pop)
 #else
+template <typename T>
 struct [[gnu::packed]] PackedView
 {
     T value;
@@ -311,6 +312,7 @@ private:
     {
         //! @brief 64-bit unsigned value.
         uint64_t uint64;
+
         //! @brief 64-bit signed value.
         int64_t int64;
 
