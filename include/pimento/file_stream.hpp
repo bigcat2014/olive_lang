@@ -70,6 +70,7 @@ class FileStream;
 
 //! @brief Type alias for input file stream.
 using InputStream = FileStream<std::istream>;
+
 //! @brief Type alias for output file stream.
 using OutputStream = FileStream<std::ostream>;
 
@@ -79,25 +80,27 @@ template <IOStream StreamType>
 class FileStream
 {
 public:
+    //! @brief Type alias for the unique pointer to the stream with a smart deleter.
+    using StreamPtr = std::unique_ptr<StreamType, SmartDeleter<StreamType>>;
+    //! @brief Type alias for the unique pointer to the input stream with a smart deleter.
+    using InputStreamPtr = std::unique_ptr<std::istream, SmartDeleter<std::istream>>;
+    //! @brief Type alias for the unique pointer to the output stream with a smart deleter.
+    using OutputStreamPtr = std::unique_ptr<std::ostream, SmartDeleter<std::ostream>>;
+
+public:
     //! @brief Factory method to create a FileStream from stdin.
-    static InputStream makeFromStdin()
-    {
-        return FileStream(
-            std::unique_ptr<std::istream, SmartDeleter<std::istream>>(&std::cin, SmartDeleter<std::istream>{}));
-    }
+    static InputStream makeFromStdin() { return FileStream(InputStreamPtr(&std::cin, SmartDeleter<std::istream>{})); }
 
     //! @brief Factory method to create a FileStream from stdout.
     static OutputStream makeFromStdout()
     {
-        return FileStream(
-            std::unique_ptr<std::ostream, SmartDeleter<std::ostream>>(&std::cout, SmartDeleter<std::ostream>{}));
+        return FileStream(OutputStreamPtr(&std::cout, SmartDeleter<std::ostream>{}));
     }
 
     //! @brief Factory method to create a FileStream from stderr.
     static OutputStream makeFromStderr()
     {
-        return FileStream(
-            std::unique_ptr<std::ostream, SmartDeleter<std::ostream>>(&std::cerr, SmartDeleter<std::ostream>{}));
+        return FileStream(OutputStreamPtr(&std::cerr, SmartDeleter<std::ostream>{}));
     }
 
     //! @brief Factory method to create a FileStream from a file path (input or output).
@@ -110,8 +113,7 @@ public:
             delete fileStream;
             return FileStream(nullptr);
         }
-        return FileStream(
-            std::unique_ptr<StreamType, SmartDeleter<StreamType>>(fileStream, SmartDeleter<StreamType>{}));
+        return FileStream(StreamPtr(fileStream, SmartDeleter<StreamType>{}));
     }
 
     //! @brief Overloaded bool operator to check if the stream is valid and good for I/O operations.
@@ -126,13 +128,13 @@ public:
 private:
     //! @brief Private constructor that takes a unique pointer to the stream with a smart deleter.
     //! @param stream Unique pointer to the stream with a smart deleter.
-    explicit FileStream(std::unique_ptr<StreamType, SmartDeleter<StreamType>> stream)
+    explicit FileStream(StreamPtr stream)
         : mStream(std::move(stream))
     {}
 
 private:
     //! @brief Unique pointer to the stream with smart deleter.
-    std::unique_ptr<StreamType, SmartDeleter<StreamType>> mStream;
+    StreamPtr mStream;
 };
 
 //! @brief Convenience factory function for creating an InputStream from stdin.
