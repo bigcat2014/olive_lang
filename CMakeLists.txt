@@ -197,6 +197,17 @@ if (BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/pimento.cpp
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+    find_package(Doxygen)
+    if(Doxygen_FOUND)
+        set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs)
+        add_custom_target(generate_docs
+            COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Generating API documentation with Doxygen")
+    else()
+        message(WARNING "Doxygen not found! API documentation will not be generated.")
+    endif() # Doxygen_FOUND
+
     # Valgrind Memcheck Tests
     # TODO(lthomas): Refactor this into a function
     add_test(NAME ${PROJECT_NAME}_valgrind_file
