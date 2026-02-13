@@ -77,7 +77,7 @@ PROJECT_ICON           =
 # entered, it will be relative to the location where Doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = docs
+OUTPUT_DIRECTORY       = "@DOXYGEN_OUTPUT_DIRECTORY@"
 
 # If the CREATE_SUBDIRS tag is set to YES then Doxygen will create up to 4096
 # sub-directories (in 2 levels) under the output directory of each output format
@@ -240,7 +240,7 @@ JAVADOC_BANNER         = NO
 QT_AUTOBRIEF           = NO
 
 # The MULTILINE_CPP_IS_BRIEF tag can be set to YES to make Doxygen treat a
-# multi-line C++ special comment block (i.e. a block of //! or /// comments) as
+# multi-line C++ special comment block (i.e. a block of /// or /// comments) as
 # a brief description. This used to be the default behavior. The new default is
 # to treat a multi-line C++ comment block as a detailed description. Set this
 # tag to YES if you prefer the old behavior instead.
@@ -952,7 +952,7 @@ WARN_LAYOUT_FILE       = YES
 # Possible values are: NO, YES, FAIL_ON_WARNINGS and FAIL_ON_WARNINGS_PRINT.
 # The default value is: NO.
 
-WARN_AS_ERROR          = NO
+WARN_AS_ERROR          = FAIL_ON_WARNINGS_PRINT
 
 # The WARN_FORMAT tag determines the format of the warning messages that Doxygen
 # can produce. The string should contain the $file, $line, and $text tags, which
@@ -982,7 +982,7 @@ WARN_LINE_FORMAT       = "at line $line of file $file"
 # specified the warning and error messages are written to standard output
 # (stdout).
 
-WARN_LOGFILE           =
+WARN_LOGFILE           = "@DOXYGEN_WARN_LOGFILE@"
 
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
@@ -994,7 +994,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = src include/pimento
+INPUT                  = include/pimento
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses

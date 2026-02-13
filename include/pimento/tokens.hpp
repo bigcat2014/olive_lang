@@ -1,6 +1,6 @@
-//! @file tokens.hpp
-//! @brief Pimento Tokens.
-//! @author Logan Thomas
+/// @file tokens.hpp
+/// @brief Pimento Tokens.
+/// @author Logan Thomas
 
 #pragma once
 
@@ -19,7 +19,7 @@
 
 namespace pimento::tokenization {
 
-//! @brief Supported token types.
+/// @brief Supported token types.
 enum class TokenType : uint8_t
 {
     BEGIN = 0,
@@ -134,22 +134,23 @@ enum class TokenType : uint8_t
 };
 
 // TODO(lthomas): Not yet IEEE-754 compliant.
-//! @brief Float Constant Value.
-//! @details Can be a double, float, or scientific notation.
+/// @brief Float Constant Value.
+/// @details Can be a double, float, or scientific notation.
 class FloatConst
 {
 public:
+    /// @brief Enum representing the precision of the floating point value.
     enum class Precision : uint8_t
     {
         FLOAT32,
         FLOAT64
     };
 
-    //! @brief Constructor for value represented in scientific notation.
-    //! @param mantissa The mantissa of the value.
-    //! @param exponent The exponent of the value.
-    //! @param negative Whether or not the value is negative.
-    //! @param precision The precision of the floating point value.
+    /// @brief Constructor for value represented in scientific notation.
+    /// @param mantissa The mantissa of the value.
+    /// @param exponent The exponent of the value.
+    /// @param negative Whether or not the value is negative.
+    /// @param precision The precision of the floating point value.
     FloatConst(uint64_t mantissa, int32_t exponent, bool negative, Precision precision)
         : mMantissa(mantissa)
         , mExponent(exponent)
@@ -157,8 +158,8 @@ public:
         , mPrecision(precision)
     {}
 
-    //! @brief Constructor for double-precision floating point values.
-    //! @param value The value of the floating point number.
+    /// @brief Constructor for double-precision floating point values.
+    /// @param value The value of the floating point number.
     explicit FloatConst(double value)
         : mNegative(std::signbit(value))
         , mPrecision(Precision::FLOAT64)
@@ -170,8 +171,8 @@ public:
         mExponent         = exp - FLOAT64_MANTISSA_BITS;
     }
 
-    //! @brief Constructor for single-precision floating point values.
-    //! @param value The value of the floating point number.
+    /// @brief Constructor for single-precision floating point values.
+    /// @param value The value of the floating point number.
     explicit FloatConst(float value)
         : mNegative(std::signbit(value))
         , mPrecision(Precision::FLOAT32)
@@ -184,8 +185,8 @@ public:
     }
 
 public:
-    //! @brief Get the value as a double precision float.
-    //! @return The value as a double precision float.
+    /// @brief Get the value as a double precision float.
+    /// @return The value as a double precision float.
     [[nodiscard]] double asFloat64() const noexcept
     {
         double result;
@@ -201,8 +202,8 @@ public:
         return result;
     }
 
-    //! @brief Get the value as a single precision float.
-    //! @return The value as a single precision float.
+    /// @brief Get the value as a single precision float.
+    /// @return The value as a single precision float.
     [[nodiscard]] float asFloat32() const noexcept
     {
         float result;
@@ -219,25 +220,25 @@ public:
     }
 
 private:
-    //! @brief The mantissa of the floating point number.
+    /// @brief The mantissa of the floating point number.
     uint64_t mMantissa;
-    //! @brief The exponent of the floating point number.
+    /// @brief The exponent of the floating point number.
     int mExponent;
-    //! @brief Whether or not the value is negative.
+    /// @brief Whether or not the value is negative.
     bool mNegative;
-    //! @brief The precision the value was stored as.
+    /// @brief The precision the value was stored as.
     Precision mPrecision;
 
-    //! @brief Number of bits in a 64-bit floating point value mantissa.
+    /// @brief Number of bits in a 64-bit floating point value mantissa.
     static constexpr uint8_t FLOAT64_MANTISSA_BITS = 53;
-    //! @brief Number of bits in a 32-bit floating point value mantissa.
+    /// @brief Number of bits in a 32-bit floating point value mantissa.
     static constexpr uint8_t FLOAT32_MANTISSA_BITS = 24;
 };
 
-//! @brief Template wrapper for packed struct members.
-//! @tparam T The type to wrap in a packed struct.
-#ifdef _MSC_VER
+/// @brief Template wrapper for packed struct members.
+/// @tparam T The type to wrap in a packed struct.
 template <typename T>
+#ifdef _MSC_VER
 #pragma pack(push, 1)
 struct PackedView
 {
@@ -245,21 +246,21 @@ struct PackedView
 };
 #pragma pack(pop)
 #else
-template <typename T>
 struct [[gnu::packed]] PackedView
 {
+    /// @brief The value stored in the packed view.
     T value;
 };
 #endif
 
-//! @brief Constant value as raw bits.
-//! @details Generally to be used with values specified in hex, octal, or binary.
+/// @brief Constant value as raw bits.
+/// @details Generally to be used with values specified in hex, octal, or binary.
 class RawBits
 {
 public:
-    //! @brief Constructor.
-    //! @tparam T Integral type.
-    //! @param value The value to use as the raw bits.
+    /// @brief Constructor.
+    /// @tparam T Integral type.
+    /// @param value The value to use as the raw bits.
     template <typename T>
         requires std::is_integral_v<T>
     explicit RawBits(T value)
@@ -273,77 +274,77 @@ public:
     }
 
 public:
-    //! @brief Get the raw bits as unsigned 64-bit integer.
-    //! @return The raw bits as unsigned 64-bit integer.
+    /// @brief Get the raw bits as unsigned 64-bit integer.
+    /// @return The raw bits as unsigned 64-bit integer.
     [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
 
-    //! @brief Get the raw bits as signed 64-bit integer.
-    //! @return The raw bits as signed 64-bit integer.
+    /// @brief Get the raw bits as signed 64-bit integer.
+    /// @return The raw bits as signed 64-bit integer.
     [[nodiscard]] int64_t asInt64() const noexcept { return int64; }
 
-    //! @brief Get the raw bits as unsigned 32-bit integer.
-    //! @return The raw bits as unsigned 32-bit integer.
+    /// @brief Get the raw bits as unsigned 32-bit integer.
+    /// @return The raw bits as unsigned 32-bit integer.
     [[nodiscard]] uint32_t asUint32() const noexcept { return uint32View.value; }
 
-    //! @brief Get the raw bits as signed 32-bit integer.
-    //! @return The raw bits as signed 32-bit integer.
+    /// @brief Get the raw bits as signed 32-bit integer.
+    /// @return The raw bits as signed 32-bit integer.
     [[nodiscard]] int32_t asInt32() const noexcept { return int32View.value; }
 
-    //! @brief Get the raw bits as unsigned 16-bit integer.
-    //! @return The raw bits as unsigned 16-bit integer.
+    /// @brief Get the raw bits as unsigned 16-bit integer.
+    /// @return The raw bits as unsigned 16-bit integer.
     [[nodiscard]] uint16_t asUint16() const noexcept { return uint16View.value; }
 
-    //! @brief Get the raw bits as signed 16-bit integer.
-    //! @return The raw bits as signed 16-bit integer.
+    /// @brief Get the raw bits as signed 16-bit integer.
+    /// @return The raw bits as signed 16-bit integer.
     [[nodiscard]] int16_t asInt16() const noexcept { return int16View.value; }
 
-    //! @brief Get the raw bits as unsigned 8-bit integer.
-    //! @return The raw bits as unsigned 8-bit integer.
+    /// @brief Get the raw bits as unsigned 8-bit integer.
+    /// @return The raw bits as unsigned 8-bit integer.
     [[nodiscard]] uint8_t asUint8() const noexcept { return uint8View.value; }
 
-    //! @brief Get the raw bits as signed 8-bit integer.
-    //! @return The raw bits as signed 8-bit integer.
+    /// @brief Get the raw bits as signed 8-bit integer.
+    /// @return The raw bits as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const noexcept { return int8View.value; }
 
 private:
-    //! @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
-    //! used for type punning.
+    /// @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
+    /// used for type punning.
     union
     {
-        //! @brief 64-bit unsigned value.
+        /// @brief 64-bit unsigned value.
         uint64_t uint64;
 
-        //! @brief 64-bit signed value.
+        /// @brief 64-bit signed value.
         int64_t int64;
 
-        //! @brief View of lower 32-bits of unsigned value.
+        /// @brief View of lower 32-bits of unsigned value.
         PackedView<uint32_t> uint32View;
 
-        //! @brief View of lower 32-bits of signed value.
+        /// @brief View of lower 32-bits of signed value.
         PackedView<int32_t> int32View;
 
-        //! @brief View of lower 16-bits of unsigned value.
+        /// @brief View of lower 16-bits of unsigned value.
         PackedView<uint16_t> uint16View;
 
-        //! @brief View of lower 16-bits of signed value.
+        /// @brief View of lower 16-bits of signed value.
         PackedView<int16_t> int16View;
 
-        //! @brief View of lower 8-bits of unsigned value.
+        /// @brief View of lower 8-bits of unsigned value.
         PackedView<uint8_t> uint8View;
 
-        //! @brief View of lower 8-bits of signed value.
+        /// @brief View of lower 8-bits of signed value.
         PackedView<int8_t> int8View;
     };
 };
 
-//! @brief Integer Constant value.
-//! @details Can be signed or unsigned.
+/// @brief Integer Constant value.
+/// @details Can be signed or unsigned.
 class IntConst
 {
 public:
-    //! @brief Constructor.
-    //! @tparam T Integral type.
-    //! @param value The value of the integer.
+    /// @brief Constructor.
+    /// @tparam T Integral type.
+    /// @param value The value of the integer.
     template <typename T>
         requires std::is_integral_v<T>
     explicit IntConst(T value)
@@ -357,60 +358,61 @@ public:
     }
 
 public:
-    //! @brief Get the value as unsigned 64-bit integer.
-    //! @return The value as unsigned 64-bit integer.
+    /// @brief Get the value as unsigned 64-bit integer.
+    /// @return The value as unsigned 64-bit integer.
     [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
 
-    //! @brief Get the value as signed 64-bit integer.
-    //! @return The value as signed 64-bit integer.
+    /// @brief Get the value as signed 64-bit integer.
+    /// @return The value as signed 64-bit integer.
     [[nodiscard]] int64_t asInt64() const noexcept { return int64; }
 
-    //! @brief Get the value as unsigned 32-bit integer.
-    //! @return The value as unsigned 32-bit integer.
+    /// @brief Get the value as unsigned 32-bit integer.
+    /// @return The value as unsigned 32-bit integer.
     [[nodiscard]] uint32_t asUint32() const noexcept { return static_cast<uint32_t>(uint64); }
 
-    //! @brief Get the value as signed 32-bit integer.
-    //! @return The value as signed 32-bit integer.
+    /// @brief Get the value as signed 32-bit integer.
+    /// @return The value as signed 32-bit integer.
     [[nodiscard]] int32_t asInt32() const noexcept { return static_cast<int32_t>(int64); }
 
-    //! @brief Get the value as unsigned 16-bit integer.
-    //! @return The value as unsigned 16-bit integer.
+    /// @brief Get the value as unsigned 16-bit integer.
+    /// @return The value as unsigned 16-bit integer.
     [[nodiscard]] uint16_t asUint16() const noexcept { return static_cast<uint16_t>(uint64); }
 
-    //! @brief Get the value as signed 16-bit integer.
-    //! @return The value as signed 16-bit integer.
+    /// @brief Get the value as signed 16-bit integer.
+    /// @return The value as signed 16-bit integer.
     [[nodiscard]] int16_t asInt16() const noexcept { return static_cast<int16_t>(int64); }
 
-    //! @brief Get the value as unsigned 8-bit integer.
-    //! @return The value as unsigned 8-bit integer.
+    /// @brief Get the value as unsigned 8-bit integer.
+    /// @return The value as unsigned 8-bit integer.
     [[nodiscard]] uint8_t asUint8() const noexcept { return static_cast<uint8_t>(uint64); }
 
-    //! @brief Get the value as signed 8-bit integer.
-    //! @return The value as signed 8-bit integer.
+    /// @brief Get the value as signed 8-bit integer.
+    /// @return The value as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const noexcept { return static_cast<int8_t>(int64); }
 
 private:
-    //! @brief Union of signed and signed and unsigned 64-bit values to be used
-    //! for type punning.
+    /// @brief Union of signed and signed and unsigned 64-bit values to be used
+    /// for type punning.
     union
     {
-        //! @brief 64-bit unsigned value.
+        /// @brief 64-bit unsigned value.
         uint64_t uint64;
-        //! @brief 64-bit signed value.
+        /// @brief 64-bit signed value.
         int64_t int64;
     };
 };
 
-//! @brief Numeric Constant value.
-//! @details Can be floating point number, integer, or raw bits.
+/// @brief Numeric Constant value.
+/// @details Can be floating point number, integer, or raw bits.
 class NumericConst
 {
 public:
+    /// @brief Alias for the variant of the numeric constant value.
     using Value = std::variant<IntConst, FloatConst, RawBits>;
 
-    //! @brief Constructor for integer value.
-    //! @tparam T Integral type.
-    //! @param value The value of the integer.
+    /// @brief Constructor for integer value.
+    /// @tparam T Integral type.
+    /// @param value The value of the integer.
     template <typename T>
         requires std::is_integral_v<T>
     explicit NumericConst(T value)
@@ -419,41 +421,41 @@ public:
 
     // TODO(lthomas): Not sure if I should always be creating these as double-precision float, I think this has the
     // potential for a double round error.
-    //! @brief Constructor for floating point value represented in scientific notation.
-    //! @param mantissa The mantissa of the floating point value.
-    //! @param exponent The exponent of the floating point value.
-    //! @param negative Whether or not the value is negative.
+    /// @brief Constructor for floating point value represented in scientific notation.
+    /// @param mantissa The mantissa of the floating point value.
+    /// @param exponent The exponent of the floating point value.
+    /// @param negative Whether or not the value is negative.
     NumericConst(uint64_t mantissa, int exponent, bool negative = false)
         : mValue(FloatConst{mantissa, exponent, negative, FloatConst::Precision::FLOAT64})
     {}
 
-    //! @brief Constructor for value specified in raw bits.
-    //! @param raw The raw bits from which to construct the value.
+    /// @brief Constructor for value specified in raw bits.
+    /// @param raw The raw bits from which to construct the value.
     explicit NumericConst(const RawBits& raw)
         : mValue(raw)
     {}
 
-    //! @brief Constructor for value specified as FloatConst.
-    //! @param raw The floating point constant from which to construct the value.
+    /// @brief Constructor for value specified as FloatConst.
+    /// @param floatConst The floating point constant from which to construct the value.
     explicit NumericConst(const FloatConst& floatConst)
         : mValue(floatConst)
     {}
 
-    //! @brief Constructor for double-precision floating point values.
-    //! @param value The value of the floating point number.
+    /// @brief Constructor for double-precision floating point values.
+    /// @param value The value of the floating point number.
     explicit NumericConst(double value)
         : mValue(FloatConst(value))
     {}
 
-    //! @brief Constructor for single-precision floating point values.
-    //! @param value The value of the floating point number.
+    /// @brief Constructor for single-precision floating point values.
+    /// @param value The value of the floating point number.
     explicit NumericConst(float value)
         : mValue(FloatConst(value))
     {}
 
 public:
-    //! @brief Get the value as a double-precision (64-bit) floating point number.
-    //! @return The value as a double-precision (64-bit) floating point number.
+    /// @brief Get the value as a double-precision (64-bit) floating point number.
+    /// @return The value as a double-precision (64-bit) floating point number.
     [[nodiscard]] double asFloat64() const
     {
         return std::visit(
@@ -475,8 +477,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as a single-precision (32-bit) floating point number.
-    //! @return The value as a single-precision (32-bit) floating point number.
+    /// @brief Get the value as a single-precision (32-bit) floating point number.
+    /// @return The value as a single-precision (32-bit) floating point number.
     [[nodiscard]] float asFloat32() const
     {
         return std::visit(
@@ -498,8 +500,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as unsigned 64-bit integer.
-    //! @return The value as unsigned 64-bit integer.
+    /// @brief Get the value as unsigned 64-bit integer.
+    /// @return The value as unsigned 64-bit integer.
     [[nodiscard]] uint64_t asUint64() const
     {
         return std::visit(
@@ -517,8 +519,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as signed 64-bit integer.
-    //! @return The value as signed 64-bit integer.
+    /// @brief Get the value as signed 64-bit integer.
+    /// @return The value as signed 64-bit integer.
     [[nodiscard]] int64_t asInt64() const
     {
         return std::visit(
@@ -536,8 +538,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as unsigned 32-bit integer.
-    //! @return The value as unsigned 32-bit integer.
+    /// @brief Get the value as unsigned 32-bit integer.
+    /// @return The value as unsigned 32-bit integer.
     [[nodiscard]] uint32_t asUint32() const
     {
         return std::visit(
@@ -555,8 +557,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as signed 32-bit integer.
-    //! @return The value as signed 32-bit integer.
+    /// @brief Get the value as signed 32-bit integer.
+    /// @return The value as signed 32-bit integer.
     [[nodiscard]] int32_t asInt32() const
     {
         return std::visit(
@@ -574,8 +576,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as unsigned 16-bit integer.
-    //! @return The value as unsigned 16-bit integer.
+    /// @brief Get the value as unsigned 16-bit integer.
+    /// @return The value as unsigned 16-bit integer.
     [[nodiscard]] uint16_t asUint16() const
     {
         return std::visit(
@@ -593,8 +595,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as signed 16-bit integer.
-    //! @return The value as signed 16-bit integer.
+    /// @brief Get the value as signed 16-bit integer.
+    /// @return The value as signed 16-bit integer.
     [[nodiscard]] int16_t asInt16() const
     {
         return std::visit(
@@ -612,8 +614,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as unsigned 8-bit integer.
-    //! @return The value as unsigned 8-bit integer.
+    /// @brief Get the value as unsigned 8-bit integer.
+    /// @return The value as unsigned 8-bit integer.
     [[nodiscard]] uint8_t asUint8() const
     {
         return std::visit(
@@ -631,8 +633,8 @@ public:
             mValue);
     }
 
-    //! @brief Get the value as signed 8-bit integer.
-    //! @return The value as signed 8-bit integer.
+    /// @brief Get the value as signed 8-bit integer.
+    /// @return The value as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const
     {
         return std::visit(
@@ -651,19 +653,19 @@ public:
     }
 
 private:
-    //! @brief The numeric constant value.
+    /// @brief The numeric constant value.
     Value mValue;
 };
 
-//! @brief Static utility class for interacting with token types.
+/// @brief Static utility class for interacting with token types.
 class TokenTypeUtil
 {
 public:
     TokenTypeUtil() = delete;
 
-    //! @brief Get a human-readable string representing the token.
-    //! @param token_type The token type for which to return the string.
-    //! @return The human-readable string representation of the token.
+    /// @brief Get a human-readable string representing the token.
+    /// @param tokenType The token type for which to return the string.
+    /// @return The human-readable string representation of the token.
     [[nodiscard]] static std::string getTypeAsStr(TokenType tokenType)
     {
         try {
@@ -676,7 +678,7 @@ public:
 private:
     using TokenStrMap = std::unordered_map<TokenType, std::string>;
 
-    //! @brief Get the map from token types to human-readable strings.
+    /// @brief Get the map from token types to human-readable strings.
     [[nodiscard]] static TokenStrMap getTokenStrMap() noexcept
     {
         static const TokenStrMap TokenStr{{TokenType::AMP_EQUAL, "AMP_EQUAL"},
@@ -791,18 +793,22 @@ private:
     }
 };
 
-//! @brief Parsed token.
+/// @brief Parsed token.
 struct Token
 {
-    //! @brief The type of this token.
+    /// @brief The type of this token.
     TokenType tokenType;
-    //! @brief The literal string parsed to get the token.
+    /// @brief The literal string parsed to get the token.
     std::string lexeme;
-    //! @brief The offset and span of the token.
+    /// @brief The offset and span of the token.
     std::pair<uint64_t, uint64_t> sourceSpan;
-    //! @brief The line and column number of the token.
+    /// @brief The line and column number of the token.
     std::pair<uint64_t, uint64_t> location;
 
+    /// @brief Output stream operator for Token.
+    /// @param out The output stream to which to write the token.
+    /// @param data The token to write to the output stream.
+    /// @return The output stream to which the token was written.
     friend std::ostream& operator<<(std::ostream& out, Token const& data)
     {
         out << "Token:";
@@ -816,18 +822,18 @@ struct Token
     }
 };
 
-//! @brief Token for representing numeric constants.
+/// @brief Token for representing numeric constants.
 struct NumConstToken : public Token
 {
-    //! @brief The value of the floating point number.
+    /// @brief The value of the floating point number.
     NumericConst value;
 };
 
-//! @brief Token for representing string values.
-//! @details This could be string literals, identifiers, or type identifiers.
+/// @brief Token for representing string values.
+/// @details This could be string literals, identifiers, or type identifiers.
 struct StringToken : public Token
 {
-    //! @brief The string value stored, either string literal or identifier.
+    /// @brief The string value stored, either string literal or identifier.
     std::string value;
 };
 

@@ -87,7 +87,7 @@
 			"label": "CMake: Generate Documentation",
 			"command": "build",
 			"targets": [
-				"generate_docs"
+				"doxygen_docs"
 			],
 			"problemMatcher": []
 		},

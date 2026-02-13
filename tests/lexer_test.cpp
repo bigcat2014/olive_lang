@@ -1,6 +1,6 @@
-//! @file lexer_test.cpp
-//! @brief Pimento lexer unit tests
-//! @author Logan Thomas
+/// @file lexer_test.cpp
+/// @brief Pimento lexer unit tests
+/// @author Logan Thomas
 
 #include <fstream>
 #include <sstream>

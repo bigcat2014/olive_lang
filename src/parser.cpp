@@ -25,7 +25,7 @@ void Parser::parse()
 
 [[nodiscard]] inline std::optional<tokenization::Token> Parser::peek(size_t lookahead) const noexcept
 {
-    //! @brief The tokens to parse.
+    /// @brief The tokens to parse.
     const std::vector<tokenization::Token> M_TOKENS = mLexer.tokens();
     try {
         return M_TOKENS.at(mIndex + lookahead);

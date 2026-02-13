@@ -1,6 +1,6 @@
-//! @file pimento.cpp
-//! @brief Pimento executable
-//! @author Logan Thomas
+/// @file pimento.cpp
+/// @brief Pimento executable
+/// @author Logan Thomas
 
 #include <string>
 

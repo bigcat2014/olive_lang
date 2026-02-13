@@ -199,11 +199,24 @@ if (BUILD_TESTING)
 
     find_package(Doxygen)
     if(Doxygen_FOUND)
-        set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs)
-        add_custom_target(generate_docs
-            COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-            COMMENT "Generating API documentation with Doxygen")
+        set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs)
+        set(DOXYGEN_WARN_LOGFILE ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_doxygen_warnings.txt)
+
+        configure_file(
+            ${${PROJECT_NAME}_CMAKE_DIR}/Doxyfile.in
+            ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+            @ONLY)
+
+        doxygen_add_docs(
+            doxygen_docs
+            ${CMAKE_CURRENT_SOURCE_DIR}/include/pimento}
+            COMMENT "Generating API documentation"
+            CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+        )
+
+        add_test(NAME pimento_doxygen_linter
+                COMMAND ${CMAKE_COMMAND} --build . --target doxygen_docs
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     else()
         message(WARNING "Doxygen not found! API documentation will not be generated.")
     endif() # Doxygen_FOUND

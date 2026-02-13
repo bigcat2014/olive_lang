@@ -1,6 +1,6 @@
-//! @file parser_test.cpp
-//! @brief Pimento parser unit tests
-//! @author Logan Thomas
+/// @file parser_test.cpp
+/// @brief Pimento parser unit tests
+/// @author Logan Thomas
 
 #include <memory>
 #include <sstream>

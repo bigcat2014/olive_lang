@@ -1,6 +1,6 @@
-//! @file errors.hpp
-//! @brief Pimento error handling.
-//! @author Logan Thomas
+/// @file errors.hpp
+/// @brief Pimento error handling.
+/// @author Logan Thomas
 
 #pragma once
 
@@ -12,21 +12,22 @@
 
 namespace pimento::errors {
 
+/// @brief Supported error types.
 enum class ErrorType : uint8_t
 {
     INVALID_TOKEN_ERROR,
     SYMBOL_ERROR,
 };
 
-//! @brief Static utility class for interacting with error types.
+/// @brief Static utility class for interacting with error types.
 class ErrorTypeUtil
 {
 public:
     ErrorTypeUtil() = delete;
 
-    //! @brief Get a human-readable string representing the error type.
-    //! @param error_type The error type for which to return the string.
-    //! @return The human-readable string representation of the error.
+    /// @brief Get a human-readable string representing the error type.
+    /// @param errorType The error type for which to return the string.
+    /// @return The human-readable string representation of the error.
     [[nodiscard]] static std::string getErrorTypeStr(ErrorType errorType)
     {
         try {
@@ -39,7 +40,7 @@ public:
 private:
     using ErrorStrMap = std::unordered_map<ErrorType, std::string>;
 
-    //! @brief Get the map from error types to human-readable strings.
+    /// @brief Get the map from error types to human-readable strings.
     [[nodiscard]] static ErrorStrMap getErrorStrMap() noexcept
     {
         static const ErrorStrMap TokenStr{{ErrorType::INVALID_TOKEN_ERROR, "Invalid Token Error"},
@@ -49,14 +50,21 @@ private:
     }
 };
 
+/// @brief Error struct representing errors encountered during the compilation process.
 struct Error
 {
+    /// @brief The type of the error.
     ErrorType type;
+    /// @brief The line number at which the error occured.
     size_t line;
+    /// @brief The column number at which the error occured.
     size_t column;
+    /// @brief The error message describing the error.
     std::string msg;
 };
 
+/// @brief Raise an error by logging it and exiting the program.
+/// @param error The error to raise.
 inline void raise(const Error& error)
 {
     auto& logger = pimento::utils::getLogger();
