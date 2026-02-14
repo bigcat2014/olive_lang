@@ -1,4 +1,4 @@
-name: CMake Multi-Platform Build
+name: CMake Matrix Build
 
 on:
   # schedule:
@@ -78,39 +78,39 @@ jobs:
       if: matrix.build_type == 'Debug'
       run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }} --target run_tests
 
-  # build-windows:
-  #   runs-on: ${{ matrix.os }}
+  build-windows:
+    runs-on: ${{ matrix.os }}
     
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [windows-2019, windows-2022]
-  #       build_type: [Debug, Release]
-  #       include:
-  #         - build_type: Debug
-  #           build_type_lower: debug
-  #         - build_type: Release
-  #           build_type_lower: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2019, windows-2022]
+        build_type: [Debug, Release]
+        include:
+          - build_type: Debug
+            build_type_lower: debug
+          - build_type: Release
+            build_type_lower: release
     
-  #   steps:
-  #   - uses: actions/checkout@v4
+    steps:
+    - uses: actions/checkout@v4
     
-  #   - name: Install Ninja
-  #     uses: seanmiddleditch/gha-setup-ninja@master
+    - name: Install Ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
     
-  #   - name: Install Windows Dependencies
-  #     run: |
-  #       choco install -y `
-  #         llvm `
-  #         doxygen `
-  #         miktex
-  #       pip install run-clang-format cmakelang gcovr
+    - name: Install Windows Dependencies
+      run: |
+        choco install -y `
+          llvm `
+          doxygen `
+          miktex
+        pip install run-clang-format cmakelang gcovr
     
-  #   - name: Configure
-  #     run: cmake --preset windows-${{ matrix.build_type_lower }}
+    - name: Configure
+      run: cmake --preset windows-${{ matrix.build_type_lower }}
     
-  #   - name: Build
-  #     run: cmake --build --preset windows-${{ matrix.build_type_lower }} --target all
+    - name: Build
+      run: cmake --build --preset windows-${{ matrix.build_type_lower }} --target all
     
   #   - name: Test
   #     if: matrix.build_type == 'Debug'
