@@ -17,6 +17,8 @@
 #include <unordered_map>
 #include <variant>
 
+#include <magic_enum/magic_enum.hpp>
+
 namespace pimento::tokenization {
 
 /// @brief Supported token types.
