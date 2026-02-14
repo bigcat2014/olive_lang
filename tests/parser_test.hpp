@@ -4,7 +4,7 @@
     (__extension__({                                                                                               \
         __typeof__(IDENTIFIER_TOKEN) __identifierToken = (IDENTIFIER_TOKEN);                                       \
         __typeof__(IDENTIFIER) __identifier            = (IDENTIFIER);                                             \
-        EXPECT_EQ(__identifierToken.tokenType, pimento::tokenization::TokenType::IDENTIFIER);                      \
+        EXPECT_EQ(__identifierToken.tokenType, pimento::tokenization::TokenType::TT_IDENTIFIER);                   \
         ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IdentProperties>(__identifierToken.properties)); \
         EXPECT_EQ(std::get<pimento::tokenization::IdentProperties>(__identifierToken.properties).identifier,       \
                   __identifier);                                                                                   \
@@ -17,7 +17,7 @@
         ASSERT_TRUE(std::holds_alternative<std::shared_ptr<pimento::ast::node::TermIdentNode>>(__identifierTerm));     \
         EXPECT_EQ(                                                                                                     \
             std::get<std::shared_ptr<pimento::ast::node::TermIdentNode>>(__identifierTerm)->identifierToken.tokenType, \
-            pimento::tokenization::TokenType::IDENTIFIER);                                                             \
+            pimento::tokenization::TokenType::TT_IDENTIFIER);                                                          \
         ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IdentProperties>(                                    \
             std::get<std::shared_ptr<pimento::ast::node::TermIdentNode>>(__identifierTerm)                             \
                 ->identifierToken.properties));                                                                        \
@@ -34,7 +34,7 @@
         __typeof__(INT_LIT) __intLit          = (INT_LIT);                                                            \
         ASSERT_TRUE(std::holds_alternative<std::shared_ptr<pimento::ast::node::TermIntLitNode>>(__intLitTerm));       \
         EXPECT_EQ(std::get<std::shared_ptr<pimento::ast::node::TermIntLitNode>>(__intLitTerm)->intLitToken.tokenType, \
-                  pimento::tokenization::TokenType::INT_LITERAL);                                                     \
+                  pimento::tokenization::TokenType::TT_INT_LITERAL);                                                  \
         ASSERT_TRUE(std::holds_alternative<pimento::tokenization::IntLitProperties>(                                  \
             std::get<std::shared_ptr<pimento::ast::node::TermIntLitNode>>(__intLitTerm)->intLitToken.properties));    \
         EXPECT_EQ(                                                                                                    \

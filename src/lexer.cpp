@@ -138,31 +138,31 @@ void Lexer::tokenize()
                 break;
             }
             case ':':
-                createToken(TokenType::COLON, offset, line, column);
+                createToken(TokenType::TT_COLON, offset, line, column);
                 break;
             case ',':
-                createToken(TokenType::COMMA, offset, line, column);
+                createToken(TokenType::TT_COMMA, offset, line, column);
                 break;
             case '{':
-                createToken(TokenType::LEFT_CURLY, offset, line, column);
+                createToken(TokenType::TT_LEFT_CURLY, offset, line, column);
                 break;
             case '(':
-                createToken(TokenType::LEFT_PAREN, offset, line, column);
+                createToken(TokenType::TT_LEFT_PAREN, offset, line, column);
                 break;
             case '[':
-                createToken(TokenType::LEFT_SQUARE, offset, line, column);
+                createToken(TokenType::TT_LEFT_SQUARE, offset, line, column);
                 break;
             case '}':
-                createToken(TokenType::RIGHT_CURLY, offset, line, column);
+                createToken(TokenType::TT_RIGHT_CURLY, offset, line, column);
                 break;
             case ')':
-                createToken(TokenType::RIGHT_PAREN, offset, line, column);
+                createToken(TokenType::TT_RIGHT_PAREN, offset, line, column);
                 break;
             case ']':
-                createToken(TokenType::RIGHT_SQUARE, offset, line, column);
+                createToken(TokenType::TT_RIGHT_SQUARE, offset, line, column);
                 break;
             case ';':
-                createToken(TokenType::SEMI, offset, line, column);
+                createToken(TokenType::TT_SEMI, offset, line, column);
                 break;
             // &, &=
             case '&':
@@ -175,10 +175,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::AMP_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_AMP_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::AMP, offset, line, column);
+                            createToken(TokenType::TT_AMP, offset, line, column);
                     }
                 }
                 break;
@@ -202,10 +202,10 @@ void Lexer::tokenize()
                                         else {
                                             break;
                                         }
-                                        createToken(TokenType::CARET_CARET_EQUAL, offset, line, column);
+                                        createToken(TokenType::TT_CARET_CARET_EQUAL, offset, line, column);
                                         break;
                                     default:
-                                        createToken(TokenType::CARET_CARET, offset, line, column);
+                                        createToken(TokenType::TT_CARET_CARET, offset, line, column);
                                 }
                             }
                             break;
@@ -216,16 +216,16 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::CARET_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_CARET_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::CARET, offset, line, column);
+                            createToken(TokenType::TT_CARET, offset, line, column);
                     }
                 }
                 break;
             // .
             case '.':
-                createToken(TokenType::DOT, offset, line, column);
+                createToken(TokenType::TT_DOT, offset, line, column);
                 break;
             // =, ==
             case '=':
@@ -238,10 +238,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::EQUAL_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_EQUAL_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::EQUAL, offset, line, column);
+                            createToken(TokenType::TT_EQUAL, offset, line, column);
                     }
                 }
                 break;
@@ -274,10 +274,10 @@ void Lexer::tokenize()
                                         else {
                                             break;
                                         }
-                                        createToken(TokenType::FSLASH_FSLASH_EQUAL, offset, line, column);
+                                        createToken(TokenType::TT_FSLASH_FSLASH_EQUAL, offset, line, column);
                                         break;
                                     default:
-                                        createToken(TokenType::FSLASH_FSLASH, offset, line, column);
+                                        createToken(TokenType::TT_FSLASH_FSLASH, offset, line, column);
                                 }
                             }
                             break;
@@ -288,10 +288,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::FSLASH_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_FSLASH_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::FSLASH, offset, line, column);
+                            createToken(TokenType::TT_FSLASH, offset, line, column);
                     }
                 }
                 break;
@@ -306,7 +306,7 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::LANGLE_LANGLE, offset, line, column);
+                            createToken(TokenType::TT_LANGLE_LANGLE, offset, line, column);
                             break;
                         case '=':
                             if (auto current = mFileBuffer.consume()) {
@@ -315,10 +315,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::LANGLE_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_LANGLE_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::LANGLE, offset, line, column);
+                            createToken(TokenType::TT_LANGLE, offset, line, column);
                     }
                 }
                 break;
@@ -333,7 +333,7 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::MINUS_MINUS, offset, line, column);
+                            createToken(TokenType::TT_MINUS_MINUS, offset, line, column);
                             break;
                         case '=':
                             if (auto current = mFileBuffer.consume()) {
@@ -342,10 +342,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::MINUS_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_MINUS_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::MINUS, offset, line, column);
+                            createToken(TokenType::TT_MINUS, offset, line, column);
                     }
                 }
                 break;
@@ -360,10 +360,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::PERCENT_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_PERCENT_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::PERCENT, offset, line, column);
+                            createToken(TokenType::TT_PERCENT, offset, line, column);
                     }
                 }
                 break;
@@ -378,10 +378,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::PIPE_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_PIPE_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::PIPE, offset, line, column);
+                            createToken(TokenType::TT_PIPE, offset, line, column);
                     }
                 }
                 break;
@@ -396,7 +396,7 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::PLUS_PLUS, offset, line, column);
+                            createToken(TokenType::TT_PLUS_PLUS, offset, line, column);
                             break;
                         case '=':
                             if (auto current = mFileBuffer.consume()) {
@@ -405,16 +405,16 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::PLUS_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_PLUS_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::PLUS, offset, line, column);
+                            createToken(TokenType::TT_PLUS, offset, line, column);
                     }
                 }
                 break;
             // ?
             case '?':
-                createToken(TokenType::QUESTION, offset, line, column);
+                createToken(TokenType::TT_QUESTION, offset, line, column);
                 break;
             // >, >=, >>
             case '>':
@@ -427,7 +427,7 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::RANGLE_RANGLE, offset, line, column);
+                            createToken(TokenType::TT_RANGLE_RANGLE, offset, line, column);
                             break;
                         case '=':
                             if (auto current = mFileBuffer.consume()) {
@@ -436,10 +436,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::RANGLE_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_RANGLE_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::RANGLE, offset, line, column);
+                            createToken(TokenType::TT_RANGLE, offset, line, column);
                     }
                 }
                 break;
@@ -454,10 +454,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::STAR_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_STAR_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::STAR, offset, line, column);
+                            createToken(TokenType::TT_STAR, offset, line, column);
                     }
                 }
                 break;
@@ -472,10 +472,10 @@ void Lexer::tokenize()
                             else {
                                 break;
                             }
-                            createToken(TokenType::TILDE_EQUAL, offset, line, column);
+                            createToken(TokenType::TT_TILDE_EQUAL, offset, line, column);
                             break;
                         default:
-                            createToken(TokenType::TILDE, offset, line, column);
+                            createToken(TokenType::TT_TILDE, offset, line, column);
                     }
                 }
                 break;
@@ -530,7 +530,8 @@ void Lexer::createIdentToken(const std::string& /*value*/, size_t offset, size_t
 {
     std::string const lexme{mTokenBuffer.str()};
     // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
-    mTokens.emplace_back(TokenType::IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+    mTokens.emplace_back(
+        TokenType::TT_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
@@ -540,7 +541,7 @@ void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t 
     std::string const lexme{mTokenBuffer.str()};
     // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
     mTokens.emplace_back(
-        TokenType::TYPE_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+        TokenType::TT_TYPE_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }

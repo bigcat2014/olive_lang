@@ -65,7 +65,7 @@ TEST(Lexer, FloatPass)
         std::istringstream input{std::move(parsed[0])};
         Lexer lexer{input};
         for (const auto& token : lexer.tokens()) {
-            EXPECT_EQ(token.tokenType, TokenType::NUMERIC_CONST);
+            EXPECT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
             // TODO(lthomas): Placeholder code. Will need updating for token type
             // EXPECT_EQ(token.value, std::stod(parsed[1]));
         }
@@ -85,7 +85,7 @@ TEST(Lexer, IntegerPass)
         Lexer lexer{input};
         for (const auto& token : lexer.tokens()) {
             // TODO(lthomas): Placeholder code. Will need updating for token type
-            EXPECT_EQ(token.tokenType, TokenType::NUMERIC_CONST);
+            EXPECT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
             // EXPECT_EQ(token.value, std::stoll(parsed[1]));
         }
     }
@@ -104,7 +104,7 @@ TEST(Lexer, ScientificPass)
         Lexer lexer{input};
         for (const auto& token : lexer.tokens()) {
             // TODO(lthomas): Placeholder code. Will need updating for token type
-            EXPECT_EQ(token.tokenType, TokenType::NUMERIC_CONST);
+            EXPECT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
             // EXPECT_EQ(token.value, std::stoll(parsed[1]));
             // EXPECT_EQ(token.value, std::stoll(parsed[2]));
         }
@@ -120,7 +120,7 @@ TEST(Lexer, FloatFail)
         Lexer lexer{testStream};
 
         for (const auto& token : lexer.tokens()) {
-            EXPECT_NE(token.tokenType, TokenType::NUMERIC_CONST);
+            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_CONST);
         }
     }
 }
@@ -135,7 +135,7 @@ TEST(Lexer, IntegerFail)
 
         for (const auto& token : lexer.tokens()) {
             // TODO(lthomas): Will need updating for token type
-            EXPECT_NE(token.tokenType, TokenType::NUMERIC_CONST);
+            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_CONST);
         }
     }
 }
@@ -150,7 +150,7 @@ TEST(Lexer, ScientificFail)
 
         for (const auto& token : lexer.tokens()) {
             // TODO(lthomas): Will need updating for token type
-            EXPECT_NE(token.tokenType, TokenType::NUMERIC_CONST);
+            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_CONST);
         }
     }
 }
@@ -169,7 +169,7 @@ TEST(Lexer, ELSE)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELSE);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_ELSE);
 }
 
 TEST(Lexer, EXIT)
@@ -178,7 +178,7 @@ TEST(Lexer, EXIT)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EXIT);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_EXIT);
 }
 
 TEST(Lexer, WHILE)
@@ -187,7 +187,7 @@ TEST(Lexer, WHILE)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::WHILE);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_WHILE);
 }
 
 TEST(Lexer, IF)
@@ -196,7 +196,7 @@ TEST(Lexer, IF)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::IF);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_IF);
 }
 
 TEST(Lexer, ELIF)
@@ -205,7 +205,7 @@ TEST(Lexer, ELIF)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::ELIF);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_ELIF);
 }
 
 // TEST(Lexer, LET) {
@@ -213,7 +213,7 @@ TEST(Lexer, ELIF)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LET);
+//   TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_LET);
 // }
 
 TEST(Lexer, LEFT_CURLY)
@@ -222,7 +222,7 @@ TEST(Lexer, LEFT_CURLY)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_CURLY);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_LEFT_CURLY);
 }
 
 TEST(Lexer, LEFT_PAREN)
@@ -231,7 +231,7 @@ TEST(Lexer, LEFT_PAREN)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::LEFT_PAREN);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_LEFT_PAREN);
 }
 
 TEST(Lexer, RIGHT_CURLY)
@@ -240,7 +240,7 @@ TEST(Lexer, RIGHT_CURLY)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_CURLY);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_RIGHT_CURLY);
 }
 
 TEST(Lexer, RIGHT_PAREN)
@@ -249,7 +249,7 @@ TEST(Lexer, RIGHT_PAREN)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::RIGHT_PAREN);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_RIGHT_PAREN);
 }
 
 // TEST(Lexer, DOUBLE_CARET) {
@@ -257,7 +257,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::DOUBLE_CARET, 3,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_DOUBLE_CARET, 3,
 //                        BinOpProperties::Associativity::RIGHT);
 // }
 
@@ -266,7 +266,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::PERCENT, 2,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_PERCENT, 2,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -275,7 +275,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::STAR, 2,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_STAR, 2,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -284,7 +284,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::FORWARD_SLASH, 2,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_FORWARD_SLASH, 2,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -293,7 +293,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::MINUS, 1,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_MINUS, 1,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -302,7 +302,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::PLUS, 1,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_PLUS, 1,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -311,7 +311,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::LT, 0,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_LT, 0,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -320,7 +320,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::GT, 0,
+//   TEST_BINARY_OP_TOKEN(lexer.tokens()[0], TokenType::TT_GT, 0,
 //                        BinOpProperties::Associativity::LEFT);
 // }
 
@@ -329,7 +329,7 @@ TEST(Lexer, RIGHT_PAREN)
 //   Lexer lexer(iss);
 
 //   ASSERT_EQ(lexer.tokens().size(), 1);
-//   TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::EQUAL);
+//   TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_EQUAL);
 // }
 
 TEST(Lexer, SEMI)
@@ -338,7 +338,7 @@ TEST(Lexer, SEMI)
     Lexer lexer(iss);
 
     ASSERT_EQ(lexer.tokens().size(), 1);
-    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::SEMI);
+    // TEST_MONOSTATE_TOKEN(lexer.tokens()[0], TokenType::TT_SEMI);
 }
 
 // TEST(Lexer, INT_LITERAL) {

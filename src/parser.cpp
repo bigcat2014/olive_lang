@@ -89,49 +89,49 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
 
     switch (currentToken.tokenType) {
         // Parse format exit([Expr]);
-        case tokenization::TokenType::EXIT: {
-            tryConsume(tokenization::TokenType::EXIT);
-            tryConsume(tokenization::TokenType::LEFT_PAREN);
+        case tokenization::TokenType::TT_EXIT: {
+            tryConsume(tokenization::TokenType::TT_EXIT);
+            tryConsume(tokenization::TokenType::TT_LEFT_PAREN);
 
             std::shared_ptr<node::ExprNode> const expression = parseExpression();
 
-            tryConsume(tokenization::TokenType::RIGHT_PAREN);
-            tryConsume(tokenization::TokenType::SEMI);
+            tryConsume(tokenization::TokenType::TT_RIGHT_PAREN);
+            tryConsume(tokenization::TokenType::TT_SEMI);
 
             stmt = std::make_shared<node::StmtNode>(std::make_shared<node::StmtExitNode>(expression));
             break;
         }
         // Parse format let ident = [Expr];
-        // case tokenization::TokenType::LET: {
-        //   tryConsume(tokenization::TokenType::LET);
+        // case tokenization::TokenType::TT_LET: {
+        //   tryConsume(tokenization::TokenType::TT_LET);
         //   tokenization::Token identifier =
-        //       tryConsume(tokenization::TokenType::IDENTIFIER);
+        //       tryConsume(tokenization::TokenType::TT_IDENTIFIER);
 
-        //   tryConsume(tokenization::TokenType::EQUAL);
+        //   tryConsume(tokenization::TokenType::TT_EQUAL);
 
         //   std::shared_ptr<node::ExprNode> expression = parseExpression();
 
-        //   tryConsume(tokenization::TokenType::SEMI);
+        //   tryConsume(tokenization::TokenType::TT_SEMI);
 
         //   stmt = std::make_shared<node::StmtNode>(
         //       std::make_shared<node::StmtLetNode>(identifier, expression));
         //   break;
         // }
         // Parse format ident = [Expr];
-        case tokenization::TokenType::IDENT: {
-            tryConsume(tokenization::TokenType::IDENT);
-            // tryConsume(tokenization::TokenType::EQUAL);
+        case tokenization::TokenType::TT_IDENT: {
+            tryConsume(tokenization::TokenType::TT_IDENT);
+            // tryConsume(tokenization::TokenType::TT_EQUAL);
 
             std::shared_ptr<node::ExprNode> const expression = parseExpression();
 
-            tryConsume(tokenization::TokenType::SEMI);
+            tryConsume(tokenization::TokenType::TT_SEMI);
 
             stmt = std::make_shared<node::StmtNode>(std::make_shared<node::StmtAssignNode>(currentToken, expression));
             break;
         }
         // Parse format if [Expr] [Scope] [IfPred]
-        case tokenization::TokenType::IF: {
-            tryConsume(tokenization::TokenType::IF);
+        case tokenization::TokenType::TT_IF: {
+            tryConsume(tokenization::TokenType::TT_IF);
 
             std::shared_ptr<node::ExprNode> const expression = parseExpression();
 
@@ -144,8 +144,8 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
             break;
         }
         // Parse format while [Expr] [Scope]
-        case tokenization::TokenType::WHILE: {
-            tryConsume(tokenization::TokenType::WHILE);
+        case tokenization::TokenType::TT_WHILE: {
+            tryConsume(tokenization::TokenType::TT_WHILE);
 
             std::shared_ptr<node::ExprNode> const expression = parseExpression();
 
@@ -156,7 +156,7 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
             break;
         }
         // Parse format {[Stmt]*}
-        case tokenization::TokenType::LEFT_CURLY: {
+        case tokenization::TokenType::TT_LEFT_CURLY: {
             stmt = std::make_shared<node::StmtNode>(parseScope());
             break;
         }
@@ -180,8 +180,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
 
         // TODO(lthomas): I don't like this logic here. Lots of repetitive code
         switch (currentToken.tokenType) {
-            // case tokenization::TokenType::DOUBLE_CARET: {
-            //   tryConsume(tokenization::TokenType::DOUBLE_CARET);
+            // case tokenization::TokenType::TT_DOUBLE_CARET: {
+            //   tryConsume(tokenization::TokenType::TT_DOUBLE_CARET);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -205,8 +205,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::PERCENT: {
-            //   tryConsume(tokenization::TokenType::PERCENT);
+            // case tokenization::TokenType::TT_PERCENT: {
+            //   tryConsume(tokenization::TokenType::TT_PERCENT);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -230,8 +230,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::STAR: {
-            //   tryConsume(tokenization::TokenType::STAR);
+            // case tokenization::TokenType::TT_STAR: {
+            //   tryConsume(tokenization::TokenType::TT_STAR);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -255,8 +255,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::FORWARD_SLASH: {
-            //   tryConsume(tokenization::TokenType::FORWARD_SLASH);
+            // case tokenization::TokenType::TT_FORWARD_SLASH: {
+            //   tryConsume(tokenization::TokenType::TT_FORWARD_SLASH);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -280,8 +280,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::PLUS: {
-            //   tryConsume(tokenization::TokenType::PLUS);
+            // case tokenization::TokenType::TT_PLUS: {
+            //   tryConsume(tokenization::TokenType::TT_PLUS);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -305,8 +305,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::MINUS: {
-            //   tryConsume(tokenization::TokenType::MINUS);
+            // case tokenization::TokenType::TT_MINUS: {
+            //   tryConsume(tokenization::TokenType::TT_MINUS);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -330,8 +330,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::LT: {
-            //   tryConsume(tokenization::TokenType::LT);
+            // case tokenization::TokenType::TT_LT: {
+            //   tryConsume(tokenization::TokenType::TT_LT);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -355,8 +355,8 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
             //   }
             //   break;
             // }
-            // case tokenization::TokenType::GT: {
-            //   tryConsume(tokenization::TokenType::GT);
+            // case tokenization::TokenType::TT_GT: {
+            //   tryConsume(tokenization::TokenType::TT_GT);
             //   std::pair<uint8_t, tokenization::BinOpProperties::Associativity>
             //       properties = tokenization::TokenTypeUtil::get_bin_expr_properties(
             //           current_token.tokenType);
@@ -394,12 +394,12 @@ std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*
 
 std::shared_ptr<node::ScopeNode> Parser::parseScope()
 {
-    tryConsume(tokenization::TokenType::LEFT_CURLY);
+    tryConsume(tokenization::TokenType::TT_LEFT_CURLY);
 
     std::shared_ptr<node::ScopeNode> scope = std::make_shared<node::ScopeNode>();
     while (true) {
         std::optional<tokenization::Token> next = peek();
-        if (!next.has_value() || next.value().tokenType == tokenization::TokenType::RIGHT_CURLY) {
+        if (!next.has_value() || next.value().tokenType == tokenization::TokenType::TT_RIGHT_CURLY) {
             break;
         }
 
@@ -407,7 +407,7 @@ std::shared_ptr<node::ScopeNode> Parser::parseScope()
         scope->statements.push_back(statement);
     }
 
-    tryConsume(tokenization::TokenType::RIGHT_CURLY);
+    tryConsume(tokenization::TokenType::TT_RIGHT_CURLY);
     return scope;
 }
 
@@ -425,8 +425,8 @@ std::optional<std::shared_ptr<node::IfPredNode>> Parser::parseIfPred()
 
     switch (currentToken.tokenType) {
         // Parse format ident;
-        case tokenization::TokenType::ELIF: {
-            tryConsume(tokenization::TokenType::ELIF);
+        case tokenization::TokenType::TT_ELIF: {
+            tryConsume(tokenization::TokenType::TT_ELIF);
             std::shared_ptr<node::ExprNode> const expression                  = parseExpression();
             std::shared_ptr<node::ScopeNode> const scope                      = parseScope();
             std::optional<std::shared_ptr<node::IfPredNode>> const ifPredElif = parseIfPred();
@@ -435,8 +435,8 @@ std::optional<std::shared_ptr<node::IfPredNode>> Parser::parseIfPred()
             break;
         }
         // Parse format int_lit
-        case tokenization::TokenType::ELSE: {
-            tryConsume(tokenization::TokenType::ELSE);
+        case tokenization::TokenType::TT_ELSE: {
+            tryConsume(tokenization::TokenType::TT_ELSE);
             std::shared_ptr<node::ScopeNode> const scope = parseScope();
             ifpred = std::make_shared<node::IfPredNode>(std::make_shared<node::IfPredElseNode>(scope));
             break;
@@ -464,20 +464,20 @@ std::shared_ptr<node::TermNode> Parser::parseTerm()
 
     switch (currentToken.tokenType) {
         // Parse format ident;
-        case tokenization::TokenType::IDENT: {
+        case tokenization::TokenType::TT_IDENT: {
             term = std::make_shared<node::TermNode>(std::make_shared<node::TermIdentNode>(currentToken));
             break;
         }
         // Parse format int_lit
-        // case tokenization::TokenType::INT_LITERAL: {
+        // case tokenization::TokenType::TT_INT_LITERAL: {
         //   term = std::make_shared<node::TermNode>(
         //       std::make_shared<node::TermIntLitNode>(current_token));
         //   break;
         // }
         // Parse format ident = ([Expr]);
-        case tokenization::TokenType::LEFT_PAREN: {
+        case tokenization::TokenType::TT_LEFT_PAREN: {
             std::shared_ptr<node::ExprNode> const expression = parseExpression();
-            tryConsume(tokenization::TokenType::RIGHT_PAREN);
+            tryConsume(tokenization::TokenType::TT_RIGHT_PAREN);
 
             term = std::make_shared<node::TermNode>(std::make_shared<node::TermExprNode>(expression));
             break;
