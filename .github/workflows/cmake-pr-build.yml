@@ -1,0 +1,81 @@
+name: CMake PR Build
+
+on:
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    # Use custom container images
+    container:
+      image: ghcr.io/${{ github.repository }}/linux-builder:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+        include:
+          - compiler: gcc
+            preset_prefix: linux-gcc
+          - compiler: clang
+            preset_prefix: linux-clang
+          - build_type: Debug
+            build_type_lower: debug
+          - build_type: Release
+            build_type_lower: release
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configure
+      run: cmake --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }}
+    
+    - name: Build
+      run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }}
+    
+    - name: Test
+      if: matrix.build_type == 'Debug'
+      run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }} --target run_tests
+
+  build-windows:
+    runs-on: windows-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Debug, Release]
+        include:
+          - build_type: Debug
+            build_type_lower: debug
+          - build_type: Release
+            build_type_lower: release
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
+    
+    - name: Install Windows Dependencies
+      run: |
+        choco install -y `
+          llvm `
+          doxygen `
+          miktex
+        pip install run-clang-format cmakelang gcovr
+    
+    - name: Configure
+      run: cmake --preset windows-${{ matrix.build_type_lower }}
+    
+    - name: Build
+      run: cmake --build --preset windows-${{ matrix.build_type_lower }}
+    
+    # - name: Test
+    #   if: matrix.build_type == 'Debug'
+    #   run: cmake --build --preset windows-${{ matrix.build_type_lower }} --target run_tests
