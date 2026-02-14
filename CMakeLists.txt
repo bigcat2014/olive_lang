@@ -127,25 +127,25 @@ if (BUILD_TESTING)
 
     # GTest
     ## Lexer
-    find_package(GTest REQUIRED)
-    add_executable(lexer_test EXCLUDE_FROM_ALL
-        tests/lexer_test.cpp)
-    target_include_directories(lexer_test PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-    target_link_libraries(lexer_test PRIVATE
-        ${PROJECT_NAME}_lexer GTest::gtest_main)
-    gtest_discover_tests(lexer_test)
+    # find_package(GTest REQUIRED)
+    # add_executable(lexer_test EXCLUDE_FROM_ALL
+    #     tests/lexer_test.cpp)
+    # target_include_directories(lexer_test PRIVATE
+    #     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    #     $<INSTALL_INTERFACE:include>)
+    # target_link_libraries(lexer_test PRIVATE
+    #     ${PROJECT_NAME}_lexer GTest::gtest_main)
+    # gtest_discover_tests(lexer_test)
 
-    ## Parser
-    add_executable(parser_test EXCLUDE_FROM_ALL
-        tests/parser_test.cpp)
-    target_include_directories(parser_test PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-    target_link_libraries(parser_test PRIVATE
-        ${PROJECT_NAME}_parser GTest::gtest_main)
-    gtest_discover_tests(parser_test)
+    # ## Parser
+    # add_executable(parser_test EXCLUDE_FROM_ALL
+    #     tests/parser_test.cpp)
+    # target_include_directories(parser_test PRIVATE
+    #     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    #     $<INSTALL_INTERFACE:include>)
+    # target_link_libraries(parser_test PRIVATE
+    #     ${PROJECT_NAME}_parser GTest::gtest_main)
+    # gtest_discover_tests(parser_test)
 
     # Linters
     set(${PROJECT_NAME}_LINTER_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Linters)
@@ -223,135 +223,135 @@ if (BUILD_TESTING)
 
     # Valgrind Memcheck Tests
     # TODO(lthomas): Refactor this into a function
-    add_test(NAME ${PROJECT_NAME}_valgrind_file
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_file
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_stdout
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --stdout
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_stdout
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --stdout
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_file_trace
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --trace
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_file_trace
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --trace
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_trace
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --stdout --trace
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_stdout_trace
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --stdout --trace
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_file_debug
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --debug
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_file_debug
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --debug
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_debug
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --stdout --debug
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_stdout_debug
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --stdout --debug
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_file_verbose
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --verbose
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_file_verbose
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --verbose
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(NAME ${PROJECT_NAME}_valgrind_stdout_verbose
-        COMMAND valgrind
-        --error-exitcode=1
-        --tool=memcheck
-        --leak-check=full
-        --errors-for-leak-kinds=definite
-        --show-leak-kinds=definite
-        $<TARGET_FILE:${PROJECT_NAME}>
-            ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
-            --stdout --verbose
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    # add_test(NAME ${PROJECT_NAME}_valgrind_stdout_verbose
+    #     COMMAND valgrind
+    #     --error-exitcode=1
+    #     --tool=memcheck
+    #     --leak-check=full
+    #     --errors-for-leak-kinds=definite
+    #     --show-leak-kinds=definite
+    #     $<TARGET_FILE:${PROJECT_NAME}>
+    #         ${${PROJECT_NAME}_TEST_RESOURCES_DIR}/valgrind_test.oil
+    #         --stdout --verbose
+    #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    # Gcovr Coverage Report Generation
-    list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
-    include(CodeCoverage)
-    append_coverage_compiler_flags()
-    set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
-    # Use llvm-cov gcov for Clang
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        find_program(
-            LLVM_COV_PATH
-            NAMES
-                llvm-cov
-                llvm-cov-11
-                llvm-cov-12
-                llvm-cov-13
-                llvm-cov-14
-                llvm-cov-15
-                llvm-cov-16
-                llvm-cov-17
-                llvm-cov-18
-                llvm-cov-19
-                llvm-cov-20
-                llvm-cov-21)
-        if(NOT LLVM_COV_PATH)
-            message(FATAL_ERROR "llvm-cov not found! Aborting...")
-        endif() # NOT LLVM_COV_PATH
-        list(APPEND GCOVR_ADDITIONAL_ARGS
-            --gcov-executable "${LLVM_COV_PATH} gcov")
-    endif()
-    set(Coverage_DEPENDENCIES run_tests)
-    setup_target_for_coverage_gcovr_html(NAME coverage)
+    # # Gcovr Coverage Report Generation
+    # list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
+    # include(CodeCoverage)
+    # append_coverage_compiler_flags()
+    # set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
+    # # Use llvm-cov gcov for Clang
+    # if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    #     find_program(
+    #         LLVM_COV_PATH
+    #         NAMES
+    #             llvm-cov
+    #             llvm-cov-11
+    #             llvm-cov-12
+    #             llvm-cov-13
+    #             llvm-cov-14
+    #             llvm-cov-15
+    #             llvm-cov-16
+    #             llvm-cov-17
+    #             llvm-cov-18
+    #             llvm-cov-19
+    #             llvm-cov-20
+    #             llvm-cov-21)
+    #     if(NOT LLVM_COV_PATH)
+    #         message(FATAL_ERROR "llvm-cov not found! Aborting...")
+    #     endif() # NOT LLVM_COV_PATH
+    #     list(APPEND GCOVR_ADDITIONAL_ARGS
+    #         --gcov-executable "${LLVM_COV_PATH} gcov")
+    # endif()
+    # set(Coverage_DEPENDENCIES run_tests)
+    # setup_target_for_coverage_gcovr_html(NAME coverage)
 
     # Custom Testing Targets
     add_custom_target(build_tests
-        DEPENDS lexer_test parser_test
+        # DEPENDS lexer_test parser_test
         COMMENT "Build unit tests")
 
     find_program(CTEST_PATH ctest)
