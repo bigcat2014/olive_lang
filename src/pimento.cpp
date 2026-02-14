@@ -2,6 +2,10 @@
 /// @brief Pimento executable
 /// @author Logan Thomas
 
+#include <cstdlib>
+#include <exception>
+#include <iostream>
+#include <spdlog/common.h>
 #include <string>
 
 #include <argparse/argparse.hpp>

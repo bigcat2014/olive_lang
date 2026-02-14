@@ -23,10 +23,10 @@ Lexer::Lexer(std::istream& istream)
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void Lexer::tokenize()
 {
-    auto& logger = utils::getLogger();
-    size_t offset;
-    size_t line;
-    size_t column;
+    auto& logger  = utils::getLogger();
+    size_t offset = 0;
+    size_t line   = 0;
+    size_t column = 0;
 
     while (!mFileBuffer.done()) {
         // Cache current offset, line number, and column number at start of parsing
