@@ -8,7 +8,7 @@
             "name": "Pimento Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/pimento",
+            "program": "${workspaceFolder}/build/debug/pimento",
             "args": [
                 "--debug",
                 "${workspaceFolder}/test.oil",
@@ -37,7 +37,7 @@
             "name": "Pimento Trace",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/pimento",
+            "program": "${workspaceFolder}/build/debug/pimento",
             "args": [
                 "--trace",
                 "${workspaceFolder}/test.oil",

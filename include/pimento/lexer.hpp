@@ -1,88 +1,143 @@
-//! @file lexer.hpp
-//! @brief Pimento lexer.
-//! @author Logan Thomas
+/// @file lexer.hpp
+/// @brief Pimento lexer.
+/// @author Logan Thomas
 
 #pragma once
 
-#include <array>
 #include <istream>
 #include <sstream>
+#include <unordered_set>
+#include <vector>
 
+#include <pimento/input_buffer.hpp>
 #include <pimento/tokens.hpp>
 
 namespace pimento::tokenization {
 
-class Lexer {
+/// @brief Class responsible for lexing input from a stream and producing a token vector for parsing.
+class Lexer
+{
 public:
-  //! @brief Constructor for the Lexer
-  //! @param istream std::istream& The stream of characters to
-  //! tokenize.
-  explicit Lexer(std::istream &istream);
+    /// @brief Constructor for the Lexer
+    /// @param istream The stream of characters to tokenize.
+    explicit Lexer(std::istream& istream);
 
-  //! @brief Getter for the vector of tokens lexed.
-  //! @return const std::vector<Token>& The vector of tokens lexed.
-  [[nodiscard]] const std::vector<Token> &tokens() const noexcept;
+    /// @brief Getter for the vector of tokens lexed.
+    /// @return The vector of lexed tokens.
+    [[nodiscard]] const std::vector<Token>& tokens() const noexcept;
 
-private:
-  //! @brief Tokenize the input stream.
-  void tokenize();
-
-  //! @brief Peek at a character at an offset from the current character in the
-  //! buffer.
-  //!
-  //! Peek at a character at an offset from the current character in the buffer.
-  //! If attempting to peek out of bounds, return whitespace.
-  //! @param current_index size_t The index of the current character in the
-  //! buffer.
-  //! @param buffer const char* const The buffer from which to get the
-  //! character.
-  //! @param size size_t The length of the buffer.
-  //! @param lookahead size_t Optional lookahead distance to peek.
-  //! @return char The character at `lookahead` offset from the current index or
-  //! 0 if attempting to peek out of bounds.
-  [[nodiscard]] inline char peek(size_t current_index, const char *const buffer,
-                                 size_t size,
-                                 size_t lookahead = 0) const noexcept;
-
-  //! @brief Attmpt to parse a token from the buffer.
-  //! @param token_buffer std::string The buffer from which to attempt to parse
-  //! a token.
-  //! @param next const char The next character in the buffer.
-  //! @return bool Whether or not we successfully parsed a full token.
-  bool try_parse_token(std::string &token_buffer, const char next) noexcept;
-
-  //! @brief Token visitor for logging trace output.
-  struct TraceTokenVisitor {
-    //! @brief Output string stream for building a trace string based on the
-    //! token properties.
-    std::ostringstream &output;
-
-    //! @brief Handle BinOpProperties variant.
-    //! @param properties BinOpProperties The properties of the binary operator.
-    void operator()(const BinOpProperties &properties) const noexcept;
-
-    //! @brief Handle IntLitProperties variant.
-    //! @param properties IntLitProperties The properties of the int literal.
-    void operator()(const IntLitProperties &properties) const noexcept;
-
-    //! @brief Handle IdentProperties variant.
-    //! @param properties IdentProperties The properties of the identifier.
-    void operator()(const IdentProperties &properties) const noexcept;
-
-    //! @brief Handle std::monostate variant.
-    //! @param Unused std::monostate
-    void operator()(const std::monostate &) const noexcept;
-  };
+    /// @brief Tokenize the input stream.
+    void tokenize();
 
 private:
-  //! @brief The size in bytes of the chunks to read from the input stream.
-  constexpr static size_t BUFFER_SIZE = 4096;
-  //! @brief The size in bytes of the maximum token length.
-  constexpr static size_t MAX_TOKEN_LEN = 64;
-  //! @brief The input stream to tokenize.
-  std::istream &m_stream;
-  //! @brief The tokens parsed from the input stream.
-  std::vector<Token> m_tokens;
+    /// @brief Create a token of the specified type.
+    /// @param type The TokenType to create.
+    /// @param offset The offset of the token in the input.
+    /// @param line The line number of the start of the token.
+    /// @param column The column number of the start of the token.
+    void createToken(TokenType type, size_t offset, size_t line, size_t column) noexcept;
+
+    /// @brief Create an Identifier token.
+    /// @param offset The offset of the token in the input.
+    /// @param line The line number of the start of the token.
+    /// @param column The column number of the start of the token.
+    void createIdentToken(const std::string& value, size_t offset, size_t line, size_t column) noexcept;
+
+    /// @brief Create a Type Identifier token.
+    /// @param offset The offset of the token in the input.
+    /// @param line The line number of the start of the token.
+    /// @param column The column number of the start of the token.
+    void createTypeToken(const std::string& value, size_t offset, size_t line, size_t column) noexcept;
+
+    /// @brief Parse an identifier token from the input buffer.
+    /// @param offset The offset of the start of the token for token creation.
+    /// @param line The line number of the start of the token for token creation.
+    /// @param column The column number of the start of the token for token
+    /// creation.
+    void parseIdent(size_t offset, size_t line, size_t column);
+
+    /// @brief Parse a type identifier token from the input buffer.
+    /// @param offset The offset of the start of the token for token creation.
+    /// @param line The line number of the start of the token for token creation.
+    /// @param column The column number of the start of the token for token
+    /// creation.
+    void parseType(size_t offset, size_t line, size_t column);
+
+    /// @brief Parse a numeric constant token from the input buffer.
+    /// @param offset The offset of the start of the token for token creation.
+    /// @param line The line number of the start of the token for token creation.
+    /// @param column The column number of the start of the token for token
+    /// creation.
+    void parseNumericConst(size_t offset, size_t line, size_t column);
+
+    /// @brief Check if the specified character is valid for an identifier.
+    /// @param value The character to check.
+    /// @return True if the character is valid for an identifier, false otherwise.
+    [[nodiscard]] static bool isIdentChar(char value) noexcept
+    {
+        return (std::islower(value) != 0) || (std::isupper(value) != 0) || (std::isdigit(value) != 0) || value == '_';
+    }
+
+    /// @brief Check if the specified character is valid for a type identifier.
+    /// @param value The character to check.
+    /// @return True if the character is valid for a type identifier, false
+    /// otherwise.
+    [[nodiscard]] static bool isTypeChar(char value) noexcept
+    {
+        return (std::islower(value) != 0) || (std::isupper(value) != 0) || (std::isdigit(value) != 0);
+    }
+
+    /// @brief Check if the specified character is the hex specifier.
+    /// @param value The character to check.
+    /// @return True if the character is the hex specifier, false otherwise.
+    [[nodiscard]] static bool isHexSpecifier(char value) noexcept { return value == 'x' || value == 'X'; }
+
+    /// @brief Check if the specified character is the octal specifier.
+    /// @param value The character to check.
+    /// @return True if the character is the octal specifier, false otherwise.
+    [[nodiscard]] static bool isOctalSpecifier(char value) noexcept { return value == 'o' || value == 'O'; }
+
+    /// @brief Check if the specified character is the binary specifier.
+    /// @param value The character to check.
+    /// @return True if the character is the binary specifier, false otherwise.
+    [[nodiscard]] static bool isBinarySpecifier(char value) noexcept { return value == 'b' || value == 'B'; }
+
+    /// @brief Check if the specified character is a valid octal digit.
+    /// @param value The character to check.
+    /// @return True if the character is a valid octal digit, false otherwise.
+    [[nodiscard]] static bool isOctalDigit(char value) noexcept
+    {
+        static const std::unordered_set<char> Chars{'0', '1', '2', '3', '4', '5', '6', '7'};
+
+        return Chars.contains(value);
+    }
+
+    /// @brief Check if the specified character is a valid binary digit.
+    /// @param value The character to check.
+    /// @return True if the character is a valid binary digit, false otherwise.
+    [[nodiscard]] static bool isBinaryDigit(char value) noexcept
+    {
+        static const std::unordered_set<char> Chars{'0', '1'};
+
+        return Chars.contains(value);
+    }
+
+    /// @brief Convert Scientific Notation to double precision float constant.
+    /// @param mantissa_str The mantissa of the scientific number.
+    /// @param exponent_str The exponent of the scientific number.
+    /// @return The double precision floating point number represented by the scientific notation.
+    [[nodiscard]] static FloatConst doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr);
+
+private:
+    /// @brief The size in bytes of the maximum token length.
+    static constexpr size_t MAX_TOKEN_LEN = 64;
+
+    /// @brief The buffer of the input to tokenize.
+    InputBuffer mFileBuffer;
+    /// @brief The current characters representing the token.
+    std::stringstream mTokenBuffer;
+    /// @brief The tokens parsed from the input stream.
+    std::vector<Token> mTokens;
 };
 
-} // namespace pimento::tokenization
+}  // namespace pimento::tokenization

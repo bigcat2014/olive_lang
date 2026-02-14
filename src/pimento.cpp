@@ -1,13 +1,11 @@
-//! @file pimento.cpp
-//! @brief Pimento executable
-//! @author Logan Thomas
+/// @file pimento.cpp
+/// @brief Pimento executable
+/// @author Logan Thomas
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <string>
 
 #include <argparse/argparse.hpp>
+#include <pimento/file_stream.hpp>
 #include <pimento/generator.hpp>
 #include <pimento/utils.hpp>
 
@@ -15,105 +13,104 @@
 #define PROJECT_VERSION "unknown"
 #endif
 
-int main(int argc, char *argv[]) {
-  argparse::ArgumentParser program("pimento", PROJECT_VERSION);
+int main(int argc, char* argv[])
+{
+    argparse::ArgumentParser program("pimento", PROJECT_VERSION);
 
-  program.add_argument("file")
-      .help("Path to the .oil file to compile")
-      .required();
+    std::string inFileStr;
+    std::string outFileStr;
+    bool toStdout;
+    spdlog::level::level_enum logLevel = spdlog::level::warn;
 
-  auto &group = program.add_mutually_exclusive_group();
-  group.add_argument("-o", "--output")
-      .help(
-          "Path for assembly output file. Cannot be combined with `--stdout`.")
-      .nargs(1)
-      .default_value(std::string{"out.asm"});
+    try {
+        // clang-format off
+        program.add_argument("file")
+            .required()
+            .help("Path to the .oil file to compile")
+            .store_into(inFileStr);
 
-  group.add_argument("--stdout")
-      .default_value(false)
-      .implicit_value(true)
-      .nargs(0)
-      .help("Output to stdout. Cannot be combined with `-o` | `--output`.");
+        auto& outputGroup = program.add_mutually_exclusive_group();
+        outputGroup.add_argument("-o", "--output")
+            .default_value(std::string{"out.asm"})
+            .nargs(1)
+            .help("Path for assembly output file.")
+            .store_into(outFileStr);
 
-  program.add_argument("--trace")
-      .default_value(false)
-      .implicit_value(true)
-      .nargs(0)
-      .help("Enable trace logging. WARNING: This will spam output!");
+        outputGroup.add_argument("--stdout")
+            .flag()
+            .help("Output to stdout.")
+            .store_into(toStdout);
 
-  program.add_argument("--debug")
-      .default_value(false)
-      .implicit_value(true)
-      .nargs(0)
-      .help("Enable debug logging");
+        auto& logGroup = program.add_mutually_exclusive_group();
+        logGroup.add_argument("--trace")
+            .flag()
+            .action([&](const auto&) { logLevel = spdlog::level::trace; })
+            .help("Enable trace logging. WARNING: This will spam output!");
 
-  program.add_argument("--verbose")
-      .default_value(false)
-      .implicit_value(true)
-      .nargs(0)
-      .help("Enable verbose logging");
+        logGroup.add_argument("--debug")
+            .flag()
+            .action([&](const auto&) { logLevel = spdlog::level::debug; })
+            .help("Enable debug logging");
 
-  try {
-    program.parse_args(argc, argv);
-  } catch (const std::runtime_error &err) {
-    std::cerr << "Argument parsing error: " << err.what() << '\n';
-    std::cerr << program;
-    return EXIT_FAILURE;
-  }
+        logGroup.add_argument("--verbose")
+            .flag()
+            .action([&](const auto&) { logLevel = spdlog::level::info; })
+            .help("Enable verbose logging");
+        // clang-format on
 
-  // Set log level based on flags
-  if (program.get<bool>("--trace")) {
-    pimento::utils::configure_logger(spdlog::level::trace);
-  } else if (program.get<bool>("--debug")) {
-    pimento::utils::configure_logger(spdlog::level::debug);
-  } else if (program.get<bool>("--verbose")) {
-    pimento::utils::configure_logger(spdlog::level::info);
-  } else {
-    pimento::utils::configure_logger(spdlog::level::warn);
-  }
+        program.parse_args(argc, argv);
 
-  auto &logger = pimento::utils::get_logger();
+        // Set log level based on flags
+        pimento::utils::configureLogger(logLevel);
 
-  std::string in_file_str = program.get<std::string>("file");
-  logger.debug("Input file path: {}", in_file_str);
-
-  auto input_resolved_path = pimento::utils::sanitize_path(in_file_str);
-  if (!input_resolved_path.has_value()) {
-    return EXIT_FAILURE;
-  }
-  logger.debug("Sanitized input file path: {}",
-               input_resolved_path.value().string());
-
-  std::fstream input_file{input_resolved_path.value(), std::ios::in};
-  if (!input_file) {
-    throw std::runtime_error("cannot open " +
-                             input_resolved_path.value().string());
-  }
-
-  if (program.get<bool>("--stdout")) {
-    pimento::generation::Generator generator(input_file, std::cout);
-    generator.generate();
-  } else {
-    std::string out_file_str = program.get<std::string>("output");
-    logger.debug("Output file path: {}", out_file_str);
-
-    auto output_resolved_path = pimento::utils::expand_vars(out_file_str);
-    output_resolved_path = std::filesystem::absolute(output_resolved_path);
-    output_resolved_path = output_resolved_path.lexically_normal();
-    logger.debug("Sanitized output file path: {}",
-                 output_resolved_path.string());
-
-    std::fstream output_file{output_resolved_path, std::ios::out};
-    if (!output_file) {
-      throw std::runtime_error("cannot open " + output_resolved_path.string());
+    } catch (const std::exception& err) {
+        std::cerr << "Argument retrieval error: " << err.what() << '\n';
+        std::cerr << program << '\n';
+        return EXIT_FAILURE;
     }
 
-    pimento::generation::Generator generator(input_file, output_file);
+    auto& logger = pimento::utils::getLogger();
+    logger.info("Pimento version {}", PROJECT_VERSION);
+    logger.debug("Input file path: {}", inFileStr);
+
+    // Sanitize and validate input file path
+    auto inputResolvedPath = pimento::utils::sanitizePath(inFileStr);
+    logger.debug("Sanitized input file path: {}", inputResolvedPath.string());
+    if (!pimento::utils::fileExists(inputResolvedPath)) {
+        logger.error("Input file check failed: {}", inFileStr);
+        return EXIT_FAILURE;
+    }
+
+    // Open and validate input file stream
+    pimento::tokenization::InputStream inputFile = pimento::tokenization::makeInputStreamFromPath(inputResolvedPath);
+    if (!inputFile) {
+        logger.error("Cannot open {}", inputResolvedPath.string());
+        return EXIT_FAILURE;
+    }
+
+    // Sanitize output file path, open, and validate output file stream
+    auto outputResolvedPath = pimento::utils::sanitizePath(outFileStr);
+    pimento::tokenization::OutputStream outputFile
+        = toStdout ? pimento::tokenization::makeFileStreamFromStdout()
+                   : pimento::tokenization::makeOutputStreamFromPath(outputResolvedPath);
+    if (!outputFile) {
+        logger.error("Cannot open {}", outputResolvedPath.string());
+        return EXIT_FAILURE;
+    }
+
+    if (toStdout) {
+        logger.info("Outputting to stdout");
+    }
+    else {
+        logger.debug("Output file path: {}", outFileStr);
+        logger.debug("Sanitized output file path: {}", outputResolvedPath.string());
+    }
+
+    pimento::generation::Generator generator(inputFile.getStream(), outputFile.getStream());
     generator.generate();
-  }
 
-  // system("nasm -felf64 out.asm");
-  // system("ld -o out out.o");
+    // system("nasm -felf64 out.asm");
+    // system("ld -o out out.o");
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

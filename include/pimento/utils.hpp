@@ -1,41 +1,40 @@
-//! @file utils.hpp
-//! @brief Pimento utility functions.
-//! @author Logan Thomas
+/// @file utils.hpp
+/// @brief Pimento utility functions.
+/// @author Logan Thomas
 
 #pragma once
 
 #include <filesystem>
-#include <optional>
 #include <string>
 
 #include <spdlog/spdlog.h>
 
 namespace pimento::utils {
 
-//! @brief Gets the global logger.
-//! @return spdlog::logger& Global logger.
-spdlog::logger &get_logger();
+/// @brief Gets the global logger.
+/// @return Global logger.
+spdlog::logger& getLogger() noexcept;
 
-//! @brief Configures the logger.
-//! @param level spdlog::level::level_enum The log level to configure the logger
-//! with.
-void configure_logger(spdlog::level::level_enum level);
+/// @brief Configures the logger.
+/// @param level The log level to configure the logger with.
+void configureLogger(spdlog::level::level_enum level) noexcept;
 
-//! @brief Expands `~` and environment variables in input path.
-//! @param input_path const std::string& The file path in which to expand the
-//! variables.
-//! @return std::filesystem::path The file path with variables expanded.
-std::filesystem::path expand_vars(const std::string &input_path);
+/// @brief Expands `~` and environment variables in input path.
+/// @param inputPath The file path in which to expand the variables.
+/// @return The file path with variables expanded.
+std::filesystem::path expandVars(const std::string& inputPath) noexcept;
 
-//! @brief Sanitize the input path.
-//!
-//! Sanitize the input path by expanding `~` and environment variables,
-//! normalizing the path, and ensuring it is a file. Additionally checks the
-//! file extension and warns the user if the extension is not the expected
-//! `.oil` extension.
-//! @param input_path const std::string& The file path to sanitize.
-//! @return std::optional<std::filesystem::path> The sanitized path.
-std::optional<std::filesystem::path>
-sanitize_path(const std::string &input_path);
+/// @brief Sanitize the input path.
+/// @details Sanitize the input path by expanding `~` and environment variables and producing the canonical path.
+/// @param inputPath The file path to sanitize.
+/// @return The sanitized path.
+std::filesystem::path sanitizePath(const std::string& inputPath) noexcept;
 
-} // namespace pimento::utils
+/// @brief Check if a file exists and is a regular file.
+/// @details Check if a file exists and is a regular file. Additionally checks the file extension and warns the user if
+/// the extension is not the expected `.oil` extension.
+/// @param path The file path to check.
+/// @return True if the file exists and is a regular file, false otherwise.
+bool fileExists(const std::filesystem::path& path);
+
+}  // namespace pimento::utils

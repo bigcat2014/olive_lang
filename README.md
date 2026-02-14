@@ -1,9 +1,9 @@
 # Olive Lang
 ## Prerequisites
 - cmake
-- libboost-dev
-- libspdlog-dev
-### Building unit tests
+### Unit test dependencies
+- clang-format
+- clang-tidy
 - cmake-format
 - gcovr
 - libgtest-dev
@@ -13,29 +13,13 @@
 ### Debug
 From the root of the project run the following command, replacing the compiler filepaths with your desired compiler.
 ```bash
-cmake \
-    -DCMAKE_BUILD_TYPE:STRING=Debug \
-    -DCMAKE_INSTALL_PREFIX:STRING=./install \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE \
-    -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 \
-    -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 \
-    --no-warn-unused-cli \
-    -G "Unix Makefiles" \
-    -S. -Bbuild
+cmake --preset debug -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/clang -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++
 ```
 
 ### Release
 From the root of the project run the following command, replacing the compiler filepaths with your desired compiler.
 ```bash
-cmake \
-    -DCMAKE_BUILD_TYPE:STRING=Release \
-    -DCMAKE_INSTALL_PREFIX:STRING=./install \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE \
-    -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/gcc-12 \
-    -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/g++-12 \
-    --no-warn-unused-cli \
-    -G "Unix Makefiles" \
-    -S. -Bbuild
+cmake --preset release -DCMAKE_C_COMPILER:FILEPATH=/usr/bin/clang -DCMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++
 ```
 
 ### Configuring to build unit tests
@@ -47,7 +31,11 @@ Add the following option to one of the above configuration commands.
 ## Targets
 - all - Build targets
 - install - Install targets
+- build_tests - Build all unit tests
+- run_tests - Run all unit tests
+- run_linters - Run the linter subset of unit tests
 - coverage - Generate code coverage report
+- doxygen_docs - Generate Doxygen documentation
 
 ## Building
 ### Debug
@@ -75,10 +63,18 @@ From the root of the project, run the following command:
 cmake --build build --config Release --target install --
 ```
 
-## Running tests
-From the build directory run ctest:
+## Running All Unit Tests
+From the root of the project, run the following commands:
 ```bash
-ctest -V
+cmake --build build --config Debug --target build_tests --
+cmake --build build --config Debug --target run_tests --
+```
+
+## Running Linter Unit Tests
+From the root of the project, run the following commands:
+```bash
+cmake --build build --config Debug --target build_tests --
+cmake --build build --config Debug --target run_linters --
 ```
 
 ### Generating Test Coverage Report
@@ -88,18 +84,23 @@ From the root of the project, build the coverage target
 cmake --build build --config Debug --target coverage --
 ```
 
+### Generating Doxygen documentation
+From the root of the project, build the doxygen_docs target
+```bash
+cmake --build build --config Debug --target doxygen_docs --
+```
 
 ## Running
 ### Not Installed
 From the root of the project, run the following command:
 ```bash
-./build/pimento --help
+./build/{release|debug}pimento --help
 ```
 
 ### Installed
 From the root of the project, run the following command:
 ```bash
-./install/bin/pimento --help
+./install/{release|debug}bin/pimento --help
 ```
 
 ## Known Issues
@@ -108,7 +109,12 @@ From the root of the project, run the following command:
     - https://bugs.kde.org/show_bug.cgi?id=452758
 
 # Grammar
-## Subject to change
+## Lexer Grammar
+Can be found [here](./docs/lexical_grammar.pdf)
+
+
+## Parser Grammar
+**Subject to change**
 $$
 \begin{align}
     [\text{Prog}] &\to [\text{Stmt}]^* \\
@@ -135,14 +141,14 @@ $$
     \end{cases} \\
     [\text{BinExpr}] &\to
     \begin{cases}
-        [\text{Expr}]\enspace \^{} \enspace \^{} &[\text{Expr}] \quad \text{prec} = 3; \enspace \text{associativity} = \text{right} \\
-        [\text{Expr}]\enspace               \%   &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               *    &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               /    &[\text{Expr}] \quad \text{prec} = 2; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               +    &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               -    &[\text{Expr}] \quad \text{prec} = 1; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               <    &[\text{Expr}] \quad \text{prec} = 0; \enspace \text{associativity} = \text{left}  \\
-        [\text{Expr}]\enspace               >    &[\text{Expr}] \quad \text{prec} = 0; \enspace \text{associativity} = \text{left}  \\
+        [\text{Expr}] &\hat{}\enspace\hat{} &[\text{Expr}] &\text{prec} = 3; &\text{associativity} = \text{right} \\
+        [\text{Expr}] &\text{\%}            &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{*}             &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{/}             &[\text{Expr}] &\text{prec} = 2; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{+}             &[\text{Expr}] &\text{prec} = 1; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{-}             &[\text{Expr}] &\text{prec} = 1; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{<}             &[\text{Expr}] &\text{prec} = 0; &\text{associativity} = \text{left}  \\
+        [\text{Expr}] &\text{>}             &[\text{Expr}] &\text{prec} = 0; &\text{associativity} = \text{left}  \\
     \end{cases} \\ 
     [\text{Term}] &\to
     \begin{cases}

@@ -1,312 +1,844 @@
-//! @file tokens.hpp
-//! @brief Pimento Tokens.
-//! @author Logan Thomas
+/// @file tokens.hpp
+/// @brief Pimento Tokens.
+/// @author Logan Thomas
 
 #pragma once
 
-#include <optional>
-#include <ranges>
-#include <string>
-#include <variant>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnested-anon-types"
+#endif
 
-#include <boost/bimap.hpp>
+#include <bit>
+#include <cmath>
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <variant>
 
 namespace pimento::tokenization {
 
-// TODO(lthomas): This tokenization method breaks down when there are tokens
-// that are just double versions of another token; i.e. `==` and `=`. May need
-// to parse these as their single version and handle doubles in the parser.
-//! @brief Supported token types.
-enum class TokenType {
-  BEGIN = 0,
-  // Keywords
-  TT_ELSE,
-  TT_EXIT,
-  TT_IF,
-  TT_ELIF,
-  TT_LET,
-  // Braces
-  TT_LEFT_CURLY,
-  TT_LEFT_PAREN,
-  TT_RIGHT_CURLY,
-  TT_RIGHT_PAREN,
-  // Binary operators
-  TT_DOUBLE_CARET,
-  TT_FORWARD_SLASH,
-  TT_MINUS,
-  TT_PERCENT,
-  TT_PLUS,
-  TT_STAR,
-  TT_LT,
-  TT_GT,
-  // Additional operators
-  TT_EQUAL,
-  // Miscellaneous
-  TT_IDENTIFIER,
-  TT_INT_LITERAL,
-  TT_SEMI,
-  TT_WHILE,
-  NUM_TOKENS
+/// @brief Supported token types.
+enum class TokenType : uint8_t
+{
+    BEGIN = 0,
+    AMP_EQUAL,
+    AMP,
+    AND,
+    BOOL,
+    BREAK,
+    CARET_CARET_EQUAL,
+    CARET_CARET,
+    CARET_EQUAL,
+    CARET,
+    CLASS,
+    COLON,
+    COMMA,
+    COMMENT,
+    DOT,
+    ELIF,
+    ELSE,
+    ENUM,
+    EQUAL_EQUAL,
+    EQUAL,
+    EXCLAIM_EQUAL,
+    EXIT,
+    FALSE,
+    FLOAT_CONST,
+    FLOAT_NAN,
+    FLOAT32_T_MAX,
+    FLOAT32_T_MIN,
+    FLOAT32_T,
+    FLOAT64_T_MAX,
+    FLOAT64_T_MIN,
+    FLOAT64_T,
+    FOR,
+    FSLASH_EQUAL,
+    FSLASH_FSLASH_EQUAL,
+    FSLASH_FSLASH,
+    FSLASH,
+    FUNCTION,
+    IDENT,
+    IF,
+    IN,
+    INT16_T_MAX,
+    INT16_T_MIN,
+    INT16_T,
+    INT32_T_MAX,
+    INT32_T_MIN,
+    INT32_T,
+    INT64_T_MAX,
+    INT64_T_MIN,
+    INT64_T,
+    INT8_T_MAX,
+    INT8_T_MIN,
+    INT8_T,
+    INTEGER_CONST,
+    INTERFACE,
+    LANGLE_EQUAL,
+    LANGLE_LANGLE,
+    LANGLE,
+    LEFT_CURLY,
+    LEFT_PAREN,
+    LEFT_SQUARE,
+    MINUS_EQUAL,
+    MINUS_MINUS,
+    MINUS,
+    MUTABLE,
+    NEG_INF,
+    NOT,
+    NUMERIC_CONST,
+    OR,
+    PERCENT_EQUAL,
+    PERCENT,
+    PIPE_EQUAL,
+    PIPE,
+    PLUS_EQUAL,
+    PLUS_PLUS,
+    PLUS,
+    POS_INF,
+    PRIVATE,
+    PUBLIC,
+    QUESTION,
+    RANGLE_EQUAL,
+    RANGLE_RANGLE,
+    RANGLE,
+    RETURN,
+    RIGHT_CURLY,
+    RIGHT_PAREN,
+    RIGHT_SQUARE,
+    SEMI,
+    STAR_EQUAL,
+    STAR,
+    STRING_LITERAL,
+    STRING,
+    TILDE_EQUAL,
+    TILDE,
+    TRUE,
+    TYPE_IDENT,
+    UINT16_T_MAX,
+    UINT16_T_MIN,
+    UINT16_T,
+    UINT32_T_MAX,
+    UINT32_T_MIN,
+    UINT32_T,
+    UINT64_T_MAX,
+    UINT64_T_MIN,
+    UINT64_T,
+    UINT8_T_MAX,
+    UINT8_T_MIN,
+    UINT8_T,
+    WHILE,
+    NUM_TOKENS
 };
 
-//! @brief Properties of a Binary Operator token.
-struct BinOpProperties {
-  //! @brief Associativity of binary operators.
-  enum class Associativity { LEFT = 0, RIGHT };
-
-  uint8_t precedence;
-  Associativity associativity;
-};
-
-//! @brief Properties of an Int Literal token.
-struct IntLitProperties {
-  // TODO(lthomas): Only supports 64 bit ints for now.
-  uint64_t value;
-};
-
-//! @brief Properties of an Idenfier token.
-struct IdentProperties {
-  std::string identifier;
-};
-
-//! @brief Parsed token.
-struct Token {
-  //! @brief  @brief The type of this token.
-  TokenType token_type;
-
-  //! @brief The properties associated with this token.
-  std::variant<BinOpProperties, IntLitProperties, IdentProperties,
-               std::monostate>
-      properties;
-};
-
-//! @brief Static utility class for interacting with token types.
-class TokenTypeUtil {
+// TODO(lthomas): Not yet IEEE-754 compliant.
+/// @brief Float Constant Value.
+/// @details Can be a double, float, or scientific notation.
+class FloatConst
+{
 public:
-  TokenTypeUtil() = delete;
-
-  //! @brief Get a human-readable string representing the token.
-  //! @param token_type TokenType The token type for which to return the string.
-  //! @return std::string The human-readable string representation of the token.
-  [[nodiscard]] static inline std::string
-  get_type_as_str(TokenType token_type) {
-    try {
-      return get_token_str_map().at(token_type);
-    } catch (const std::out_of_range &) {
-      return "UNKNOWN_TOKEN";
-    }
-  }
-
-  //! @brief Get the token string that needs to be parsed in order to get a
-  //! particular token type.
-  //! @param token_type TokenType The token type for which to return the string
-  //! representation.
-  //! @return std::string The string representation of the token for parsing.
-  [[nodiscard]] static inline std::string get_token_str(TokenType token_type) {
-    try {
-      return get_token_bimap().right.at(token_type);
-    } catch (const std::out_of_range &) {
-      return "UNKNOWN_TOKEN";
-    }
-  }
-
-  //! @brief Get the human-readable string representing the associativity.
-  //! @param assoc BinOpProperties::Associativity The Associativity for which to
-  //! return the string.
-  //! @return std::string The human-readable string representation of the token.
-  [[nodiscard]] static inline std::string
-  get_associativity_str(BinOpProperties::Associativity assoc) {
-    try {
-      return get_associativity_str_map().at(assoc);
-    } catch (const std::out_of_range &) {
-      return "UNKNOWN_ASSOCIATIVITY";
-    }
-  }
-
-  //! @brief Get the token type associated with a parsed string.
-  //! @param token std::string The parsed token for which to get the token type.
-  //! @return TokenType The token type associated with the provided token
-  //! string.
-  [[nodiscard]] static inline TokenType get_token_type(std::string token) {
-    // Bubble up exceptions
-    return get_token_bimap().left.at(token);
-  }
-
-  //! @brief Get the binary operator properties of a particular token type.
-  //! @param token The token type for which to get the binary operator
-  //! properties.
-  //! @return std::pair<uint8_t, BinOpProperties::Associativity> The precedence
-  //! and associativity of the specified binary operator.
-  [[nodiscard]] static inline std::pair<uint8_t, BinOpProperties::Associativity>
-  get_bin_expr_properties(TokenType token) {
-    // Bubble up exceptions
-    return get_bin_expr_properties_map().at(token);
-  }
-
-private:
-  //! @brief Create a boost::bimap from an initializer list.
-  //! @tparam L The type of the left side of the boost::bimap to initialize.
-  //! @tparam R The type of the right side of the boost::bimap to initialize.
-  //! @param list std::initializer_list<typename boost::bimap<L, R>::value_type>
-  //! The initializer list from which to initialize the boost::bimap.
-  //! @return boost::bimap<L, R> The boost::bimap initialized with the provided
-  //! initializer list.
-  template <typename L, typename R>
-  [[nodiscard]] static inline boost::bimap<L, R> make_bimap(
-      std::initializer_list<typename boost::bimap<L, R>::value_type> list) {
-    return boost::bimap<L, R>(list.begin(), list.end());
-  }
-
-private:
-  using AssociativityMap =
-      std::unordered_map<BinOpProperties::Associativity, std::string>;
-  using TokenStrMap = std::unordered_map<TokenType, std::string>;
-  using TokenBimap = boost::bimap<std::string, TokenType>;
-  using BinExprMap =
-      std::unordered_map<TokenType,
-                         std::pair<uint8_t, BinOpProperties::Associativity>>;
-
-  //! @brief Get the map from associtivity types to human-readable strings.
-  [[nodiscard]] static AssociativityMap get_associativity_str_map() noexcept {
-    // clang-format off
-    static const AssociativityMap associativity_str{
-        {BinOpProperties::Associativity::LEFT,  "LEFT"},
-        {BinOpProperties::Associativity::RIGHT, "RIGHT"}
+    /// @brief Enum representing the precision of the floating point value.
+    enum class Precision : uint8_t
+    {
+        FLOAT32,
+        FLOAT64
     };
-    // clang-format on
 
-    return associativity_str;
-  }
+    /// @brief Constructor for value represented in scientific notation.
+    /// @param mantissa The mantissa of the value.
+    /// @param exponent The exponent of the value.
+    /// @param negative Whether or not the value is negative.
+    /// @param precision The precision of the floating point value.
+    FloatConst(uint64_t mantissa, int32_t exponent, bool negative, Precision precision)
+        : mMantissa(mantissa)
+        , mExponent(exponent)
+        , mNegative(negative)
+        , mPrecision(precision)
+    {}
 
-  //! @brief Get the map from token types to human-readable strings.
-  [[nodiscard]] static TokenStrMap get_token_str_map() noexcept {
-    // clang-format off
-    static const TokenStrMap token_str{
-        {TokenType::TT_ELSE,          "TT_ELSE"},
-        {TokenType::TT_EXIT,          "TT_EXIT"},
-        {TokenType::TT_IF,            "TT_IF"},
-        {TokenType::TT_ELIF,          "TT_ELIF"},
-        {TokenType::TT_LET,           "TT_LET"},
-        {TokenType::TT_LEFT_CURLY,    "TT_LEFT_CURLY"},
-        {TokenType::TT_LEFT_PAREN,    "TT_LEFT_PAREN"},
-        {TokenType::TT_RIGHT_CURLY,   "TT_RIGHT_CURLY"},
-        {TokenType::TT_RIGHT_PAREN,   "TT_RIGHT_PAREN"},
-        {TokenType::TT_DOUBLE_CARET,  "TT_DOUBLE_CARET"},
-        {TokenType::TT_FORWARD_SLASH, "TT_FORWARD_SLASH"},
-        {TokenType::TT_MINUS,         "TT_MINUS"},
-        {TokenType::TT_PERCENT,       "TT_PERCENT"},
-        {TokenType::TT_PLUS,          "TT_PLUS"},
-        {TokenType::TT_STAR,          "TT_STAR"},
-        {TokenType::TT_LT,            "TT_LT"},
-        {TokenType::TT_GT,            "TT_GT"},
-        {TokenType::TT_EQUAL,         "TT_EQUAL"},
-        {TokenType::TT_IDENTIFIER,    "TT_IDENTIFIER"},
-        {TokenType::TT_INT_LITERAL,   "TT_INT_LITERAL"},
-        {TokenType::TT_SEMI,          "TT_SEMI"},
-        {TokenType::TT_WHILE,         "TT_WHILE"},
-    };
-    // clang-format on
+    /// @brief Constructor for double-precision floating point values.
+    /// @param value The value of the floating point number.
+    explicit FloatConst(double value)
+        : mNegative(std::signbit(value))
+        , mPrecision(Precision::FLOAT64)
+    {
+        double const absVal = std::fabs(value);
+        int exp;
+        double const frac = std::frexp(absVal, &exp);
+        mMantissa         = static_cast<uint64_t>(frac * (1ULL << FLOAT64_MANTISSA_BITS));
+        mExponent         = exp - FLOAT64_MANTISSA_BITS;
+    }
 
-    return token_str;
-  }
+    /// @brief Constructor for single-precision floating point values.
+    /// @param value The value of the floating point number.
+    explicit FloatConst(float value)
+        : mNegative(std::signbit(value))
+        , mPrecision(Precision::FLOAT32)
+    {
+        float const absVal = std::fabs(value);
+        int exp;
+        float const frac = std::frexp(absVal, &exp);
+        mMantissa        = static_cast<uint64_t>(frac * (1ULL << FLOAT32_MANTISSA_BITS));
+        mExponent        = exp - FLOAT32_MANTISSA_BITS;
+    }
 
-  //! @brief Get the bidirectional map between token string representations and
-  //! token types
-  [[nodiscard]] static TokenBimap get_token_bimap() noexcept {
-    // clang-format off
-    static const TokenBimap token_lookup =
-        make_bimap<std::string, TokenType>({{"else",  TokenType::TT_ELSE},
-                                            {"exit",  TokenType::TT_EXIT},
-                                            {"if",    TokenType::TT_IF},
-                                            {"elif",  TokenType::TT_ELIF},
-                                            {"let",   TokenType::TT_LET},
-                                            {"{",     TokenType::TT_LEFT_CURLY},
-                                            {"(",     TokenType::TT_LEFT_PAREN},
-                                            {"}",     TokenType::TT_RIGHT_CURLY},
-                                            {")",     TokenType::TT_RIGHT_PAREN},
-                                            {"^^",    TokenType::TT_DOUBLE_CARET},
-                                            {"/",     TokenType::TT_FORWARD_SLASH},
-                                            {"-",     TokenType::TT_MINUS},
-                                            {"%",     TokenType::TT_PERCENT},
-                                            {"+",     TokenType::TT_PLUS},
-                                            {"*",     TokenType::TT_STAR},
-                                            {"<",     TokenType::TT_LT},
-                                            {">",     TokenType::TT_GT},
-                                            {"=",     TokenType::TT_EQUAL},
-                                            {";",     TokenType::TT_SEMI},
-                                            {"while", TokenType::TT_WHILE},
-          });
-    // clang-format on
-
-    return token_lookup;
-  }
-
-  //! @brief Get the map from Binary Operator tokens to their respective
-  //! properties.
-  [[nodiscard]] static BinExprMap get_bin_expr_properties_map() noexcept {
-    // clang-format off
-    static const BinExprMap
-        bin_expr_properties{
-            {TokenType::TT_DOUBLE_CARET,  {3, BinOpProperties::Associativity::RIGHT}},
-            {TokenType::TT_STAR,          {2, BinOpProperties::Associativity::LEFT}},
-            {TokenType::TT_FORWARD_SLASH, {2, BinOpProperties::Associativity::LEFT}},
-            {TokenType::TT_PERCENT,       {2, BinOpProperties::Associativity::LEFT}},
-            {TokenType::TT_PLUS,          {1, BinOpProperties::Associativity::LEFT}},
-            {TokenType::TT_MINUS,         {1, BinOpProperties::Associativity::LEFT}},
-            {TokenType::TT_LT,            {0, BinOpProperties::Associativity::LEFT}},
-            {TokenType::TT_GT,            {0, BinOpProperties::Associativity::LEFT}},
-        };
-    // clang-format on
-
-    return bin_expr_properties;
-  }
-};
-
-// TODO(lthomas): Potentially use template specialization for static functions
-// here?
-//! @brief Factory class for creating tokens.
-class TokenFactory {
 public:
-  //! @brief Create a token.
-  //! @param token_type The token type the created token should be.
-  //! @return Token The created token.
-  [[nodiscard]] static inline Token
-  create_token(TokenType token_type) noexcept {
-    try {
-      std::pair<uint8_t, BinOpProperties::Associativity> bin_op_properties =
-          TokenTypeUtil::get_bin_expr_properties(token_type);
-      // Token is a binary operator, should include binary operator properties
-      return Token{.token_type = token_type,
-                   .properties = BinOpProperties{
-                       .precedence = bin_op_properties.first,
-                       .associativity = bin_op_properties.second}};
-    } catch (const std::out_of_range &) {
-      // No token properties
-      return Token{.token_type = token_type, .properties = std::monostate()};
+    /// @brief Get the value as a double precision float.
+    /// @return The value as a double precision float.
+    [[nodiscard]] double asFloat64() const noexcept
+    {
+        double result;
+        switch (mPrecision) {
+            case Precision::FLOAT64:
+                result = std::ldexp(static_cast<double>(mMantissa), mExponent);
+                result = mNegative ? -result : result;
+                break;
+            case Precision::FLOAT32:
+                result = static_cast<double>(asFloat32());
+                break;
+        }
+        return result;
     }
-  }
 
-  //! @brief Create a token.
-  //! @param token_type TokenType The token type the created token should be.
-  //! @param value uint64_t The value to store in the Int Literal token.
-  //! @return Token The created token.
-  [[nodiscard]] static inline Token create_token(TokenType token_type,
-                                                 uint64_t value) noexcept {
-    return Token{.token_type = token_type,
-                 .properties = IntLitProperties{.value = value}};
-  }
-
-  //! @brief Create a token.
-  //! @param token_type TokenType The token type the created token should be.
-  //! @param identifier std::string The identifier to store in the Identifier
-  //! token.
-  //! @return Token The created token.
-  [[nodiscard]] static inline Token
-  create_token(TokenType token_type, std::string identifier) noexcept {
-    return Token{.token_type = token_type,
-                 .properties = IdentProperties{.identifier = identifier}};
-  }
+    /// @brief Get the value as a single precision float.
+    /// @return The value as a single precision float.
+    [[nodiscard]] float asFloat32() const noexcept
+    {
+        float result;
+        switch (mPrecision) {
+            case Precision::FLOAT64:
+                result = static_cast<float>(asFloat64());
+                break;
+            case Precision::FLOAT32:
+                result = static_cast<float>(std::ldexp(static_cast<double>(mMantissa), mExponent));
+                result = mNegative ? -result : result;
+                break;
+        }
+        return result;
+    }
 
 private:
+    /// @brief The mantissa of the floating point number.
+    uint64_t mMantissa;
+    /// @brief The exponent of the floating point number.
+    int mExponent;
+    /// @brief Whether or not the value is negative.
+    bool mNegative;
+    /// @brief The precision the value was stored as.
+    Precision mPrecision;
+
+    /// @brief Number of bits in a 64-bit floating point value mantissa.
+    static constexpr uint8_t FLOAT64_MANTISSA_BITS = 53;
+    /// @brief Number of bits in a 32-bit floating point value mantissa.
+    static constexpr uint8_t FLOAT32_MANTISSA_BITS = 24;
 };
-} // namespace pimento::tokenization
+
+/// @brief Template wrapper for packed struct members.
+/// @tparam T The type to wrap in a packed struct.
+template <typename T>
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+struct PackedView
+{
+    T value;
+};
+#pragma pack(pop)
+#else
+struct [[gnu::packed]] PackedView
+{
+    /// @brief The value stored in the packed view.
+    T value;
+};
+#endif
+
+/// @brief Constant value as raw bits.
+/// @details Generally to be used with values specified in hex, octal, or binary.
+class RawBits
+{
+public:
+    /// @brief Constructor.
+    /// @tparam T Integral type.
+    /// @param value The value to use as the raw bits.
+    template <typename T>
+        requires std::is_integral_v<T>
+    explicit RawBits(T value)
+    {
+        if constexpr (std::is_signed_v<T>) {
+            int64 = static_cast<int64_t>(value);
+        }
+        else {
+            uint64 = static_cast<uint64_t>(value);
+        }
+    }
+
+public:
+    /// @brief Get the raw bits as unsigned 64-bit integer.
+    /// @return The raw bits as unsigned 64-bit integer.
+    [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
+
+    /// @brief Get the raw bits as signed 64-bit integer.
+    /// @return The raw bits as signed 64-bit integer.
+    [[nodiscard]] int64_t asInt64() const noexcept { return int64; }
+
+    /// @brief Get the raw bits as unsigned 32-bit integer.
+    /// @return The raw bits as unsigned 32-bit integer.
+    [[nodiscard]] uint32_t asUint32() const noexcept { return uint32View.value; }
+
+    /// @brief Get the raw bits as signed 32-bit integer.
+    /// @return The raw bits as signed 32-bit integer.
+    [[nodiscard]] int32_t asInt32() const noexcept { return int32View.value; }
+
+    /// @brief Get the raw bits as unsigned 16-bit integer.
+    /// @return The raw bits as unsigned 16-bit integer.
+    [[nodiscard]] uint16_t asUint16() const noexcept { return uint16View.value; }
+
+    /// @brief Get the raw bits as signed 16-bit integer.
+    /// @return The raw bits as signed 16-bit integer.
+    [[nodiscard]] int16_t asInt16() const noexcept { return int16View.value; }
+
+    /// @brief Get the raw bits as unsigned 8-bit integer.
+    /// @return The raw bits as unsigned 8-bit integer.
+    [[nodiscard]] uint8_t asUint8() const noexcept { return uint8View.value; }
+
+    /// @brief Get the raw bits as signed 8-bit integer.
+    /// @return The raw bits as signed 8-bit integer.
+    [[nodiscard]] int8_t asInt8() const noexcept { return int8View.value; }
+
+private:
+    /// @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
+    /// used for type punning.
+    union
+    {
+        /// @brief 64-bit unsigned value.
+        uint64_t uint64;
+
+        /// @brief 64-bit signed value.
+        int64_t int64;
+
+        /// @brief View of lower 32-bits of unsigned value.
+        PackedView<uint32_t> uint32View;
+
+        /// @brief View of lower 32-bits of signed value.
+        PackedView<int32_t> int32View;
+
+        /// @brief View of lower 16-bits of unsigned value.
+        PackedView<uint16_t> uint16View;
+
+        /// @brief View of lower 16-bits of signed value.
+        PackedView<int16_t> int16View;
+
+        /// @brief View of lower 8-bits of unsigned value.
+        PackedView<uint8_t> uint8View;
+
+        /// @brief View of lower 8-bits of signed value.
+        PackedView<int8_t> int8View;
+    };
+};
+
+/// @brief Integer Constant value.
+/// @details Can be signed or unsigned.
+class IntConst
+{
+public:
+    /// @brief Constructor.
+    /// @tparam T Integral type.
+    /// @param value The value of the integer.
+    template <typename T>
+        requires std::is_integral_v<T>
+    explicit IntConst(T value)
+    {
+        if constexpr (std::is_signed_v<T>) {
+            int64 = static_cast<int64_t>(value);
+        }
+        else {
+            uint64 = static_cast<uint64_t>(value);
+        }
+    }
+
+public:
+    /// @brief Get the value as unsigned 64-bit integer.
+    /// @return The value as unsigned 64-bit integer.
+    [[nodiscard]] uint64_t asUint64() const noexcept { return uint64; }
+
+    /// @brief Get the value as signed 64-bit integer.
+    /// @return The value as signed 64-bit integer.
+    [[nodiscard]] int64_t asInt64() const noexcept { return int64; }
+
+    /// @brief Get the value as unsigned 32-bit integer.
+    /// @return The value as unsigned 32-bit integer.
+    [[nodiscard]] uint32_t asUint32() const noexcept { return static_cast<uint32_t>(uint64); }
+
+    /// @brief Get the value as signed 32-bit integer.
+    /// @return The value as signed 32-bit integer.
+    [[nodiscard]] int32_t asInt32() const noexcept { return static_cast<int32_t>(int64); }
+
+    /// @brief Get the value as unsigned 16-bit integer.
+    /// @return The value as unsigned 16-bit integer.
+    [[nodiscard]] uint16_t asUint16() const noexcept { return static_cast<uint16_t>(uint64); }
+
+    /// @brief Get the value as signed 16-bit integer.
+    /// @return The value as signed 16-bit integer.
+    [[nodiscard]] int16_t asInt16() const noexcept { return static_cast<int16_t>(int64); }
+
+    /// @brief Get the value as unsigned 8-bit integer.
+    /// @return The value as unsigned 8-bit integer.
+    [[nodiscard]] uint8_t asUint8() const noexcept { return static_cast<uint8_t>(uint64); }
+
+    /// @brief Get the value as signed 8-bit integer.
+    /// @return The value as signed 8-bit integer.
+    [[nodiscard]] int8_t asInt8() const noexcept { return static_cast<int8_t>(int64); }
+
+private:
+    /// @brief Union of signed and signed and unsigned 64-bit values to be used
+    /// for type punning.
+    union
+    {
+        /// @brief 64-bit unsigned value.
+        uint64_t uint64;
+        /// @brief 64-bit signed value.
+        int64_t int64;
+    };
+};
+
+/// @brief Numeric Constant value.
+/// @details Can be floating point number, integer, or raw bits.
+class NumericConst
+{
+public:
+    /// @brief Alias for the variant of the numeric constant value.
+    using Value = std::variant<IntConst, FloatConst, RawBits>;
+
+    /// @brief Constructor for integer value.
+    /// @tparam T Integral type.
+    /// @param value The value of the integer.
+    template <typename T>
+        requires std::is_integral_v<T>
+    explicit NumericConst(T value)
+        : mValue(IntConst(value))
+    {}
+
+    // TODO(lthomas): Not sure if I should always be creating these as double-precision float, I think this has the
+    // potential for a double round error.
+    /// @brief Constructor for floating point value represented in scientific notation.
+    /// @param mantissa The mantissa of the floating point value.
+    /// @param exponent The exponent of the floating point value.
+    /// @param negative Whether or not the value is negative.
+    NumericConst(uint64_t mantissa, int exponent, bool negative = false)
+        : mValue(FloatConst{mantissa, exponent, negative, FloatConst::Precision::FLOAT64})
+    {}
+
+    /// @brief Constructor for value specified in raw bits.
+    /// @param raw The raw bits from which to construct the value.
+    explicit NumericConst(const RawBits& raw)
+        : mValue(raw)
+    {}
+
+    /// @brief Constructor for value specified as FloatConst.
+    /// @param floatConst The floating point constant from which to construct the value.
+    explicit NumericConst(const FloatConst& floatConst)
+        : mValue(floatConst)
+    {}
+
+    /// @brief Constructor for double-precision floating point values.
+    /// @param value The value of the floating point number.
+    explicit NumericConst(double value)
+        : mValue(FloatConst(value))
+    {}
+
+    /// @brief Constructor for single-precision floating point values.
+    /// @param value The value of the floating point number.
+    explicit NumericConst(float value)
+        : mValue(FloatConst(value))
+    {}
+
+public:
+    /// @brief Get the value as a double-precision (64-bit) floating point number.
+    /// @return The value as a double-precision (64-bit) floating point number.
+    [[nodiscard]] double asFloat64() const
+    {
+        return std::visit(
+            [](auto&& element) -> double {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, RawBits>) {
+                    // std::cout << "RawBits" << std::endl;
+                    return std::bit_cast<double>(element.asUint64());
+                }
+                else if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return element.asFloat64();
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return static_cast<double>(element.asInt64());
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as a single-precision (32-bit) floating point number.
+    /// @return The value as a single-precision (32-bit) floating point number.
+    [[nodiscard]] float asFloat32() const
+    {
+        return std::visit(
+            [](auto&& element) -> float {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, RawBits>) {
+                    // std::cout << "RawBits" << std::endl;
+                    return std::bit_cast<float>(element.asUint32());
+                }
+                else if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return element.asFloat32();
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return static_cast<float>(element.asInt64());
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as unsigned 64-bit integer.
+    /// @return The value as unsigned 64-bit integer.
+    [[nodiscard]] uint64_t asUint64() const
+    {
+        return std::visit(
+            [](auto&& element) -> uint64_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<uint64_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asUint64();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as signed 64-bit integer.
+    /// @return The value as signed 64-bit integer.
+    [[nodiscard]] int64_t asInt64() const
+    {
+        return std::visit(
+            [](auto&& element) -> int64_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<int64_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asInt64();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as unsigned 32-bit integer.
+    /// @return The value as unsigned 32-bit integer.
+    [[nodiscard]] uint32_t asUint32() const
+    {
+        return std::visit(
+            [](auto&& element) -> uint32_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<uint32_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asUint32();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as signed 32-bit integer.
+    /// @return The value as signed 32-bit integer.
+    [[nodiscard]] int32_t asInt32() const
+    {
+        return std::visit(
+            [](auto&& element) -> int32_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<int32_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asInt32();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as unsigned 16-bit integer.
+    /// @return The value as unsigned 16-bit integer.
+    [[nodiscard]] uint16_t asUint16() const
+    {
+        return std::visit(
+            [](auto&& element) -> uint16_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<uint16_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asUint16();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as signed 16-bit integer.
+    /// @return The value as signed 16-bit integer.
+    [[nodiscard]] int16_t asInt16() const
+    {
+        return std::visit(
+            [](auto&& element) -> int16_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<int16_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asInt16();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as unsigned 8-bit integer.
+    /// @return The value as unsigned 8-bit integer.
+    [[nodiscard]] uint8_t asUint8() const
+    {
+        return std::visit(
+            [](auto&& element) -> uint8_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<uint8_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asUint8();
+                }
+            },
+            mValue);
+    }
+
+    /// @brief Get the value as signed 8-bit integer.
+    /// @return The value as signed 8-bit integer.
+    [[nodiscard]] int8_t asInt8() const
+    {
+        return std::visit(
+            [](auto&& element) -> int8_t {
+                using T = std::decay_t<decltype(element)>;
+                if constexpr (std::is_same_v<T, FloatConst>) {
+                    // std::cout << "FloatConst" << std::endl;
+                    return static_cast<int8_t>(element.asFloat64());
+                }
+                else {
+                    // std::cout << "IntConst" << std::endl;
+                    return element.asInt8();
+                }
+            },
+            mValue);
+    }
+
+private:
+    /// @brief The numeric constant value.
+    Value mValue;
+};
+
+/// @brief Static utility class for interacting with token types.
+class TokenTypeUtil
+{
+public:
+    TokenTypeUtil() = delete;
+
+    /// @brief Get a human-readable string representing the token.
+    /// @param tokenType The token type for which to return the string.
+    /// @return The human-readable string representation of the token.
+    [[nodiscard]] static std::string getTypeAsStr(TokenType tokenType)
+    {
+        try {
+            return getTokenStrMap().at(tokenType);
+        } catch (const std::out_of_range&) {
+            return "UNKNOWN_TOKEN";
+        }
+    }
+
+private:
+    using TokenStrMap = std::unordered_map<TokenType, std::string>;
+
+    /// @brief Get the map from token types to human-readable strings.
+    [[nodiscard]] static TokenStrMap getTokenStrMap() noexcept
+    {
+        static const TokenStrMap TokenStr{{TokenType::AMP_EQUAL, "AMP_EQUAL"},
+                                          {TokenType::AMP, "AMP"},
+                                          {TokenType::AND, "AND"},
+                                          {TokenType::BOOL, "BOOL"},
+                                          {TokenType::BREAK, "BREAK"},
+                                          {TokenType::CARET_CARET_EQUAL, "CARET_CARET_EQUAL"},
+                                          {TokenType::CARET_CARET, "CARET_CARET"},
+                                          {TokenType::CARET_EQUAL, "CARET_EQUAL"},
+                                          {TokenType::CARET, "CARET"},
+                                          {TokenType::CLASS, "CLASS"},
+                                          {TokenType::COLON, "COLON"},
+                                          {TokenType::COMMA, "COMMA"},
+                                          {TokenType::COMMENT, "COMMENT"},
+                                          {TokenType::DOT, "DOT"},
+                                          {TokenType::ELIF, "ELIF"},
+                                          {TokenType::ELSE, "ELSE"},
+                                          {TokenType::ENUM, "ENUM"},
+                                          {TokenType::EQUAL_EQUAL, "EQUAL_EQUAL"},
+                                          {TokenType::EQUAL, "EQUAL"},
+                                          {TokenType::EXCLAIM_EQUAL, "EXCLAIM_EQUAL"},
+                                          {TokenType::EXIT, "EXIT"},
+                                          {TokenType::FALSE, "FALSE"},
+                                          {TokenType::FLOAT_CONST, "FLOAT_CONST"},
+                                          {TokenType::FLOAT_NAN, "FLOAT_NAN"},
+                                          {TokenType::FLOAT32_T_MAX, "FLOAT32_T_MAX"},
+                                          {TokenType::FLOAT32_T_MIN, "FLOAT32_T_MIN"},
+                                          {TokenType::FLOAT32_T, "FLOAT32_T"},
+                                          {TokenType::FLOAT64_T_MAX, "FLOAT64_T_MAX"},
+                                          {TokenType::FLOAT64_T_MIN, "FLOAT64_T_MIN"},
+                                          {TokenType::FLOAT64_T, "FLOAT64_T"},
+                                          {TokenType::FOR, "FOR"},
+                                          {TokenType::FSLASH_EQUAL, "FSLASH_EQUAL"},
+                                          {TokenType::FSLASH_FSLASH_EQUAL, "FSLASH_FSLASH_EQUAL"},
+                                          {TokenType::FSLASH_FSLASH, "FSLASH_FSLASH"},
+                                          {TokenType::FSLASH, "FSLASH"},
+                                          {TokenType::FUNCTION, "FUNCTION"},
+                                          {TokenType::IDENT, "IDENT"},
+                                          {TokenType::IF, "IF"},
+                                          {TokenType::IN, "IN"},
+                                          {TokenType::INT16_T_MAX, "INT16_T_MAX"},
+                                          {TokenType::INT16_T_MIN, "INT16_T_MIN"},
+                                          {TokenType::INT16_T, "INT16_T"},
+                                          {TokenType::INT32_T_MAX, "INT32_T_MAX"},
+                                          {TokenType::INT32_T_MIN, "INT32_T_MIN"},
+                                          {TokenType::INT32_T, "INT32_T"},
+                                          {TokenType::INT64_T_MAX, "INT64_T_MAX"},
+                                          {TokenType::INT64_T_MIN, "INT64_T_MIN"},
+                                          {TokenType::INT64_T, "INT64_T"},
+                                          {TokenType::INT8_T_MAX, "INT8_T_MAX"},
+                                          {TokenType::INT8_T_MIN, "INT8_T_MIN"},
+                                          {TokenType::INT8_T, "INT8_T"},
+                                          {TokenType::INTEGER_CONST, "INTEGER_CONST"},
+                                          {TokenType::INTERFACE, "INTERFACE"},
+                                          {TokenType::LANGLE_EQUAL, "LANGLE_EQUAL"},
+                                          {TokenType::LANGLE_LANGLE, "LANGLE_LANGLE"},
+                                          {TokenType::LANGLE, "LANGLE"},
+                                          {TokenType::LEFT_CURLY, "LEFT_CURLY"},
+                                          {TokenType::LEFT_PAREN, "LEFT_PAREN"},
+                                          {TokenType::LEFT_SQUARE, "LEFT_SQUARE"},
+                                          {TokenType::MINUS_EQUAL, "MINUS_EQUAL"},
+                                          {TokenType::MINUS_MINUS, "MINUS_MINUS"},
+                                          {TokenType::MINUS, "MINUS"},
+                                          {TokenType::MUTABLE, "MUTABLE"},
+                                          {TokenType::NEG_INF, "NEG_INF"},
+                                          {TokenType::NOT, "NOT"},
+                                          {TokenType::NUMERIC_CONST, "NUMERIC_CONST"},
+                                          {TokenType::OR, "OR"},
+                                          {TokenType::PERCENT_EQUAL, "PERCENT_EQUAL"},
+                                          {TokenType::PERCENT, "PERCENT"},
+                                          {TokenType::PIPE_EQUAL, "PIPE_EQUAL"},
+                                          {TokenType::PIPE, "PIPE"},
+                                          {TokenType::PLUS_EQUAL, "PLUS_EQUAL"},
+                                          {TokenType::PLUS_PLUS, "PLUS_PLUS"},
+                                          {TokenType::PLUS, "PLUS"},
+                                          {TokenType::POS_INF, "POS_INF"},
+                                          {TokenType::PRIVATE, "PRIVATE"},
+                                          {TokenType::PUBLIC, "PUBLIC"},
+                                          {TokenType::QUESTION, "QUESTION"},
+                                          {TokenType::RANGLE_EQUAL, "RANGLE_EQUAL"},
+                                          {TokenType::RANGLE_RANGLE, "RANGLE_RANGLE"},
+                                          {TokenType::RANGLE, "RANGLE"},
+                                          {TokenType::RETURN, "RETURN"},
+                                          {TokenType::RIGHT_CURLY, "RIGHT_CURLY"},
+                                          {TokenType::RIGHT_PAREN, "RIGHT_PAREN"},
+                                          {TokenType::RIGHT_SQUARE, "RIGHT_SQUARE"},
+                                          {TokenType::SEMI, "SEMI"},
+                                          {TokenType::STAR_EQUAL, "STAR_EQUAL"},
+                                          {TokenType::STAR, "STAR"},
+                                          {TokenType::STRING_LITERAL, "STRING_LITERAL"},
+                                          {TokenType::STRING, "STRING"},
+                                          {TokenType::TILDE_EQUAL, "TILDE_EQUAL"},
+                                          {TokenType::TILDE, "TILDE"},
+                                          {TokenType::TRUE, "TRUE"},
+                                          {TokenType::TYPE_IDENT, "TYPE_IDENT"},
+                                          {TokenType::UINT16_T_MAX, "UINT16_T_MAX"},
+                                          {TokenType::UINT16_T_MIN, "UINT16_T_MIN"},
+                                          {TokenType::UINT16_T, "UINT16_T"},
+                                          {TokenType::UINT32_T_MAX, "UINT32_T_MAX"},
+                                          {TokenType::UINT32_T_MIN, "UINT32_T_MIN"},
+                                          {TokenType::UINT32_T, "UINT32_T"},
+                                          {TokenType::UINT64_T_MAX, "UINT64_T_MAX"},
+                                          {TokenType::UINT64_T_MIN, "UINT64_T_MIN"},
+                                          {TokenType::UINT64_T, "UINT64_T"},
+                                          {TokenType::UINT8_T_MAX, "UINT8_T_MAX"},
+                                          {TokenType::UINT8_T_MIN, "UINT8_T_MIN"},
+                                          {TokenType::UINT8_T, "UINT8_T"},
+                                          {TokenType::WHILE, "WHILE"}};
+
+        return TokenStr;
+    }
+};
+
+/// @brief Parsed token.
+struct Token
+{
+    /// @brief The type of this token.
+    TokenType tokenType;
+    /// @brief The literal string parsed to get the token.
+    std::string lexeme;
+    /// @brief The offset and span of the token.
+    std::pair<uint64_t, uint64_t> sourceSpan;
+    /// @brief The line and column number of the token.
+    std::pair<uint64_t, uint64_t> location;
+
+    /// @brief Output stream operator for Token.
+    /// @param out The output stream to which to write the token.
+    /// @param data The token to write to the output stream.
+    /// @return The output stream to which the token was written.
+    friend std::ostream& operator<<(std::ostream& out, Token const& data)
+    {
+        out << "Token:";
+        out << "\n\tTokenType: " << TokenTypeUtil::getTypeAsStr(data.tokenType);
+        out << "\n\tLexme: \"" << data.lexeme << "\"";
+        out << "\n\tOffset: " << data.sourceSpan.first;
+        out << "\n\tSpan: " << data.sourceSpan.second;
+        out << "\n\tLine: " << data.location.first;
+        out << "\n\tColumn: " << data.location.second;
+        return out;
+    }
+};
+
+/// @brief Token for representing numeric constants.
+struct NumConstToken : public Token
+{
+    /// @brief The value of the floating point number.
+    NumericConst value;
+};
+
+/// @brief Token for representing string values.
+/// @details This could be string literals, identifiers, or type identifiers.
+struct StringToken : public Token
+{
+    /// @brief The string value stored, either string literal or identifier.
+    std::string value;
+};
+
+}  // namespace pimento::tokenization
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

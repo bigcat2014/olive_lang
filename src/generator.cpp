@@ -1,3 +1,4 @@
+#include <utility>
 #include <variant>
 
 #include <pimento/generator.hpp>
@@ -5,492 +6,412 @@
 
 namespace pimento::generation {
 
-Generator::Generator(std::istream &istream, std::ostream &ostream)
-    : m_parser(istream), m_output(ostream) {}
+Generator::Generator(std::istream& istream, std::ostream& ostream)
+    : mParser(istream)
+    , mOutput(ostream)
+{}
 
-void Generator::generate() noexcept {
-  m_output << "global _start\n_start:\n";
+void Generator::generate() noexcept
+{
+    mOutput << "global _start\n_start:\n";
 
-  const ast::node::ProgNode program = m_parser.get_program();
-  for (const auto &statement : program.statements) {
-    gen_statement(statement);
-  }
+    const ast::node::ProgNode PROGRAM = mParser.getProgram();
+    for (const auto& statement : PROGRAM.statements) {
+        genStatement(statement);
+    }
 }
 
-void Generator::gen_statement(
-    std::shared_ptr<ast::node::StmtNode> node) noexcept {
-  struct Visitor {
-    Generator &gen;
+void Generator::genStatement(const std::shared_ptr<ast::node::StmtNode>& node) noexcept
+{
+    struct Visitor
+    {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
 
-    void operator()(std::shared_ptr<ast::node::StmtExitNode> stmt) const {
-      gen.gen_expression(stmt->expression);
-      gen.m_output << "    mov rax, 60\n";
-      gen.pop("rdi");
-      gen.m_output << "    syscall\n";
-    }
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
 
-    void operator()(std::shared_ptr<ast::node::StmtLetNode> stmt) const {
-      const auto it =
-          std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var &var) {
-            bool match{false};
-            // TODO(lthomas): Probably a cleaner way to do this... Refactor
-            // later
-            struct TokenVisitor {
-              bool &match;
-              const std::string &name;
+        Generator& gen;
 
-              void operator()(tokenization::IdentProperties properties) {
-                match = properties.identifier == name;
-              }
-              void operator()(tokenization::BinOpProperties) { match = false; }
-              void operator()(tokenization::IntLitProperties) { match = false; }
-              void operator()(std::monostate) { match = false; }
-            };
-
-            std::visit(TokenVisitor{.match = match, .name = var.name},
-                       stmt->identifier.properties);
-            return match;
-          });
-
-      if (it != gen.m_vars.cend()) {
-        std::ostringstream oss;
-        oss << "Identifier already used: ";
-        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-        struct TokenVisitor {
-          std::ostringstream &oss;
-
-          TokenVisitor(std::ostringstream &oss) : oss(oss) {}
-
-          void operator()(tokenization::IdentProperties properties) {
-            oss << properties.identifier;
-          }
-          void operator()(tokenization::BinOpProperties) {}
-          void operator()(tokenization::IntLitProperties) {}
-          void operator()(std::monostate) {}
-        };
-
-        std::visit(TokenVisitor(oss), stmt->identifier.properties);
-
-        auto &logger = utils::get_logger();
-        logger.error(oss.str());
-        exit(EXIT_FAILURE);
-      }
-
-      // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-      struct TokenVisitor {
-        std::vector<Var> &vars;
-        size_t stack_size;
-
-        TokenVisitor(std::vector<Var> &vars, size_t stack_size)
-            : vars(vars), stack_size(stack_size) {}
-
-        void operator()(tokenization::IdentProperties properties) {
-          vars.emplace_back(properties.identifier, stack_size);
+        void operator()(const std::shared_ptr<ast::node::StmtExitNode>& stmt) const
+        {
+            gen.genExpression(stmt->expression);
+            gen.mOutput << "    mov rax, 60\n";
+            gen.pop("rdi");
+            gen.mOutput << "    syscall\n";
         }
-        void operator()(tokenization::BinOpProperties) {}
-        void operator()(tokenization::IntLitProperties) {}
-        void operator()(std::monostate) {}
-      };
 
-      std::visit(TokenVisitor(gen.m_vars, gen.m_stack_size),
-                 stmt->identifier.properties);
-
-      gen.gen_expression(stmt->expression);
-    }
-
-    void operator()(std::shared_ptr<ast::node::StmtAssignNode> stmt) const {
-      const auto it =
-          std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var &var) {
-            bool match{false};
-            // TODO(lthomas): Probably a cleaner way to do this... Refactor
-            // later
-            struct TokenVisitor {
-              bool &match;
-              const std::string &name;
-
-              void operator()(tokenization::IdentProperties properties) {
-                match = properties.identifier == name;
-              }
-              void operator()(tokenization::BinOpProperties) { match = false; }
-              void operator()(tokenization::IntLitProperties) { match = false; }
-              void operator()(std::monostate) { match = false; }
-            };
-
-            std::visit(TokenVisitor{.match = match, .name = var.name},
-                       stmt->identifier.properties);
-            return match;
-          });
-
-      if (it == gen.m_vars.cend()) {
-        std::ostringstream oss;
-        oss << "Undeclared identifier: ";
-        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-        struct TokenVisitor {
-          std::ostringstream &oss;
-
-          TokenVisitor(std::ostringstream &oss) : oss(oss) {}
-
-          void operator()(tokenization::IdentProperties properties) {
-            oss << properties.identifier;
-          }
-          void operator()(tokenization::BinOpProperties) {}
-          void operator()(tokenization::IntLitProperties) {}
-          void operator()(std::monostate) {}
-        };
-
-        std::visit(TokenVisitor(oss), stmt->identifier.properties);
-
-        auto &logger = utils::get_logger();
-        logger.error(oss.str());
-        exit(EXIT_FAILURE);
-      }
-
-      gen.gen_expression(stmt->expression);
-      gen.pop("rax");
-      gen.m_output << "    mov [rsp + "
-                   << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
-    }
-
-    void operator()(std::shared_ptr<ast::node::ScopeNode> stmt) const {
-      gen.m_output << "    ;; scope\n";
-      gen.gen_scope(stmt);
-      gen.m_output << "    ;; /scope\n";
-    }
-
-    void operator()(std::shared_ptr<ast::node::StmtIfNode> stmt) const {
-
-      gen.gen_expression(stmt->expression);
-      gen.pop("rax");
-      const std::string label = gen.create_label();
-      gen.m_output << "    test rax, rax\n";
-      // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
-      // true
-      gen.m_output << "    jz " << label << "\n";
-      gen.gen_scope(stmt->scope);
-      if (stmt->ifpred.has_value()) {
-        const std::string end_label = gen.create_label();
-        gen.m_output << "    jmp " << end_label << "\n";
-        gen.m_output << label << ":\n";
-        gen.gen_ifpred(stmt->ifpred.value(), end_label);
-        gen.m_output << end_label << ":\n";
-      } else {
-        gen.m_output << label << ":\n";
-      }
-    }
-
-    void operator()(std::shared_ptr<ast::node::StmtWhileNode> stmt) const {
-
-      const std::string loop_label = gen.create_label();
-      const std::string end_label = gen.create_label();
-
-      gen.m_output << loop_label << ":\n";
-      gen.gen_expression(stmt->expression);
-      gen.pop("rax");
-      gen.m_output << "    test rax, rax\n";
-      gen.m_output << "    jz " << end_label << "\n";
-      gen.gen_scope(stmt->scope);
-      gen.m_output << "    jmp " << loop_label << "\n";
-      gen.m_output << end_label << ":\n";
-    }
-  };
-
-  std::visit(Visitor{.gen = *this}, node->node);
-}
-
-void Generator::gen_expression(
-    std::shared_ptr<ast::node::ExprNode> node) noexcept {
-  struct Visitor {
-    Generator &gen;
-
-    void operator()(std::shared_ptr<ast::node::TermNode> expr) const {
-      gen.gen_term(expr);
-    }
-
-    void operator()(std::shared_ptr<ast::node::BinExprNode> expr) const {
-      gen.gen_bin_expr(expr);
-    }
-  };
-
-  std::visit(Visitor{.gen = *this}, node->node);
-}
-
-void Generator::gen_scope(std::shared_ptr<ast::node::ScopeNode> node) noexcept {
-  for (const auto &stmt : node->statements) {
-    begin_scope();
-    gen_statement(stmt);
-    end_scope();
-  }
-}
-
-void Generator::gen_ifpred(std::shared_ptr<ast::node::IfPredNode> node,
-                           const std::string &end_label) noexcept {
-  struct Visitor {
-    Generator &gen;
-    const std::string &end_label;
-
-    void operator()(std::shared_ptr<ast::node::IfPredElifNode> ifpred) const {
-
-      gen.gen_expression(ifpred->expression);
-      gen.pop("rax");
-      const std::string label = gen.create_label();
-      gen.m_output << "    test rax, rax\n";
-      // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
-      // true
-      gen.m_output << "    jz " << label << "\n";
-      gen.gen_scope(ifpred->scope);
-      gen.m_output << "    jmp " << end_label << "\n";
-      gen.m_output << label << ":\n";
-      if (ifpred->ifpred.has_value()) {
-        gen.gen_ifpred(ifpred->ifpred.value(), end_label);
-      }
-    }
-
-    void operator()(std::shared_ptr<ast::node::IfPredElseNode> ifpred) const {
-      gen.gen_scope(ifpred->scope);
-    }
-  };
-
-  std::visit(Visitor{.gen = *this, .end_label = end_label}, node->node);
-}
-
-void Generator::gen_term(std::shared_ptr<ast::node::TermNode> node) noexcept {
-  struct Visitor {
-    Generator &gen;
-
-    void operator()(std::shared_ptr<ast::node::TermIntLitNode> term) const {
-      // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-      struct TokenVisitor {
-        Generator &gen;
-
-        TokenVisitor(Generator &gen) : gen(gen) {}
-
-        void operator()(tokenization::IdentProperties) {}
-        void operator()(tokenization::BinOpProperties) {}
-        void operator()(tokenization::IntLitProperties properties) {
-          gen.m_output << "    mov rax, " << properties.value << "\n";
-          gen.push("rax");
+        void operator()(const std::shared_ptr<ast::node::StmtLetNode>& stmt) const
+        {
+            // TODO(lthomas): Not implemented
+            (void)stmt;
         }
-        void operator()(std::monostate) {}
-      };
 
-      std::visit(TokenVisitor(gen), term->int_lit_token.properties);
-    }
+        void operator()(const std::shared_ptr<ast::node::StmtAssignNode>& stmt) const
+        {
+            // TODO(lthomas): Not implemented
+            (void)stmt;
+        }
 
-    void operator()(std::shared_ptr<ast::node::TermIdentNode> term) const {
-      const auto it =
-          std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var &var) {
-            bool match = false;
-            // TODO(lthomas): Probably a cleaner way to do this... Refactor
-            // later
-            struct TokenVisitor {
-              bool &match;
-              const std::string &name;
+        void operator()(const std::shared_ptr<ast::node::ScopeNode>& stmt) const
+        {
+            gen.mOutput << "    ;; scope\n";
+            gen.genScope(stmt);
+            gen.mOutput << "    ;; /scope\n";
+        }
 
-              void operator()(tokenization::IdentProperties properties) {
-                match = properties.identifier == name;
-              }
-              void operator()(tokenization::BinOpProperties) { match = false; }
-              void operator()(tokenization::IntLitProperties) { match = false; }
-              void operator()(std::monostate) { match = false; }
-            };
+        void operator()(const std::shared_ptr<ast::node::StmtIfNode>& stmt) const
+        {
+            gen.genExpression(stmt->expression);
+            gen.pop("rax");
+            const std::string LABEL = pimento::generation::Generator::createLabel();
+            gen.mOutput << "    test rax, rax\n";
+            // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
+            // true
+            gen.mOutput << "    jz " << LABEL << "\n";
+            gen.genScope(stmt->scope);
+            if (stmt->ifpred.has_value()) {
+                const std::string END_LABEL = pimento::generation::Generator::createLabel();
+                gen.mOutput << "    jmp " << END_LABEL << "\n";
+                gen.mOutput << LABEL << ":\n";
+                gen.genIfpred(stmt->ifpred.value(), END_LABEL);
+                gen.mOutput << END_LABEL << ":\n";
+            }
+            else {
+                gen.mOutput << LABEL << ":\n";
+            }
+        }
 
-            std::visit(TokenVisitor{.match = match, .name = var.name},
-                       term->identifier_token.properties);
-            return match;
-          });
+        void operator()(const std::shared_ptr<ast::node::StmtWhileNode>& stmt) const
+        {
+            const std::string LOOP_LABEL = pimento::generation::Generator::createLabel();
+            const std::string END_LABEL  = pimento::generation::Generator::createLabel();
 
-      if (it == gen.m_vars.cend()) {
-        std::ostringstream oss;
-        oss << "Undeclared identifier: ";
-        // TODO(lthomas): Probably a cleaner way to do this... Refactor later
-        struct TokenVisitor {
-          std::ostringstream &oss;
+            gen.mOutput << LOOP_LABEL << ":\n";
+            gen.genExpression(stmt->expression);
+            gen.pop("rax");
+            gen.mOutput << "    test rax, rax\n";
+            gen.mOutput << "    jz " << END_LABEL << "\n";
+            gen.genScope(stmt->scope);
+            gen.mOutput << "    jmp " << LOOP_LABEL << "\n";
+            gen.mOutput << END_LABEL << ":\n";
+        }
+    };
 
-          TokenVisitor(std::ostringstream &oss) : oss(oss) {}
-
-          void operator()(tokenization::IdentProperties properties) {
-            oss << properties.identifier;
-          }
-          void operator()(tokenization::BinOpProperties) {}
-          void operator()(tokenization::IntLitProperties) {}
-          void operator()(std::monostate) {}
-        };
-
-        std::visit(TokenVisitor(oss), term->identifier_token.properties);
-
-        auto &logger = utils::get_logger();
-        logger.error(oss.str());
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
         exit(EXIT_FAILURE);
-      }
-
-      std::ostringstream offset;
-      // TODO(lthomas): Multiplying by 8 bytes for 64 bit sytem
-      offset << "QWORD [rsp + " << (gen.m_stack_size - it->stack_loc - 1) * 8
-             << "]";
-      gen.push(offset.str());
     }
-
-    void operator()(std::shared_ptr<ast::node::TermExprNode> term) const {
-      gen.gen_expression(term->expression);
-    }
-  };
-
-  std::visit(Visitor{.gen = *this}, node->node);
 }
 
-void Generator::gen_bin_expr(
-    std::shared_ptr<ast::node::BinExprNode> node) noexcept {
-  struct Visitor {
-    Generator &gen;
+void Generator::genExpression(const std::shared_ptr<ast::node::ExprNode>& node) noexcept
+{
+    struct Visitor
+    {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
 
-    void
-    operator()(std::shared_ptr<ast::node::BinExprPowerNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
 
-      std::string loop_label = gen.create_label();
-      std::string neg_label = gen.create_label();
-      std::string end_label = gen.create_label();
+        Generator& gen;
 
-      gen.pop("rax");
-      gen.m_output << "    mov rbx, rax\n";
-      gen.pop("rcx");
-      gen.m_output << loop_label << ":\n";
-      gen.m_output << "    sub rcx, 1\n";
-      gen.m_output << "    jc " << neg_label << "\n";
-      gen.m_output << "    jz " << end_label << "\n";
-      gen.m_output << "    mul rbx\n";
-      gen.m_output << "    jmp " << loop_label << "\n";
-      gen.m_output << neg_label << ":\n";
-      gen.m_output << "    mov rax, 1\n";
-      gen.m_output << end_label << ":\n";
-      gen.push("rax");
+        void operator()(const std::shared_ptr<ast::node::TermNode>& expr) const { gen.genTerm(expr); }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprNode>& expr) const { gen.genBinExpr(expr); }
+    };
+
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
     }
-
-    void operator()(std::shared_ptr<ast::node::BinExprModNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    div rbx\n";
-      gen.push("rdx");
-    }
-
-    void operator()(std::shared_ptr<ast::node::BinExprMulNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    mul rbx\n";
-      gen.push("rax");
-    }
-
-    void operator()(std::shared_ptr<ast::node::BinExprDivNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    div rbx\n";
-      gen.push("rax");
-    }
-
-    void
-    operator()(std::shared_ptr<ast::node::BinExprPlusNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    add rax, rbx\n";
-      gen.push("rax");
-    }
-
-    void
-    operator()(std::shared_ptr<ast::node::BinExprMinusNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    sub rax, rbx\n";
-      gen.push("rax");
-    }
-
-    void
-    operator()(std::shared_ptr<ast::node::BinExprLessThanNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-
-      std::string label = gen.create_label();
-      std::string end_label = gen.create_label();
-
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    cmp rax, rbx\n";
-      gen.m_output << "    jl " << label << "\n";
-      gen.m_output << "    mov rax, 0\n";
-      gen.m_output << "    jmp " << end_label << "\n";
-      gen.m_output << label << ":\n";
-      gen.m_output << "    mov rax, 1\n";
-      gen.m_output << end_label << ":\n";
-      gen.push("rax");
-    }
-
-    void operator()(
-        std::shared_ptr<ast::node::BinExprGreaterThanNode> bin_expr) const {
-      gen.gen_expression(bin_expr->right);
-      gen.gen_expression(bin_expr->left);
-
-      std::string label = gen.create_label();
-      std::string end_label = gen.create_label();
-
-      gen.pop("rax");
-      gen.pop("rbx");
-      gen.m_output << "    cmp rax, rbx\n";
-      gen.m_output << "    jg " << label << "\n";
-      gen.m_output << "    mov rax, 0\n";
-      gen.m_output << "    jmp " << end_label << "\n";
-      gen.m_output << label << ":\n";
-      gen.m_output << "    mov rax, 1\n";
-      gen.m_output << end_label << ":\n";
-      gen.push("rax");
-    }
-  };
-
-  std::visit(Visitor{.gen = *this}, node->node);
 }
 
-void Generator::push(const std::string &reg) noexcept {
-  m_output << "    push " << reg << "\n";
-  m_stack_size++;
+void Generator::genScope(const std::shared_ptr<ast::node::ScopeNode>& node) noexcept
+{
+    for (const auto& stmt : node->statements) {
+        beginScope();
+        genStatement(stmt);
+        endScope();
+    }
 }
 
-void Generator::pop(const std::string &reg) noexcept {
-  m_output << "    pop " << reg << "\n";
-  m_stack_size--;
+void Generator::genIfpred(const std::shared_ptr<ast::node::IfPredNode>& node, const std::string& endLabel) noexcept
+{
+    struct Visitor
+    {
+        Visitor(Generator& gen, const std::string& endLabel)
+            : gen(gen)
+            , endLabel(endLabel)
+        {}
+
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
+        Generator& gen;
+        const std::string endLabel;
+
+        void operator()(const std::shared_ptr<ast::node::IfPredElifNode>& ifpred) const
+        {
+            gen.genExpression(ifpred->expression);
+            gen.pop("rax");
+            const std::string LABEL = pimento::generation::Generator::createLabel();
+            gen.mOutput << "    test rax, rax\n";
+            // TODO(lthomas): Hardcoded 0 evaluates to false and > 0 evaluates to
+            // true
+            gen.mOutput << "    jz " << LABEL << "\n";
+            gen.genScope(ifpred->scope);
+            gen.mOutput << "    jmp " << endLabel << "\n";
+            gen.mOutput << LABEL << ":\n";
+            if (ifpred->ifpred.has_value()) {
+                gen.genIfpred(ifpred->ifpred.value(), endLabel);
+            }
+        }
+
+        void operator()(const std::shared_ptr<ast::node::IfPredElseNode>& ifpred) const { gen.genScope(ifpred->scope); }
+    };
+
+    try {
+        std::visit(Visitor(*this, endLabel), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
-void Generator::begin_scope() noexcept { m_scopes.emplace_back(m_vars.size()); }
+void Generator::genTerm(const std::shared_ptr<ast::node::TermNode>& node) noexcept
+{
+    struct Visitor
+    {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
 
-void Generator::end_scope() noexcept {
-  const size_t pop_count = m_vars.size() - m_scopes.back();
-  if (pop_count != 0) {
-    m_output << "    add rsp, " << pop_count * 8 << "\n";
-  }
-  m_stack_size -= pop_count;
-  for (size_t i = 0; i < pop_count; i++) {
-    m_vars.pop_back();
-  }
-  m_scopes.pop_back();
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
+        Generator& gen;
+
+        void operator()(const std::shared_ptr<ast::node::TermIntLitNode>& term) const
+        {
+            // TODO(lthomas): Not implemented
+            (void)term;
+        }
+
+        void operator()(const std::shared_ptr<ast::node::TermIdentNode>& term) const
+        {
+            // TODO(lthomas): Not implemented
+            (void)term;
+        }
+
+        void operator()(const std::shared_ptr<ast::node::TermExprNode>& term) const
+        {
+            gen.genExpression(term->expression);
+        }
+    };
+
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
-std::string Generator::create_label() const noexcept {
-  static size_t label_count{0};
+void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) noexcept
+{
+    struct Visitor
+    {
+        explicit Visitor(Generator& gen)
+            : gen(gen)
+        {}
 
-  std::ostringstream oss;
-  oss << "label" << std::to_string(label_count++);
-  return oss.str();
+        Visitor(const Visitor& other) = delete;
+        Visitor(Visitor&& other)      = delete;
+
+        Generator& gen;
+
+        void operator()(const std::shared_ptr<ast::node::BinExprPowerNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+
+            std::string const loopLabel = pimento::generation::Generator::createLabel();
+            std::string const negLabel  = pimento::generation::Generator::createLabel();
+            std::string const endLabel  = pimento::generation::Generator::createLabel();
+
+            gen.pop("rax");
+            gen.mOutput << "    mov rbx, rax\n";
+            gen.pop("rcx");
+            gen.mOutput << loopLabel << ":\n";
+            gen.mOutput << "    sub rcx, 1\n";
+            gen.mOutput << "    jc " << negLabel << "\n";
+            gen.mOutput << "    jz " << endLabel << "\n";
+            gen.mOutput << "    mul rbx\n";
+            gen.mOutput << "    jmp " << loopLabel << "\n";
+            gen.mOutput << negLabel << ":\n";
+            gen.mOutput << "    mov rax, 1\n";
+            gen.mOutput << endLabel << ":\n";
+            gen.push("rax");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprModNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    div rbx\n";
+            gen.push("rdx");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprMulNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    mul rbx\n";
+            gen.push("rax");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprDivNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    div rbx\n";
+            gen.push("rax");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprPlusNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    add rax, rbx\n";
+            gen.push("rax");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprMinusNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    sub rax, rbx\n";
+            gen.push("rax");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprLessThanNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+
+            std::string const label    = pimento::generation::Generator::createLabel();
+            std::string const endLabel = pimento::generation::Generator::createLabel();
+
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    cmp rax, rbx\n";
+            gen.mOutput << "    jl " << label << "\n";
+            gen.mOutput << "    mov rax, 0\n";
+            gen.mOutput << "    jmp " << endLabel << "\n";
+            gen.mOutput << label << ":\n";
+            gen.mOutput << "    mov rax, 1\n";
+            gen.mOutput << endLabel << ":\n";
+            gen.push("rax");
+        }
+
+        void operator()(const std::shared_ptr<ast::node::BinExprGreaterThanNode>& binExpr) const
+        {
+            gen.genExpression(binExpr->right);
+            gen.genExpression(binExpr->left);
+
+            std::string const label    = pimento::generation::Generator::createLabel();
+            std::string const endLabel = pimento::generation::Generator::createLabel();
+
+            gen.pop("rax");
+            gen.pop("rbx");
+            gen.mOutput << "    cmp rax, rbx\n";
+            gen.mOutput << "    jg " << label << "\n";
+            gen.mOutput << "    mov rax, 0\n";
+            gen.mOutput << "    jmp " << endLabel << "\n";
+            gen.mOutput << label << ":\n";
+            gen.mOutput << "    mov rax, 1\n";
+            gen.mOutput << endLabel << ":\n";
+            gen.push("rax");
+        }
+    };
+
+    try {
+        std::visit(Visitor(*this), node->node);
+    } catch (const std::bad_variant_access& e) {
+        // Should never happen
+        auto& logger = utils::getLogger();
+        logger.error("Generator encountered bad variant access in \"{}\": {}", __FUNCTION__, e.what());
+        exit(EXIT_FAILURE);
+    }
 }
 
-Generator::Var::Var(const std::string &name, size_t stack_loc)
-    : name(name), stack_loc(stack_loc) {}
+void Generator::push(const std::string& reg) noexcept
+{
+    mOutput << "    push " << reg << "\n";
+    mStackSize++;
+}
 
-} // namespace pimento::generation
+void Generator::pop(const std::string& reg) noexcept
+{
+    mOutput << "    pop " << reg << "\n";
+    mStackSize--;
+}
+
+void Generator::beginScope() noexcept
+{
+    mScopes.emplace_back(mVars.size());
+}
+
+void Generator::endScope() noexcept
+{
+    const size_t POP_COUNT = mVars.size() - mScopes.back();
+    if (POP_COUNT != 0) {
+        mOutput << "    add rsp, " << POP_COUNT * 8 << "\n";
+    }
+    mStackSize -= POP_COUNT;
+    for (size_t i = 0; i < POP_COUNT; i++) {
+        mVars.pop_back();
+    }
+    mScopes.pop_back();
+}
+
+std::string Generator::createLabel() noexcept
+{
+    static size_t sLabelCount{0};
+
+    std::ostringstream oss;
+    oss << "label" << std::to_string(sLabelCount++);
+    return oss.str();
+}
+
+Generator::Var::Var(std::string name, size_t stackLoc)
+    : name(std::move(name))
+    , stackLoc(stackLoc)
+{}
+
+}  // namespace pimento::generation

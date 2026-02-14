@@ -82,5 +82,14 @@
 				"CMake: Run Tests"
 			]
 		},
+		{
+			"type": "cmake",
+			"label": "CMake: Generate Documentation",
+			"command": "build",
+			"targets": [
+				"doxygen_docs"
+			],
+			"problemMatcher": []
+		},
 	]
 }

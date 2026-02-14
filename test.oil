@@ -1,9 +1,63 @@
-let x = 16;
-let z = 0;
-
-while x {
-    z = z + 3;
-    x = x - 1;
+identifier
+iDentifier
+iDentifier23
+# iDentifier23iDentifier23iDentifier23iDentifier23iDentifier23iDentifier23
+_identifier
+_iDentifier
+_iDentifier23
+__identifier
+__iDenti_fier
+__iDenti_fier23
+Identifier
+IDentifier
+IDentifier23
+# _Identifier - Invalid identifier and type
+# _IDentifier - Invalid identifier and type
+# _IDentifier23 - Invalid identifier and type
+# __Identifier - Invalid identifier and type
+# __IDenti_fier - Invalid identifier and type
+# __IDenti_fier23 - Invalid identifier and type
+:
+,
+{
+(
+[
 }
-
-exit(z);
+)
+]
+;
+&=
+&
+^^=
+^^
+^=
+^
+.
+==
+=
+/=
+//=
+//
+/
+<=
+<<
+<
+-=
+--
+-
+%=
+%
+|=
+|
++=
+++
++
+?
+>=
+>>
+>
+*=
+*
+~=
+~
+# I'm a comment
