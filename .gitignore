@@ -45,6 +45,64 @@ _deps
 *.out
 *.app
 
-# Build and install
+# Assembly files
+*.asm
+
+# LaTeX
+*.acn
+*.acr
+*.alg
+*.aux
+*.bak
+*.bbl
+*.bcf
+*.blg
+*.brf
+*.bst
+*.dvi
+*.fdb_latexmk
+*.fls
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lol
+*.lot
+*.maf
+*.mtc
+*.mtc1
+*.nav
+*.nlo
+*.nls
+*.out
+*.pyg
+*.run.xml
+*.snm
+*.synctex.gz
+*.tex.backup
+*.tex~
+*.thm
+*.toc
+*.vrb
+*.xdy
+*.xml
+*blx.bib
+.bak 
+.mtc
+
+# Doxygen
+docs/html
+docs/latex
+docs/man
+
+# Build, install, and output
 build
 install
+output
+out
+test_settings.hpp

@@ -1,0 +1,15 @@
+#include <string_view>
+
+constexpr std::string_view FLOAT_PASS_PATH{
+    "@FLOAT_PASS_PATH@"};
+constexpr std::string_view INTEGER_PASS_PATH{
+    "@INTEGER_PASS_PATH@"};
+constexpr std::string_view SCIENTIFIC_PASS_PATH{
+    "@SCIENTIFIC_PASS_PATH@"};
+
+constexpr std::string_view FLOAT_FAIL_PATH{
+    "@FLOAT_FAIL_PATH@"};
+constexpr std::string_view INTEGER_FAIL_PATH{
+    "@INTEGER_FAIL_PATH@"};
+constexpr std::string_view SCIENTIFIC_FAIL_PATH{
+    "@SCIENTIFIC_FAIL_PATH@"};

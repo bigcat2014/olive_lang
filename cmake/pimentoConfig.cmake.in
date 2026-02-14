@@ -1,0 +1,5 @@
+set(pimento_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+include("${pimento_DIR/export_pimento.cmake}")
+
+set(pimento_LIBRARIES pimento)
