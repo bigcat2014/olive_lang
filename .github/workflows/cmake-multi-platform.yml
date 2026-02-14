@@ -1,17 +1,15 @@
-# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
-name: CMake on multiple platforms
+name: CMake Multi-Platform Build
 
 on:
   push:
-    branches: [ "develop", "update-grammar" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "main", "develop" ]
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-
+    
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
@@ -24,18 +22,22 @@ jobs:
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
         os: [ubuntu-latest, windows-latest]
-        build_type: [Release, Debug]
+        build_type: [Debug, Release]
         c_compiler: [gcc, clang, cl]
         include:
-          - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
           - os: ubuntu-latest
             c_compiler: gcc
-            cpp_compiler: g++
+            preset_prefix: linux-gcc
           - os: ubuntu-latest
             c_compiler: clang
-            cpp_compiler: clang++
+            preset_prefix: linux-clang
+          - os: windows-latest
+            c_compiler: cl
+            preset_prefix: windows
+          - build_type: Debug
+            build_type_lower: debug
+          - build_type: Release
+            build_type_lower: release
         exclude:
           - os: windows-latest
             c_compiler: gcc
@@ -47,32 +49,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+    - name: Install Ninja
+      uses: seanmiddleditch/gha-setup-ninja@master
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        --no-warn-unused-cli
-        -G "Unix Makefiles"
-        -S ${{ github.workspace }}
+    - name: Install Linux Dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Configure
+      run: cmake --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }}
 
     - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }} --target all --
+      run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }} --target all
 
     - name: Test
-      # working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      # run: ctest --build-config ${{ matrix.build_type }}
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }} --target run_tests --
+      run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }} --target run_tests
