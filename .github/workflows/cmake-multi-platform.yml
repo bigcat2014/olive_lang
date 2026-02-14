@@ -55,11 +55,15 @@ jobs:
     - name: Install Linux Dependencies
       if: runner.os == 'Linux'
       run: |
+        # Add LLVM repository for newer clang tools
+        wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+        sudo add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main"
+
         sudo apt-get update
         sudo apt-get install -y \
           build-essential \
-          clang-format \
-          clang-tidy \
+          clang-format-19 \
+          clang-tidy-19 \
           doxygen \
           libgtest-dev \
           texlive-font-utils \
