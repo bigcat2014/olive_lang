@@ -82,4 +82,5 @@ jobs:
       run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }} --target all
 
     - name: Test
+      if: matrix.build_type == 'Debug'
       run: cmake --build --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }} --target run_tests
