@@ -65,7 +65,7 @@ jobs:
           update-alternatives --set clang-tidy /usr/bin/clang-tidy-${{ matrix.compiler_version }}
           update-alternatives --set run-clang-tidy /usr/bin/run-clang-tidy-${{ matrix.compiler_version }}
           update-alternatives --set clang-format /usr/bin/clang-format-${{ matrix.compiler_version }}
-          update-alternatives --set llvm-cov /usr/lib/llvm-${{ matrix.compiler_version }}/bin/llvm-cov
+          update-alternatives --set llvm-cov /usr/bin/llvm-cov-${{ matrix.compiler_version }}
         fi
 
     - name: Configure
