@@ -7,7 +7,7 @@ Checks: >
     cppcoreguidelines-avoid-do-while,
     cppcoreguidelines-avoid-goto,
     cppcoreguidelines-avoid-non-const-global-variables,
-    cppcoreguidelines-avoid-reference-corouotine-parameters,
+    cppcoreguidelines-avoid-reference-coroutine-parameters,
     cppcoreguidelines-interfaces-global-init,
     cppcoreguidelines-macro-usage,
     cppcoreguidelines-misleading-capture-default-by-value,

@@ -170,18 +170,18 @@ if (BUILD_TESTING)
     find_program(
         CLANG_TIDY_PATH
         NAMES
-            run-clang-tidy
-            run-clang-tidy-11
-            run-clang-tidy-12
-            run-clang-tidy-13
-            run-clang-tidy-14
-            run-clang-tidy-15
-            run-clang-tidy-16
-            run-clang-tidy-17
-            run-clang-tidy-18
-            run-clang-tidy-19
+            run-clang-tidy-21
             run-clang-tidy-20
-            run-clang-tidy-21)
+            run-clang-tidy-19
+            run-clang-tidy-10
+            run-clang-tidy-17
+            run-clang-tidy-16
+            run-clang-tidy-15
+            run-clang-tidy-14
+            run-clang-tidy-13
+            run-clang-tidy-12
+            run-clang-tidy-11
+            run-clang-tidy) # Generic callback last
     if(NOT CLANG_TIDY_PATH)
         message(FATAL_ERROR "clang-tidy not found! Aborting...")
     endif() # NOT CLANG_TIDY_PATH
@@ -328,18 +328,18 @@ if (BUILD_TESTING)
     #     find_program(
     #         LLVM_COV_PATH
     #         NAMES
-    #             llvm-cov
-    #             llvm-cov-11
-    #             llvm-cov-12
-    #             llvm-cov-13
-    #             llvm-cov-14
-    #             llvm-cov-15
-    #             llvm-cov-16
-    #             llvm-cov-17
-    #             llvm-cov-18
-    #             llvm-cov-19
+    #             llvm-cov-21
     #             llvm-cov-20
-    #             llvm-cov-21)
+    #             llvm-cov-19
+    #             llvm-cov-10
+    #             llvm-cov-17
+    #             llvm-cov-16
+    #             llvm-cov-15
+    #             llvm-cov-14
+    #             llvm-cov-13
+    #             llvm-cov-12
+    #             llvm-cov-11
+    #             llvm-cov) # Geeneric fallback last
     #     if(NOT LLVM_COV_PATH)
     #         message(FATAL_ERROR "llvm-cov not found! Aborting...")
     #     endif() # NOT LLVM_COV_PATH
