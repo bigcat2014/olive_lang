@@ -64,12 +64,14 @@ jobs:
           doxygen \
           valgrind
         pip install run-clang-format
+        pip install cmakelang
 
     - name: Install Windows Dependencies
       if: runner.os == 'Windows'
       run: |
         choco install llvm doxygen -y
         pip install run-clang-format
+        pip install cmakelang
 
     - name: Configure
       run: cmake --preset ${{ matrix.preset_prefix }}-${{ matrix.build_type_lower }}
