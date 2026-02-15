@@ -20,6 +20,11 @@ public:
     static constexpr size_t BUFFER_SIZE = 4096;
 
 public:
+    /// @brief Default constructor for InputBuffer;
+    InputBuffer()
+        : mDone(true)
+    {}
+
     /// @brief Constructor for the InputBuffer
     /// @param istream The stream of characters to buffer.
     explicit InputBuffer(std::istream* istream);
