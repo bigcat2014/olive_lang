@@ -8,7 +8,7 @@
             "name": "Pimento Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/debug/pimento",
+            "program": "${command:cmake.getLaunchTargetDirectory}/pimento",
             "args": [
                 "--debug",
                 "${workspaceFolder}/test.oil",

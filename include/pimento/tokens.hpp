@@ -12,10 +12,11 @@
 #include <bit>
 #include <cmath>
 #include <cstdint>
-#include <stdexcept>
+#include <ostream>
 #include <string>
-#include <unordered_map>
 #include <variant>
+
+#include <magic_enum/magic_enum.hpp>
 
 namespace pimento::tokenization {
 
@@ -657,142 +658,6 @@ private:
     Value mValue;
 };
 
-/// @brief Static utility class for interacting with token types.
-class TokenTypeUtil
-{
-public:
-    TokenTypeUtil() = delete;
-
-    /// @brief Get a human-readable string representing the token.
-    /// @param tokenType The token type for which to return the string.
-    /// @return The human-readable string representation of the token.
-    [[nodiscard]] static std::string getTypeAsStr(TokenType tokenType)
-    {
-        try {
-            return getTokenStrMap().at(tokenType);
-        } catch (const std::out_of_range&) {
-            return "UNKNOWN_TOKEN";
-        }
-    }
-
-private:
-    using TokenStrMap = std::unordered_map<TokenType, std::string>;
-
-    /// @brief Get the map from token types to human-readable strings.
-    [[nodiscard]] static TokenStrMap getTokenStrMap() noexcept
-    {
-        static const TokenStrMap TokenStr{{TokenType::TT_AMP_EQUAL, "AMP_EQUAL"},
-                                          {TokenType::TT_AMP, "AMP"},
-                                          {TokenType::TT_AND, "AND"},
-                                          {TokenType::TT_BOOL, "BOOL"},
-                                          {TokenType::TT_BREAK, "BREAK"},
-                                          {TokenType::TT_CARET_CARET_EQUAL, "CARET_CARET_EQUAL"},
-                                          {TokenType::TT_CARET_CARET, "CARET_CARET"},
-                                          {TokenType::TT_CARET_EQUAL, "CARET_EQUAL"},
-                                          {TokenType::TT_CARET, "CARET"},
-                                          {TokenType::TT_CLASS, "CLASS"},
-                                          {TokenType::TT_COLON, "COLON"},
-                                          {TokenType::TT_COMMA, "COMMA"},
-                                          {TokenType::TT_COMMENT, "COMMENT"},
-                                          {TokenType::TT_DOT, "DOT"},
-                                          {TokenType::TT_ELIF, "ELIF"},
-                                          {TokenType::TT_ELSE, "ELSE"},
-                                          {TokenType::TT_ENUM, "ENUM"},
-                                          {TokenType::TT_EQUAL_EQUAL, "EQUAL_EQUAL"},
-                                          {TokenType::TT_EQUAL, "EQUAL"},
-                                          {TokenType::TT_EXCLAIM_EQUAL, "EXCLAIM_EQUAL"},
-                                          {TokenType::TT_EXIT, "EXIT"},
-                                          {TokenType::TT_FALSE, "FALSE"},
-                                          {TokenType::TT_FLOAT_CONST, "FLOAT_CONST"},
-                                          {TokenType::TT_FLOAT_NAN, "FLOAT_NAN"},
-                                          {TokenType::TT_FLOAT32_T_MAX, "FLOAT32_T_MAX"},
-                                          {TokenType::TT_FLOAT32_T_MIN, "FLOAT32_T_MIN"},
-                                          {TokenType::TT_FLOAT32_T, "FLOAT32_T"},
-                                          {TokenType::TT_FLOAT64_T_MAX, "FLOAT64_T_MAX"},
-                                          {TokenType::TT_FLOAT64_T_MIN, "FLOAT64_T_MIN"},
-                                          {TokenType::TT_FLOAT64_T, "FLOAT64_T"},
-                                          {TokenType::TT_FOR, "FOR"},
-                                          {TokenType::TT_FSLASH_EQUAL, "FSLASH_EQUAL"},
-                                          {TokenType::TT_FSLASH_FSLASH_EQUAL, "FSLASH_FSLASH_EQUAL"},
-                                          {TokenType::TT_FSLASH_FSLASH, "FSLASH_FSLASH"},
-                                          {TokenType::TT_FSLASH, "FSLASH"},
-                                          {TokenType::TT_FUNCTION, "FUNCTION"},
-                                          {TokenType::TT_IDENT, "IDENT"},
-                                          {TokenType::TT_IF, "IF"},
-                                          {TokenType::TT_IN, "IN"},
-                                          {TokenType::TT_INT16_T_MAX, "INT16_T_MAX"},
-                                          {TokenType::TT_INT16_T_MIN, "INT16_T_MIN"},
-                                          {TokenType::TT_INT16_T, "INT16_T"},
-                                          {TokenType::TT_INT32_T_MAX, "INT32_T_MAX"},
-                                          {TokenType::TT_INT32_T_MIN, "INT32_T_MIN"},
-                                          {TokenType::TT_INT32_T, "INT32_T"},
-                                          {TokenType::TT_INT64_T_MAX, "INT64_T_MAX"},
-                                          {TokenType::TT_INT64_T_MIN, "INT64_T_MIN"},
-                                          {TokenType::TT_INT64_T, "INT64_T"},
-                                          {TokenType::TT_INT8_T_MAX, "INT8_T_MAX"},
-                                          {TokenType::TT_INT8_T_MIN, "INT8_T_MIN"},
-                                          {TokenType::TT_INT8_T, "INT8_T"},
-                                          {TokenType::TT_INTEGER_CONST, "INTEGER_CONST"},
-                                          {TokenType::TT_INTERFACE, "INTERFACE"},
-                                          {TokenType::TT_LANGLE_EQUAL, "LANGLE_EQUAL"},
-                                          {TokenType::TT_LANGLE_LANGLE, "LANGLE_LANGLE"},
-                                          {TokenType::TT_LANGLE, "LANGLE"},
-                                          {TokenType::TT_LEFT_CURLY, "LEFT_CURLY"},
-                                          {TokenType::TT_LEFT_PAREN, "LEFT_PAREN"},
-                                          {TokenType::TT_LEFT_SQUARE, "LEFT_SQUARE"},
-                                          {TokenType::TT_MINUS_EQUAL, "MINUS_EQUAL"},
-                                          {TokenType::TT_MINUS_MINUS, "MINUS_MINUS"},
-                                          {TokenType::TT_MINUS, "MINUS"},
-                                          {TokenType::TT_MUTABLE, "MUTABLE"},
-                                          {TokenType::TT_NEG_INF, "NEG_INF"},
-                                          {TokenType::TT_NOT, "NOT"},
-                                          {TokenType::TT_NUMERIC_CONST, "NUMERIC_CONST"},
-                                          {TokenType::TT_OR, "OR"},
-                                          {TokenType::TT_PERCENT_EQUAL, "PERCENT_EQUAL"},
-                                          {TokenType::TT_PERCENT, "PERCENT"},
-                                          {TokenType::TT_PIPE_EQUAL, "PIPE_EQUAL"},
-                                          {TokenType::TT_PIPE, "PIPE"},
-                                          {TokenType::TT_PLUS_EQUAL, "PLUS_EQUAL"},
-                                          {TokenType::TT_PLUS_PLUS, "PLUS_PLUS"},
-                                          {TokenType::TT_PLUS, "PLUS"},
-                                          {TokenType::TT_POS_INF, "POS_INF"},
-                                          {TokenType::TT_PRIVATE, "PRIVATE"},
-                                          {TokenType::TT_PUBLIC, "PUBLIC"},
-                                          {TokenType::TT_QUESTION, "QUESTION"},
-                                          {TokenType::TT_RANGLE_EQUAL, "RANGLE_EQUAL"},
-                                          {TokenType::TT_RANGLE_RANGLE, "RANGLE_RANGLE"},
-                                          {TokenType::TT_RANGLE, "RANGLE"},
-                                          {TokenType::TT_RETURN, "RETURN"},
-                                          {TokenType::TT_RIGHT_CURLY, "RIGHT_CURLY"},
-                                          {TokenType::TT_RIGHT_PAREN, "RIGHT_PAREN"},
-                                          {TokenType::TT_RIGHT_SQUARE, "RIGHT_SQUARE"},
-                                          {TokenType::TT_SEMI, "SEMI"},
-                                          {TokenType::TT_STAR_EQUAL, "STAR_EQUAL"},
-                                          {TokenType::TT_STAR, "STAR"},
-                                          {TokenType::TT_STRING_LITERAL, "STRING_LITERAL"},
-                                          {TokenType::TT_STRING, "STRING"},
-                                          {TokenType::TT_TILDE_EQUAL, "TILDE_EQUAL"},
-                                          {TokenType::TT_TILDE, "TILDE"},
-                                          {TokenType::TT_TRUE, "TRUE"},
-                                          {TokenType::TT_TYPE_IDENT, "TYPE_IDENT"},
-                                          {TokenType::TT_UINT16_T_MAX, "UINT16_T_MAX"},
-                                          {TokenType::TT_UINT16_T_MIN, "UINT16_T_MIN"},
-                                          {TokenType::TT_UINT16_T, "UINT16_T"},
-                                          {TokenType::TT_UINT32_T_MAX, "UINT32_T_MAX"},
-                                          {TokenType::TT_UINT32_T_MIN, "UINT32_T_MIN"},
-                                          {TokenType::TT_UINT32_T, "UINT32_T"},
-                                          {TokenType::TT_UINT64_T_MAX, "UINT64_T_MAX"},
-                                          {TokenType::TT_UINT64_T_MIN, "UINT64_T_MIN"},
-                                          {TokenType::TT_UINT64_T, "UINT64_T"},
-                                          {TokenType::TT_UINT8_T_MAX, "UINT8_T_MAX"},
-                                          {TokenType::TT_UINT8_T_MIN, "UINT8_T_MIN"},
-                                          {TokenType::TT_UINT8_T, "UINT8_T"},
-                                          {TokenType::TT_WHILE, "WHILE"}};
-
-        return TokenStr;
-    }
-};
-
 /// @brief Parsed token.
 struct Token
 {
@@ -812,7 +677,7 @@ struct Token
     friend std::ostream& operator<<(std::ostream& out, Token const& data)
     {
         out << "Token:";
-        out << "\n\tTokenType: " << TokenTypeUtil::getTypeAsStr(data.tokenType);
+        out << "\n\tTokenType: " << magic_enum::enum_name(data.tokenType);
         out << "\n\tLexme: \"" << data.lexeme << "\"";
         out << "\n\tOffset: " << data.sourceSpan.first;
         out << "\n\tSpan: " << data.sourceSpan.second;
