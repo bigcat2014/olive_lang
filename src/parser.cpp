@@ -5,7 +5,7 @@
 
 namespace pimento::ast {
 
-Parser::Parser(std::istream& istream)
+Parser::Parser(std::istream* istream)
     : mLexer(istream)
 {
     mLexer.tokenize();

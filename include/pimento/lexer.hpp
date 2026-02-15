@@ -20,7 +20,7 @@ class Lexer
 public:
     /// @brief Constructor for the Lexer
     /// @param istream The stream of characters to tokenize.
-    explicit Lexer(std::istream& istream);
+    explicit Lexer(std::istream* istream);
 
     /// @brief Getter for the vector of tokens lexed.
     /// @return The vector of lexed tokens.
@@ -133,7 +133,7 @@ private:
     static constexpr size_t MAX_TOKEN_LEN = 64;
 
     /// @brief The buffer of the input to tokenize.
-    InputBuffer mFileBuffer;
+    InputBuffer mInputBuffer;
     /// @brief The current characters representing the token.
     std::stringstream mTokenBuffer;
     /// @brief The tokens parsed from the input stream.

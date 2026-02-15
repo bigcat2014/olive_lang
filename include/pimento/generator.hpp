@@ -21,13 +21,7 @@ public:
     /// @brief Constructor for the Generator.
     /// @param istream Input stream of characters to lex, parse, and generate.
     /// @param ostream Output stream to generate to.
-    explicit Generator(std::istream& istream, std::ostream& ostream);
-
-    /// @brief Deleted copy constructor.
-    Generator(const Generator& other) = delete;
-
-    /// @brief Deleted move constructor.
-    Generator(Generator&& other) = delete;
+    explicit Generator(std::istream* istream, std::ostream* ostream);
 
     /// @brief Lex, parse, and generate output.
     void generate() noexcept;
@@ -94,7 +88,7 @@ private:
     /// @brief Parser object for parsing tokens into AST.
     ast::Parser mParser;
     /// @brief Output stream.
-    std::ostream& mOutput;
+    std::ostream* mOutput;
     /// @brief The current stack size.
     size_t mStackSize{0};
     /// @brief Current variables in use.

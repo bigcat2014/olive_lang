@@ -120,10 +120,10 @@ public:
     explicit operator bool() const noexcept { return mStream && mStream->good(); }
 
     /// @brief Get a reference to the underlying stream.
-    [[nodiscard]] StreamType& getStream() noexcept { return *mStream; }
+    [[nodiscard]] StreamType* getStream() noexcept { return mStream.get(); }
 
     /// @brief Get a const reference to the underlying stream.
-    [[nodiscard]] const StreamType& getStream() const noexcept { return *mStream; }
+    [[nodiscard]] const StreamType* getStream() const noexcept { return mStream.get(); }
 
 private:
     /// @brief Private constructor that takes a unique pointer to the stream with a smart deleter.

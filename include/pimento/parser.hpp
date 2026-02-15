@@ -6,7 +6,6 @@
 
 #include <istream>
 #include <optional>
-#include <vector>
 
 #include <pimento/ast.hpp>
 #include <pimento/lexer.hpp>
@@ -20,7 +19,7 @@ class Parser
 public:
     /// @brief Construct a new Parser object.
     /// @param istream The stream of characters to tokenize and parse.
-    explicit Parser(std::istream& istream);
+    explicit Parser(std::istream* istream);
 
     /// @brief Getter for the top level program AST node.
     /// @return The top level program AST node.

@@ -8,8 +8,8 @@
 
 namespace pimento::tokenization {
 
-Lexer::Lexer(std::istream& istream)
-    : mFileBuffer(istream)
+Lexer::Lexer(std::istream* istream)
+    : mInputBuffer(istream)
 {
     mTokens.reserve(InputBuffer::BUFFER_SIZE);
     // tokenize();
@@ -28,23 +28,23 @@ void Lexer::tokenize()
     size_t line   = 0;
     size_t column = 0;
 
-    while (!mFileBuffer.done()) {
+    while (!mInputBuffer.done()) {
         // Cache current offset, line number, and column number at start of parsing
         // current token
         if (mTokenBuffer.str().empty()) {
-            offset = mFileBuffer.getOffset();
-            line   = mFileBuffer.getCurrentLine();
-            column = mFileBuffer.getCurrentColumn();
+            offset = mInputBuffer.getOffset();
+            line   = mInputBuffer.getCurrentLine();
+            column = mInputBuffer.getCurrentColumn();
         }
         else if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    mFileBuffer.getCurrentLine() + 1,
-                                    mFileBuffer.getCurrentColumn(),
+                                    mInputBuffer.getCurrentLine() + 1,
+                                    mInputBuffer.getCurrentColumn(),
                                     std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
         }
 
         char currentChar;
-        if (auto current = mFileBuffer.consume()) {
+        if (auto current = mInputBuffer.consume()) {
             currentChar = current.value();
         }
         else {
@@ -56,28 +56,28 @@ void Lexer::tokenize()
             case '_':
                 // TODO(lthomas): I don't like this... Lots of reused code, not very
                 // clean.
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '_':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
                                 break;
                             }
-                            if (auto next = mFileBuffer.peek()) {
+                            if (auto next = mInputBuffer.peek()) {
                                 switch (next.value()) {
                                     case '_':
                                         pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                                mFileBuffer.getCurrentLine() + 1,
-                                                                mFileBuffer.getCurrentColumn(),
+                                                                mInputBuffer.getCurrentLine() + 1,
+                                                                mInputBuffer.getCurrentColumn(),
                                                                 "Too many '_' at start of identifier. Max is 2."});
                                         break;
                                     default:
                                         if (std::islower(next.value()) == 0) {
                                             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                                    mFileBuffer.getCurrentLine() + 1,
-                                                                    mFileBuffer.getCurrentColumn(),
+                                                                    mInputBuffer.getCurrentLine() + 1,
+                                                                    mInputBuffer.getCurrentColumn(),
                                                                     "Expected character matching [a-z_]."});
                                         }
                                         parseIdent(offset, line, column);
@@ -87,8 +87,8 @@ void Lexer::tokenize()
                         default:
                             if (std::islower(next.value()) == 0) {
                                 pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                        mFileBuffer.getCurrentLine() + 1,
-                                                        mFileBuffer.getCurrentColumn(),
+                                                        mInputBuffer.getCurrentLine() + 1,
+                                                        mInputBuffer.getCurrentColumn(),
                                                         "Expected character matching [a-z_]."});
                             }
                             parseIdent(offset, line, column);
@@ -97,8 +97,8 @@ void Lexer::tokenize()
                 }
                 else if (mTokenBuffer.str().back() == '_') {
                     pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                            mFileBuffer.getCurrentLine() + 1,
-                                            mFileBuffer.getCurrentColumn(),
+                                            mInputBuffer.getCurrentLine() + 1,
+                                            mInputBuffer.getCurrentColumn(),
                                             "Expected character after '_'"});
                 }
                 break;
@@ -166,10 +166,10 @@ void Lexer::tokenize()
                 break;
             // &, &=
             case '&':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -184,19 +184,19 @@ void Lexer::tokenize()
                 break;
             // ^, ^=, ^^, ^^=
             case '^':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '^':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
                                 break;
                             }
-                            if (auto next = mFileBuffer.peek()) {
+                            if (auto next = mInputBuffer.peek()) {
                                 switch (next.value()) {
                                     case '=':
-                                        if (auto current = mFileBuffer.consume()) {
+                                        if (auto current = mInputBuffer.consume()) {
                                             mTokenBuffer << current.value();
                                         }
                                         else {
@@ -210,7 +210,7 @@ void Lexer::tokenize()
                             }
                             break;
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -229,10 +229,10 @@ void Lexer::tokenize()
                 break;
             // =, ==
             case '=':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -256,19 +256,19 @@ void Lexer::tokenize()
             //   break;
             // /, //, /=, //=
             case '/':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '/':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
                                 break;
                             }
-                            if (auto next = mFileBuffer.peek()) {
+                            if (auto next = mInputBuffer.peek()) {
                                 switch (next.value()) {
                                     case '=':
-                                        if (auto current = mFileBuffer.consume()) {
+                                        if (auto current = mInputBuffer.consume()) {
                                             mTokenBuffer << current.value();
                                         }
                                         else {
@@ -282,7 +282,7 @@ void Lexer::tokenize()
                             }
                             break;
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -297,10 +297,10 @@ void Lexer::tokenize()
                 break;
             // <, <=, <<
             case '<':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '<':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -309,7 +309,7 @@ void Lexer::tokenize()
                             createToken(TokenType::TT_LANGLE_LANGLE, offset, line, column);
                             break;
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -324,10 +324,10 @@ void Lexer::tokenize()
                 break;
             // -, --, -=
             case '-':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '-':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -336,7 +336,7 @@ void Lexer::tokenize()
                             createToken(TokenType::TT_MINUS_MINUS, offset, line, column);
                             break;
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -351,10 +351,10 @@ void Lexer::tokenize()
                 break;
             // %, %=
             case '%':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -369,10 +369,10 @@ void Lexer::tokenize()
                 break;
             // |, |=
             case '|':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -387,10 +387,10 @@ void Lexer::tokenize()
                 break;
             // +, ++, +=
             case '+':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '+':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -399,7 +399,7 @@ void Lexer::tokenize()
                             createToken(TokenType::TT_PLUS_PLUS, offset, line, column);
                             break;
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -418,10 +418,10 @@ void Lexer::tokenize()
                 break;
             // >, >=, >>
             case '>':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '>':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -430,7 +430,7 @@ void Lexer::tokenize()
                             createToken(TokenType::TT_RANGLE_RANGLE, offset, line, column);
                             break;
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -445,10 +445,10 @@ void Lexer::tokenize()
                 break;
             // *, *=
             case '*':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -463,10 +463,10 @@ void Lexer::tokenize()
                 break;
             // ~, ~=
             case '~':
-                if (auto next = mFileBuffer.peek()) {
+                if (auto next = mInputBuffer.peek()) {
                     switch (next.value()) {
                         case '=':
-                            if (auto current = mFileBuffer.consume()) {
+                            if (auto current = mInputBuffer.consume()) {
                                 mTokenBuffer << current.value();
                             }
                             else {
@@ -481,9 +481,9 @@ void Lexer::tokenize()
                 break;
             // Comments
             case '#': {
-                std::optional<char> next = mFileBuffer.consume();
+                std::optional<char> next = mInputBuffer.consume();
                 while (next.has_value() && next.value() != '\n') {
-                    next = mFileBuffer.consume();
+                    next = mInputBuffer.consume();
                 }
 
                 mTokenBuffer.str("");
@@ -493,16 +493,16 @@ void Lexer::tokenize()
             // Unknown symbol
             default:
                 pimento::errors::raise({pimento::errors::ErrorType::SYMBOL_ERROR,
-                                        mFileBuffer.getCurrentLine() + 1,
-                                        mFileBuffer.getCurrentColumn(),
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
                                         std::format("Unknown symbol '{}'.", currentChar)});
         }
     }
 
     logger.trace(
-        "Finished final line: {} with {} columns", mFileBuffer.getCurrentLine(), mFileBuffer.getCurrentColumn());
-    logger.debug("Total chunks read: {}", mFileBuffer.getTotalChunks());
-    logger.debug("Total bytes read: {}", mFileBuffer.getTotalBytes());
+        "Finished final line: {} with {} columns", mInputBuffer.getCurrentLine(), mInputBuffer.getCurrentColumn());
+    logger.debug("Total chunks read: {}", mInputBuffer.getTotalChunks());
+    logger.debug("Total bytes read: {}", mInputBuffer.getTotalBytes());
 
     if (logger.level() == spdlog::level::trace) {
         std::cout << "Tokens:" << '\n';
@@ -513,7 +513,7 @@ void Lexer::tokenize()
         // Testing using offset and span for pulling from input stream
         std::cout << "Tokens from file" << '\n';
         for (const auto& token : mTokens) {
-            std::cout << mFileBuffer.get(token.sourceSpan.first, token.sourceSpan.second) << '\n';
+            std::cout << mInputBuffer.get(token.sourceSpan.first, token.sourceSpan.second) << '\n';
         }
     }
 }
@@ -548,9 +548,9 @@ void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t 
 
 void Lexer::parseIdent(size_t offset, size_t line, size_t column)
 {
-    if (auto next = mFileBuffer.peek()) {
+    if (auto next = mInputBuffer.peek()) {
         while (next.has_value() && isIdentChar(next.value())) {
-            auto consumed = mFileBuffer.consume();
+            auto consumed = mInputBuffer.consume();
             if (!consumed.has_value()) {
                 auto& logger = utils::getLogger();
                 logger.error("Unexpected EOF in \"{}\"", __FUNCTION__);
@@ -563,15 +563,15 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
                                         column,
                                         std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
             }
-            next = mFileBuffer.peek();
+            next = mInputBuffer.peek();
         }
 
-        next = mFileBuffer.peek();
+        next = mInputBuffer.peek();
         if (next.has_value()) {
             if (std::isspace(next.value()) == 0) {
                 pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                        mFileBuffer.getCurrentLine() + 1,
-                                        mFileBuffer.getCurrentColumn(),
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
                                         std::format("Unexpected character: '{}'.", next.value())});
             }
         }
@@ -582,9 +582,9 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
 
 void Lexer::parseType(size_t offset, size_t line, size_t column)
 {
-    if (auto next = mFileBuffer.peek()) {
+    if (auto next = mInputBuffer.peek()) {
         while (next.has_value() && isTypeChar(next.value())) {
-            auto consumed = mFileBuffer.consume();
+            auto consumed = mInputBuffer.consume();
             if (!consumed.has_value()) {
                 auto& logger = utils::getLogger();
                 logger.error("Unexpected EOF in \"{}\"", __FUNCTION__);
@@ -597,15 +597,15 @@ void Lexer::parseType(size_t offset, size_t line, size_t column)
                                         column,
                                         std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
             }
-            next = mFileBuffer.peek();
+            next = mInputBuffer.peek();
         }
 
-        next = mFileBuffer.peek();
+        next = mInputBuffer.peek();
         if (next.has_value()) {
             if (std::isspace(next.value()) == 0) {
                 pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                        mFileBuffer.getCurrentLine() + 1,
-                                        mFileBuffer.getCurrentColumn(),
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
                                         std::format("Unexpected character: '{}'.", next.value())});
             }
         }
