@@ -3,7 +3,7 @@
 
 namespace pimento::tokenization {
 
-InputBuffer::InputBuffer(std::istream& istream)
+InputBuffer::InputBuffer(std::istream* istream)
     : mStream(istream)
 {
     readChunk();
@@ -63,19 +63,19 @@ void InputBuffer::advance()
 [[nodiscard]] std::string InputBuffer::get(size_t offset, size_t span)
 {
     std::string out;
-    mStream.clear();
+    mStream->clear();
 
-    mStream.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
+    mStream->seekg(static_cast<std::streamsize>(offset), std::ios::beg);
     out.resize(span);
-    mStream.read(out.data(), static_cast<std::streamsize>(span));
+    mStream->read(out.data(), static_cast<std::streamsize>(span));
 
     return out;
 }
 
 void InputBuffer::readChunk()
 {
-    mStream.read(mBuffer.data(), static_cast<std::streamsize>(mBuffer.size()));
-    mNumChars = static_cast<size_t>(mStream.gcount());
+    mStream->read(mBuffer.data(), static_cast<std::streamsize>(mBuffer.size()));
+    mNumChars = static_cast<size_t>(mStream->gcount());
 
     if (mNumChars == 0) {
         mDone = true;

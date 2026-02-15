@@ -22,13 +22,7 @@ public:
 public:
     /// @brief Constructor for the InputBuffer
     /// @param istream The stream of characters to buffer.
-    explicit InputBuffer(std::istream& istream);
-
-    /// @brief Deleted copy constructor.
-    InputBuffer(const InputBuffer& other) = delete;
-
-    /// @brief Deleted move constructor.
-    InputBuffer(InputBuffer&& other) = delete;
+    explicit InputBuffer(std::istream* istream);
 
     /// @brief Peek at the next character in the buffer without consuming it.
     /// @return The next character in the buffer.
@@ -77,7 +71,7 @@ private:
 
 private:
     /// @brief The input stream to tokenize.
-    std::istream& mStream;
+    std::istream* mStream;
     /// @brief The buffer to read characters into.
     std::array<char, BUFFER_SIZE> mBuffer;
     /// @brief The number of characters read into the buffer.
