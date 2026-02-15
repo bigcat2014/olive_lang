@@ -1,3 +1,5 @@
+#include <magic_enum/magic_enum.hpp>
+
 #include <pimento/parser.hpp>
 #include <pimento/utils.hpp>
 
@@ -64,8 +66,8 @@ inline tokenization::Token Parser::tryConsume(tokenization::TokenType tokenType)
         auto& logger = utils::getLogger();
         logger.error("Token mismatch in \"{}\": expected {}, got {}",
                      __FUNCTION__,
-                     tokenization::TokenTypeUtil::getTypeAsStr(tokenType),
-                     tokenization::TokenTypeUtil::getTypeAsStr(next.value().tokenType));
+                     magic_enum::enum_name(tokenType),
+                     magic_enum::enum_name(next.value().tokenType));
         exit(EXIT_FAILURE);
     }
 
