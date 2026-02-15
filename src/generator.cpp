@@ -372,13 +372,13 @@ void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) 
 
 void Generator::push(const std::string& reg) noexcept
 {
-    mOutput << "    push " << reg << "\n";
+    (*mOutput) << "    push " << reg << "\n";
     mStackSize++;
 }
 
 void Generator::pop(const std::string& reg) noexcept
 {
-    mOutput << "    pop " << reg << "\n";
+    (*mOutput) << "    pop " << reg << "\n";
     mStackSize--;
 }
 
@@ -391,7 +391,7 @@ void Generator::endScope() noexcept
 {
     const size_t POP_COUNT = mVars.size() - mScopes.back();
     if (POP_COUNT != 0) {
-        mOutput << "    add rsp, " << POP_COUNT * 8 << "\n";
+        (*mOutput) << "    add rsp, " << POP_COUNT * 8 << "\n";
     }
     mStackSize -= POP_COUNT;
     for (size_t i = 0; i < POP_COUNT; i++) {
