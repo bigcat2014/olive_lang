@@ -20,73 +20,89 @@ set(${PROJECT_NAME}_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # Fetch argparse
 include(FetchContent)
 FetchContent_Declare(
-  argparse
-  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-  GIT_TAG        v3.2)
-FetchContent_MakeAvailable(argparse)
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+    GIT_TAG        v3.2
+    SYSTEM)
 
 FetchContent_Declare(
-  spdlog
-  GIT_REPOSITORY https://github.com/gabime/spdlog.git
-  GIT_TAG        v1.17.0)
-FetchContent_MakeAvailable(spdlog)
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG        v1.17.0
+    SYSTEM)
 
-# Create an interface library wrapper for spdlog to mark it as a system header and avoid clang-tidy errors
-add_library(spdlog_system INTERFACE)
-target_link_libraries(spdlog_system INTERFACE spdlog::spdlog_header_only)
-set_target_properties(spdlog_system PROPERTIES
-    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "$<TARGET_PROPERTY:spdlog::spdlog_header_only,INTERFACE_INCLUDE_DIRECTORIES>")
+FetchContent_Declare(
+    magic_enum
+    GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
+    GIT_TAG v0.9.7
+    SYSTEM)
+FetchContent_MakeAvailable(argparse spdlog magic_enum)
 
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
     src/utils.cpp)
-target_include_directories(${PROJECT_NAME}_utils PRIVATE
+target_include_directories(${PROJECT_NAME}_utils PUBLIC
 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_utils PUBLIC spdlog_system)
+target_link_libraries(${PROJECT_NAME}_utils PUBLIC spdlog::spdlog_header_only)
 
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
     src/input_buffer.cpp
     src/lexer.cpp)
-target_include_directories(${PROJECT_NAME}_lexer PRIVATE
+target_include_directories(${PROJECT_NAME}_lexer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_lexer PRIVATE
-    ${PROJECT_NAME}_utils)
+target_link_libraries(${PROJECT_NAME}_lexer PUBLIC
+    ${PROJECT_NAME}_utils magic_enum::magic_enum)
 
 # Parser library target
 add_library(${PROJECT_NAME}_parser STATIC
     src/parser.cpp)
-target_include_directories(${PROJECT_NAME}_parser PRIVATE
+target_include_directories(${PROJECT_NAME}_parser PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_parser PRIVATE
+target_link_libraries(${PROJECT_NAME}_parser PUBLIC
     ${PROJECT_NAME}_lexer
-    ${PROJECT_NAME}_utils)
+    ${PROJECT_NAME}_utils magic_enum::magic_enum)
 
 # Generator library target
 add_library(${PROJECT_NAME}_generator STATIC
     src/generator.cpp)
-target_include_directories(${PROJECT_NAME}_generator PRIVATE
+target_include_directories(${PROJECT_NAME}_generator PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME}_generator PRIVATE
+target_link_libraries(${PROJECT_NAME}_generator PUBLIC
     ${PROJECT_NAME}_parser
-    ${PROJECT_NAME}_utils)
+    ${PROJECT_NAME}_utils magic_enum::magic_enum)
 
 # Pimento executable target
 add_executable(${PROJECT_NAME}
     src/pimento.cpp)
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME} PUBLIC
     argparse
     ${PROJECT_NAME}_generator
     ${PROJECT_NAME}_utils)
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${PROJECT_NAME} PUBLIC
     PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
+
+find_program(COMPDB compdb)
+if(COMPDB)
+    add_custom_target(
+        compdb ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/build
+        COMMAND ${CMAKE_COMMAND} -E echo "Running compdb to generate compile_commands.json..."
+        COMMAND ${COMPDB} -p ${CMAKE_BINARY_DIR} list > ${CMAKE_SOURCE_DIR}/build/compile_commands.json
+        COMMAND ${CMAKE_COMMAND} -E echo "✓ compile_commands.json updated. Restart clangd language server to update."
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating enhanced compile_commands.json with compdb"
+    )
+else()
+    message(WARN "\"compdb\" not found! Compile commands may not be generated properly!")
+endif()
 
 if (BUILD_TESTING)
     enable_testing()
