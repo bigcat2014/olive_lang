@@ -23,12 +23,6 @@ public:
     /// @param ostream Output stream to generate to.
     explicit Generator(std::istream* istream, std::ostream* ostream);
 
-    /// @brief Deleted copy constructor.
-    Generator(const Generator& other) = delete;
-
-    /// @brief Deleted move constructor.
-    Generator(Generator&& other) = delete;
-
     /// @brief Lex, parse, and generate output.
     void generate() noexcept;
 
