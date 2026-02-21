@@ -17,8 +17,6 @@ class InputBuffer
 public:
     /// @brief The size in bytes of the internal buffer.
     static constexpr size_t BUFFER_SIZE = 4096;
-    /// @brief The size in bytes of the chunks read from the stream.
-    static constexpr size_t READ_SIZE = BUFFER_SIZE - 1;
 
 public:
     /// @brief Default constructor for InputBuffer;
@@ -33,10 +31,6 @@ public:
     /// @brief Peek at the current character in the buffer without consuming it.
     /// @return The current character in the buffer.
     [[nodiscard]] char peek() const noexcept;
-
-    /// @brief Peek at the next character in the buffer without consuming it.
-    /// @return The next character in the buffer.
-    [[nodiscard]] char peekNext() noexcept;
 
     /// @brief Get the current character and advance the buffer.
     /// @return The current character in the buffer.
@@ -96,7 +90,7 @@ private:
     size_t mColumn{0};
     /// @brief The current offset in the input stream.
     size_t mOffset{0};
-    /// @brief Whether or not we are done traversing the input stream.
+    /// @brief Whether or not we have consumed all characters from the stream.
     bool mDone{false};
 };
 

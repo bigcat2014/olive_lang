@@ -14,13 +14,15 @@ InputBuffer::InputBuffer(std::istream* istream)
     return mBuffer[mIndex];
 }
 
-[[nodiscard]] char InputBuffer::peekNext() noexcept
-{
-    return mBuffer[mIndex + 1];
-}
-
 [[nodiscard]] char InputBuffer::consume()
 {
+    if (mIndex >= mNumChars) {
+        readChunk();
+        if (mDone) {
+            return std::char_traits<char>::eof();
+        }
+    }
+
     const char curr = mBuffer[mIndex];
     if (curr == '\n') {
         auto& logger = utils::getLogger();
@@ -30,13 +32,6 @@ InputBuffer::InputBuffer(std::istream* istream)
     }
     else {
         ++mColumn;
-    }
-
-    if (mIndex >= mNumChars) {
-        readChunk();
-        if (mDone) {
-            return std::char_traits<char>::eof();
-        }
     }
 
     ++mIndex;
@@ -50,23 +45,23 @@ InputBuffer::InputBuffer(std::istream* istream)
 
 [[nodiscard]] std::string InputBuffer::get(size_t offset, size_t span)
 {
-    // auto& logger = utils::getLogger();
+    auto& logger = utils::getLogger();
     std::string out;
 
     // Check if the requested offset and span is within the current buffer before reading from the stream
-    size_t chunkStart = (mTotalChunks - 1) * READ_SIZE;
+    size_t chunkStart = (mTotalChunks - 1) * BUFFER_SIZE;
     size_t chunkEnd   = chunkStart + mNumChars;
 
     // The entire span is within the current buffer, no I/O needed
     if (offset >= chunkStart && (offset + span) <= chunkEnd) {
-        // logger.trace("Offset and span is in buffer, using cached value.");
+        logger.trace("Offset and span is in buffer, using cached value.");
         size_t localOffset = offset - chunkStart;
         out.assign(mBuffer.data() + localOffset, span);
         return out;
     }
 
     // Requested offset and span is not within our current buffer, we need to read from the stream
-    // logger.trace("Offset and span is not in buffer, reading from stream.");
+    logger.trace("Offset and span is not in buffer, reading from stream.");
 
     // Save state
     mStream->clear();
@@ -85,7 +80,7 @@ InputBuffer::InputBuffer(std::istream* istream)
 
 void InputBuffer::readChunk()
 {
-    mStream->read(mBuffer.data(), static_cast<std::streamsize>(READ_SIZE));
+    mStream->read(mBuffer.data(), static_cast<std::streamsize>(BUFFER_SIZE));
     auto charsRead = static_cast<size_t>(mStream->gcount());
 
     if (charsRead == 0) {
@@ -94,16 +89,8 @@ void InputBuffer::readChunk()
     }
 
     mNumChars = charsRead;
-
-    auto& logger = utils::getLogger();
-    if (mNumChars < READ_SIZE || mStream->eof()) {
-        mBuffer[mNumChars] = std::char_traits<char>::eof();
-    }
-    else {
-        mBuffer[READ_SIZE] = static_cast<char>(mStream->peek());
-    }
-
     mTotalBytes += mNumChars;
+    auto& logger = utils::getLogger();
     logger.trace("Read {} bytes from chunk {}", mNumChars, mTotalChunks);
     ++mTotalChunks;
     mIndex = 0;
