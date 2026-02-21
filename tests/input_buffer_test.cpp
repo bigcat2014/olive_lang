@@ -3,15 +3,26 @@
 /// @author Logan Thomas
 
 #include <gtest/gtest.h>
+#include <spdlog/common.h>
 #include <sstream>
 
 #include <pimento/input_buffer.hpp>
+#include <pimento/utils.hpp>
 
 namespace pimento::tokenization::testing {
 
 class InputBufferTestFixture : public ::testing::Test
 {
+public:
+    static void SetUpTestSuite()
+    {
+        pimento::utils::configureLogger(spdlog::level::trace);
+        logger = utils::getLogger();
+    }
+
 protected:
+    static inline auto& logger = utils::getLogger();
+
     InputBuffer mBuffer;
     std::istringstream mIss;
     std::string mStr;
@@ -22,44 +33,41 @@ protected:
         mStr    = mIss.str();
         mBuffer = InputBuffer(&mIss);
     }
+
+    void TearDown() override { logger.flush(); }
 };
 
 TEST_F(InputBufferTestFixture, peek)
 {
     auto value = mBuffer.peek();
+    EXPECT_EQ(value, mStr[0]);
+    // Peek should not consume
+    EXPECT_EQ(value, mBuffer.peek());
+}
 
-    ASSERT_TRUE(value.has_value());
-    EXPECT_EQ(value.value(), mStr[0]);
-    EXPECT_EQ(mIss.str(), mStr);
-
-    // Peek shouuld not consume
-    value = mBuffer.peek();
-
-    ASSERT_TRUE(value.has_value());
-    EXPECT_EQ(value.value(), mStr[0]);
-    EXPECT_EQ(mIss.str(), mStr);
+TEST_F(InputBufferTestFixture, peekNext)
+{
+    auto value = mBuffer.peekNext();
+    EXPECT_EQ(value, mStr[1]);
+    // Peek should not consume
+    EXPECT_EQ(value, mBuffer.peekNext());
 }
 
 TEST_F(InputBufferTestFixture, consume)
 {
     auto value = mBuffer.consume();
+    EXPECT_EQ(value, mStr[0]);
 
-    ASSERT_TRUE(value.has_value());
-    EXPECT_EQ(value.value(), mStr[0]);
-    EXPECT_EQ(mIss.str(), mStr);
-
+    // Consume should consume the character and advance the buffer
     value = mBuffer.peek();
-
-    ASSERT_TRUE(value.has_value());
-    EXPECT_EQ(value.value(), mStr[1]);
-    EXPECT_EQ(mIss.str(), mStr);
+    EXPECT_EQ(value, mStr[1]);
 }
 
 TEST_F(InputBufferTestFixture, advance) {}
 
 TEST_F(InputBufferTestFixture, getTotalBytes)
 {
-    EXPECT_EQ(mBuffer.getTotalBytes(), 13);
+    EXPECT_EQ(mBuffer.getTotalBytes(), mStr.size());
 }
 
 TEST_F(InputBufferTestFixture, getTotalChunks)

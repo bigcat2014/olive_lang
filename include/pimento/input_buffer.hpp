@@ -6,7 +6,6 @@
 
 #include <array>
 #include <istream>
-#include <optional>
 #include <string>
 
 namespace pimento::tokenization {
@@ -16,8 +15,10 @@ namespace pimento::tokenization {
 class InputBuffer
 {
 public:
-    /// @brief The size in bytes of the chunks to read from the input stream.
+    /// @brief The size in bytes of the internal buffer.
     static constexpr size_t BUFFER_SIZE = 4096;
+    /// @brief The size in bytes of the chunks read from the stream.
+    static constexpr size_t READ_SIZE = BUFFER_SIZE - 1;
 
 public:
     /// @brief Default constructor for InputBuffer;
@@ -29,16 +30,17 @@ public:
     /// @param istream The stream of characters to buffer.
     explicit InputBuffer(std::istream* istream);
 
+    /// @brief Peek at the current character in the buffer without consuming it.
+    /// @return The current character in the buffer.
+    [[nodiscard]] char peek() const noexcept;
+
     /// @brief Peek at the next character in the buffer without consuming it.
     /// @return The next character in the buffer.
-    [[nodiscard]] std::optional<char> peek() noexcept;
+    [[nodiscard]] char peekNext() noexcept;
 
     /// @brief Get the current character and advance the buffer.
     /// @return The current character in the buffer.
-    [[nodiscard]] std::optional<char> consume();
-
-    /// @brief Advance the file buffer.
-    void advance();
+    [[nodiscard]] char consume();
 
     /// @brief Get the current number of bytes read from input stream.
     /// @return Current number of bytes read from input stream.
@@ -72,6 +74,7 @@ public:
     [[nodiscard]] std::string get(size_t offset, size_t span = 1);
 
 private:
+    /// @brief Read one chunk of BUFFER_SIZE from the input stream.
     void readChunk();
 
 private:
