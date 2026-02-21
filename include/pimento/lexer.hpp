@@ -18,6 +18,9 @@ namespace pimento::tokenization {
 class Lexer
 {
 public:
+    /// @brief The starting buffer size for the tokens.
+    static constexpr size_t BUFFER_SIZE = 4096;
+
     /// @brief Constructor for the Lexer
     /// @param istream The stream of characters to tokenize.
     explicit Lexer(std::istream* istream);

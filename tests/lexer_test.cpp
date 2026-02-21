@@ -2,7 +2,6 @@
 /// @brief Pimento lexer unit tests
 /// @author Logan Thomas
 
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -11,6 +10,7 @@
 #include "test_settings.hpp"
 
 #include <gtest/gtest.h>
+#include <pimento/file_stream.hpp>
 #include <pimento/lexer.hpp>
 #include <pimento/tokens.hpp>
 
@@ -20,26 +20,33 @@ class TestingFile
 {
 public:
     explicit TestingFile(const std::string_view& filePath)
-        : mInputFile(std::string(filePath))
+        : mStream(makeInputStreamFromPath(filePath))
     {
-        if (!mInputFile) {
+        if (!mStream) {
             throw std::runtime_error("cannot open " + std::string(filePath));
         }
     }
 
-    virtual ~TestingFile() {}
+    virtual ~TestingFile() = default;
 
-    bool advance()
-    {
-        m_token.clear();
-        return (bool)std::getline(mInputFile, m_token);
-    }
-
-    [[nodiscard]] std::string getToken() const noexcept { return m_token; }
+    [[nodiscard]] std::string getToken() const noexcept { return mLine; }
 
 private:
-    std::ifstream mInputFile;
-    std::string m_token;
+    InputStream mStream;
+    std::string mLine;
+};
+
+class LexerFixture : public ::testing::TestWithParam<std::pair<std::string_view, std::function<bool()>>>
+{
+protected:
+    std::vector<Token> mTokens;
+
+    void initializeFromFile(const std::string_view& filePath)
+    {
+        InputStream stream = makeInputStreamFromPath(filePath);
+        Lexer lexer(stream.getStream());
+        mTokens = lexer.tokens();
+    }
 };
 
 std::vector<std::string> parseCSVRow(std::istringstream& input)
@@ -47,67 +54,43 @@ std::vector<std::string> parseCSVRow(std::istringstream& input)
     std::vector<std::string> parsed;
     std::string value;
     while (std::getline(input, value, ',')) {
-        parsed.push_back(std::move(value));
+        parsed.emplace_back(value);
     }
 
     return parsed;
 }
 
-TEST(Lexer, FloatPass)
+TEST_F(LexerFixture, FloatPass)
 {
-    TestingFile testingFile{FLOAT_PASS_PATH};
+    initializeFromFile(FLOAT_PASS_PATH);
 
-    while (testingFile.advance()) {
-        std::istringstream testStream{testingFile.getToken()};
-        std::vector<std::string> parsed = parseCSVRow(testStream);
-        ASSERT_GE(parsed.size(), 2);
-
-        std::istringstream input{std::move(parsed[0])};
-        Lexer lexer{input};
-        for (const auto& token : lexer.tokens()) {
-            EXPECT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
-            // TODO(lthomas): Placeholder code. Will need updating for token type
-            // EXPECT_EQ(token.value, std::stod(parsed[1]));
-        }
+    for (const auto& token : mTokens) {
+        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
+        // TODO(lthomas): Placeholder code. Will need updating for token type
+        EXPECT_EQ(token.value, std::stof(token));
     }
 }
 
 TEST(Lexer, IntegerPass)
 {
-    TestingFile testingFile{INTEGER_PASS_PATH};
+    initializeFromFile(INTEGER_PASS_PATH);
 
-    while (testingFile.advance()) {
-        std::istringstream testStream{testingFile.getToken()};
-        std::vector<std::string> parsed = parseCSVRow(testStream);
-        ASSERT_GE(parsed.size(), 2);
-
-        std::istringstream input{std::move(parsed[0])};
-        Lexer lexer{input};
-        for (const auto& token : lexer.tokens()) {
-            // TODO(lthomas): Placeholder code. Will need updating for token type
-            EXPECT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
-            // EXPECT_EQ(token.value, std::stoll(parsed[1]));
-        }
+    for (const auto& token : mTokens) {
+        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
+        // TODO(lthomas): Placeholder code. Will need updating for token type
+        EXPECT_EQ(token.value, std::stoll(token));
     }
 }
 
 TEST(Lexer, ScientificPass)
 {
-    TestingFile testingFile{SCIENTIFIC_PASS_PATH};
+    initializeFromFile(SCIENTIFIC_PASS_PATH);
 
-    while (testingFile.advance()) {
-        std::istringstream testStream{testingFile.getToken()};
-        std::vector<std::string> parsed = parseCSVRow(testStream);
-        ASSERT_GE(parsed.size(), 3);
-
-        std::istringstream input{std::move(parsed[0])};
-        Lexer lexer{input};
-        for (const auto& token : lexer.tokens()) {
-            // TODO(lthomas): Placeholder code. Will need updating for token type
-            EXPECT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
-            // EXPECT_EQ(token.value, std::stoll(parsed[1]));
-            // EXPECT_EQ(token.value, std::stoll(parsed[2]));
-        }
+    for (const auto& token : mTokens) {
+        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
+        // TODO(lthomas): Placeholder code. Will need updating for token type
+        EXPECT_EQ(token.value, std::stoll(parsed[1]));
+        EXPECT_EQ(token.value, std::stoll(parsed[2]));
     }
 }
 
