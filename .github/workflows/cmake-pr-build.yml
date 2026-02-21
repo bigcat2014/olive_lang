@@ -66,9 +66,9 @@ jobs:
       run: |
         choco install -y `
           llvm `
-          doxygen `
+          doxygen.install `
           miktex
-        pip install run-clang-format cmakelang gcovr
+        pip install compdb run-clang-format cmakelang gcovr
     
     - name: Configure
       run: cmake --preset windows-${{ matrix.build_type_lower }}
