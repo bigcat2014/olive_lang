@@ -9,13 +9,10 @@ set(${PROJECT_NAME}_VERSION
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS
-    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -Wno-unused-function -fno-fast-math")
-if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-endif()
-
 set(${PROJECT_NAME}_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# Disable warnings for dependencies
+set(CMAKE_CXX_FLAGS "-w")
 
 # Fetch argparse
 include(FetchContent)
@@ -26,9 +23,9 @@ FetchContent_Declare(
     SYSTEM)
 
 FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG        v1.17.0
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.17.0
     SYSTEM)
 
 FetchContent_Declare(
@@ -36,7 +33,21 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
     GIT_TAG v0.9.7
     SYSTEM)
-FetchContent_MakeAvailable(argparse spdlog magic_enum)
+
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG        v1.17.0
+    SYSTEM)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(argparse spdlog magic_enum googletest)
+
+# Re-enable warnings
+set(CMAKE_CXX_FLAGS
+    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -Wno-unused-function -fno-fast-math")
+if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif()
 
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
@@ -89,21 +100,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     PROJECT_VERSION="${${PROJECT_NAME}_VERSION}")
 
-find_program(COMPDB compdb)
-if(COMPDB)
-    add_custom_target(
-        compdb ALL
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/build
-        COMMAND ${CMAKE_COMMAND} -E echo "Running compdb to generate compile_commands.json..."
-        COMMAND ${COMPDB} -p ${CMAKE_BINARY_DIR} list > ${CMAKE_SOURCE_DIR}/build/compile_commands.json
-        COMMAND ${CMAKE_COMMAND} -E echo "✓ compile_commands.json updated. Restart clangd language server to update."
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Generating enhanced compile_commands.json with compdb"
-    )
-else()
-    message(WARN "\"compdb\" not found! Compile commands may not be generated properly!")
-endif()
-
 if (BUILD_TESTING)
     enable_testing()
 
@@ -142,8 +138,8 @@ if (BUILD_TESTING)
         @ONLY)
 
     # GTest
-    ## Lexer
-    # find_package(GTest REQUIRED)
+    # Lexer
+    include(GoogleTest)
     # add_executable(lexer_test EXCLUDE_FROM_ALL
     #     tests/lexer_test.cpp)
     # target_include_directories(lexer_test PRIVATE
@@ -153,7 +149,7 @@ if (BUILD_TESTING)
     #     ${PROJECT_NAME}_lexer GTest::gtest_main)
     # gtest_discover_tests(lexer_test)
 
-    # ## Parser
+    # Parser
     # add_executable(parser_test EXCLUDE_FROM_ALL
     #     tests/parser_test.cpp)
     # target_include_directories(parser_test PRIVATE
@@ -364,6 +360,21 @@ if (BUILD_TESTING)
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         DEPENDS build_tests ${PROJECT_NAME}
         COMMENT "Run unit tests")
+endif()
+
+find_program(COMPDB compdb)
+if(COMPDB)
+    add_custom_target(
+        compdb ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/build
+        COMMAND ${CMAKE_COMMAND} -E echo "Running compdb to generate compile_commands.json..."
+        COMMAND ${COMPDB} -p ${CMAKE_BINARY_DIR} list > ${CMAKE_SOURCE_DIR}/build/compile_commands.json
+        COMMAND ${CMAKE_COMMAND} -E echo "✓ compile_commands.json updated. Restart clangd language server to update."
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating enhanced compile_commands.json with compdb"
+    )
+else()
+    message(WARN "\"compdb\" not found! Compile commands may not be generated properly!")
 endif()
 
 install(

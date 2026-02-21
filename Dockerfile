@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y \
     doxygen \
     git \
     gnupg \
-    libgtest-dev \
     ninja-build \
     python3-pip \
     software-properties-common \
