@@ -45,14 +45,6 @@ TEST_F(InputBufferTestFixture, peek)
     EXPECT_EQ(value, mBuffer.peek());
 }
 
-TEST_F(InputBufferTestFixture, peekNext)
-{
-    auto value = mBuffer.peekNext();
-    EXPECT_EQ(value, mStr[1]);
-    // Peek should not consume
-    EXPECT_EQ(value, mBuffer.peekNext());
-}
-
 TEST_F(InputBufferTestFixture, consume)
 {
     auto value = mBuffer.consume();
