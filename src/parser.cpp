@@ -170,7 +170,7 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
     return stmt;
 }
 
-std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*/)
+std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t minPrecedence)
 {
     auto& logger = utils::getLogger();
     std::shared_ptr<node::ExprNode> expr;
