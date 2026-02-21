@@ -9,13 +9,10 @@ set(${PROJECT_NAME}_VERSION
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS
-    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -Wno-unused-function -fno-fast-math")
-if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-endif()
-
 set(${PROJECT_NAME}_CMAKE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# Disable warnings for dependencies
+set(CMAKE_CXX_FLAGS "-w")
 
 # Fetch argparse
 include(FetchContent)
@@ -44,6 +41,13 @@ FetchContent_Declare(
     SYSTEM)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(argparse spdlog magic_enum googletest)
+
+# Re-enable warnings
+set(CMAKE_CXX_FLAGS
+    "-Wall -Wextra -pedantic -Wdouble-promotion -Wconversion -Wfatal-errors -Wno-unused-function -fno-fast-math")
+if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif()
 
 # Utils library target
 add_library(${PROJECT_NAME}_utils STATIC
