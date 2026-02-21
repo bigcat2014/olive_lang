@@ -10,6 +10,7 @@
 #include <memory>
 
 namespace pimento::tokenization {
+
 template <typename T>
 concept IOStream = std::derived_from<T, std::istream> || std::derived_from<T, std::ostream>;
 
