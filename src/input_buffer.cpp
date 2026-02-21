@@ -45,27 +45,23 @@ InputBuffer::InputBuffer(std::istream* istream)
 
 [[nodiscard]] std::string InputBuffer::get(size_t offset, size_t span)
 {
-    auto& logger = utils::getLogger();
     std::string out;
 
     // Check if the requested offset and span is within the current buffer before reading from the stream
-    size_t chunkStart = (mTotalChunks - 1) * BUFFER_SIZE;
-    size_t chunkEnd   = chunkStart + mNumChars;
+    const size_t chunkStart = (mTotalChunks - 1) * BUFFER_SIZE;
+    const size_t chunkEnd   = chunkStart + mNumChars;
 
     // The entire span is within the current buffer, no I/O needed
     if (offset >= chunkStart && (offset + span) <= chunkEnd) {
-        logger.trace("Offset and span is in buffer, using cached value.");
-        size_t localOffset = offset - chunkStart;
+        const size_t localOffset = offset - chunkStart;
         out.assign(mBuffer.data() + localOffset, span);
         return out;
     }
 
     // Requested offset and span is not within our current buffer, we need to read from the stream
-    logger.trace("Offset and span is not in buffer, reading from stream.");
-
     // Save state
     mStream->clear();
-    std::streampos currentPos = mStream->tellg();
+    const std::streampos currentPos = mStream->tellg();
 
     mStream->seekg(static_cast<std::streamsize>(offset), std::ios::beg);
     out.resize(span);

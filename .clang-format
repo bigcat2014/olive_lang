@@ -42,6 +42,9 @@ AlignEscapedNewlines: Left
 AlignOperands: true
 AlignTrailingComments: true
 
+QualifierAlignment: Custom
+QualifierOrder: [static, constexpr, inline, const, volatile, friend, type]
+
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: Empty

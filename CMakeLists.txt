@@ -68,7 +68,6 @@ target_link_libraries(${PROJECT_NAME}_input_buffer PUBLIC
 
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
-    src/input_buffer.cpp
     src/lexer.cpp)
 target_include_directories(${PROJECT_NAME}_lexer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -201,6 +200,7 @@ if (BUILD_TESTING)
     # Clang Tidy
     include(ProcessorCount)
     ProcessorCount(N_PROC)
+    file(GLOB ${PROJECT_NAME}_SOURCES "src/*.cpp")
     find_program(
         CLANG_TIDY_PATH
         NAMES run-clang-tidy)
@@ -216,7 +216,7 @@ if (BUILD_TESTING)
         -warnings-as-errors=*
         -export-fixes
         ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/pimento.cpp
+        ${${PROJECT_NAME}_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
     # Doxygen

@@ -170,7 +170,7 @@ void Lexer::tokenize()
             }
             // &, &=
             case '&': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -219,7 +219,7 @@ void Lexer::tokenize()
             }
             // =, ==
             case '=': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -274,7 +274,7 @@ void Lexer::tokenize()
             }
             // <, <=, <<
             case '<': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -293,7 +293,7 @@ void Lexer::tokenize()
             }
             // -, --, -=
             case '-': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -312,7 +312,7 @@ void Lexer::tokenize()
             }
             // %, %=
             case '%': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -327,7 +327,7 @@ void Lexer::tokenize()
             }
             // |, |=
             case '|': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -342,7 +342,7 @@ void Lexer::tokenize()
             }
             // +, ++, +=
             case '+': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -366,7 +366,7 @@ void Lexer::tokenize()
             }
             // >, >=, >>
             case '>': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -385,7 +385,7 @@ void Lexer::tokenize()
             }
             // *, *=
             case '*': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -400,7 +400,7 @@ void Lexer::tokenize()
             }
             // ~, ~=
             case '~': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -455,28 +455,28 @@ void Lexer::tokenize()
 
 void Lexer::createToken(TokenType type, size_t offset, size_t line, size_t column) noexcept
 {
-    std::string const lexme{mTokenBuffer.str()};
-    mTokens.emplace_back(type, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+    const std::string lexeme{mTokenBuffer.str()};
+    mTokens.emplace_back(type, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
-void Lexer::createIdentToken(const std::string& value, size_t offset, size_t line, size_t column) noexcept
+void Lexer::createIdentToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
 {
-    std::string const lexme{mTokenBuffer.str()};
+    const std::string lexeme{mTokenBuffer.str()};
     // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
     mTokens.emplace_back(
-        TokenType::TT_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+        TokenType::TT_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
-void Lexer::createTypeToken(const std::string& value, size_t offset, size_t line, size_t column) noexcept
+void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
 {
-    std::string const lexme{mTokenBuffer.str()};
+    const std::string lexeme{mTokenBuffer.str()};
     // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
     mTokens.emplace_back(
-        TokenType::TT_TYPE_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+        TokenType::TT_TYPE_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
@@ -551,7 +551,7 @@ void Lexer::parseType(size_t offset, size_t line, size_t column)
     createTypeToken(mTokenBuffer.str(), offset, line, column);
 }
 
-void Lexer::parseNumericConst(size_t offset, size_t line, size_t column)
+void Lexer::parseNumericConst(size_t /*offset*/, size_t /*line*/, size_t /*column*/)
 {
     mTokenBuffer.str("");
     mTokenBuffer.clear();
@@ -577,7 +577,7 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     exponent = std::stoi(exponentStr);
 
     // 3. Normalize mantissa (remove decimal point)
-    size_t const dotPos  = mantissaStr.find('.');
+    const size_t dotPos  = mantissaStr.find('.');
     int32_t decimalShift = 0;
     if (dotPos != std::string::npos) {
         decimalShift = static_cast<int32_t>(mantissaStr.size()) - static_cast<int32_t>(dotPos) - 1;
@@ -586,7 +586,7 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
 
     // Convert mantissa digits to integer
     uint64_t decimalMantissa = 0;
-    for (char const character : mantissaStr) {
+    for (const char character : mantissaStr) {
         if (character < '0' || character > '9') {
             throw std::invalid_argument("Invalid digit in float");
         }
@@ -594,14 +594,14 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     }
 
     // Effective base-10 exponent
-    int const effectiveExp10 = exponent - decimalShift;
+    const int effectiveExp10 = exponent - decimalShift;
 
     // 4. Convert decimal mantissa and exponent to binary
-    long double const value = static_cast<long double>(decimalMantissa) * std::pow(10.0L, effectiveExp10);
+    const long double value = static_cast<long double>(decimalMantissa) * std::pow(10.0L, effectiveExp10);
 
     // Decompose into mantissa + binary exponent
     int binExp;
-    long double const frac = std::frexp(value, &binExp);                  // frac in [0.5, 1)
+    const long double frac = std::frexp(value, &binExp);                  // frac in [0.5, 1)
     mantissa               = static_cast<uint64_t>(frac * (1ULL << 53));  // 53-bit mantissa for double
     exponent               = binExp - 53;
 

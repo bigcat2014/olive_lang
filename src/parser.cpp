@@ -20,7 +20,7 @@ Parser::Parser(std::istream* istream)
 void Parser::parse()
 {
     while (peek().has_value()) {
-        std::shared_ptr<node::StmtNode> const stmt = parseStatement();
+        const std::shared_ptr<node::StmtNode> stmt = parseStatement();
         mProg.statements.push_back(stmt);
     }
 }
@@ -95,7 +95,7 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
             tryConsume(tokenization::TokenType::TT_EXIT);
             tryConsume(tokenization::TokenType::TT_LEFT_PAREN);
 
-            std::shared_ptr<node::ExprNode> const expression = parseExpression();
+            const std::shared_ptr<node::ExprNode> expression = parseExpression();
 
             tryConsume(tokenization::TokenType::TT_RIGHT_PAREN);
             tryConsume(tokenization::TokenType::TT_SEMI);
@@ -124,7 +124,7 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
             tryConsume(tokenization::TokenType::TT_IDENT);
             // tryConsume(tokenization::TokenType::TT_EQUAL);
 
-            std::shared_ptr<node::ExprNode> const expression = parseExpression();
+            const std::shared_ptr<node::ExprNode> expression = parseExpression();
 
             tryConsume(tokenization::TokenType::TT_SEMI);
 
@@ -135,11 +135,11 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
         case tokenization::TokenType::TT_IF: {
             tryConsume(tokenization::TokenType::TT_IF);
 
-            std::shared_ptr<node::ExprNode> const expression = parseExpression();
+            const std::shared_ptr<node::ExprNode> expression = parseExpression();
 
-            std::shared_ptr<node::ScopeNode> const scope = parseScope();
+            const std::shared_ptr<node::ScopeNode> scope = parseScope();
 
-            std::optional<std::shared_ptr<node::IfPredNode>> const ifpred = parseIfPred();
+            const std::optional<std::shared_ptr<node::IfPredNode>> ifpred = parseIfPred();
 
             stmt = std::make_shared<node::StmtNode>(std::make_shared<node::StmtIfNode>(expression, scope, ifpred));
 
@@ -149,9 +149,9 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
         case tokenization::TokenType::TT_WHILE: {
             tryConsume(tokenization::TokenType::TT_WHILE);
 
-            std::shared_ptr<node::ExprNode> const expression = parseExpression();
+            const std::shared_ptr<node::ExprNode> expression = parseExpression();
 
-            std::shared_ptr<node::ScopeNode> const scope = parseScope();
+            const std::shared_ptr<node::ScopeNode> scope = parseScope();
 
             stmt = std::make_shared<node::StmtNode>(std::make_shared<node::StmtWhileNode>(expression, scope));
 
@@ -170,7 +170,7 @@ std::shared_ptr<node::StmtNode> Parser::parseStatement()
     return stmt;
 }
 
-std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t minPrecedence)
+std::shared_ptr<node::ExprNode> Parser::parseExpression(uint8_t /*minPrecedence*/)
 {
     auto& logger = utils::getLogger();
     std::shared_ptr<node::ExprNode> expr;
@@ -405,7 +405,7 @@ std::shared_ptr<node::ScopeNode> Parser::parseScope()
             break;
         }
 
-        std::shared_ptr<node::StmtNode> const statement = parseStatement();
+        const std::shared_ptr<node::StmtNode> statement = parseStatement();
         scope->statements.push_back(statement);
     }
 
@@ -429,9 +429,9 @@ std::optional<std::shared_ptr<node::IfPredNode>> Parser::parseIfPred()
         // Parse format ident;
         case tokenization::TokenType::TT_ELIF: {
             tryConsume(tokenization::TokenType::TT_ELIF);
-            std::shared_ptr<node::ExprNode> const expression                  = parseExpression();
-            std::shared_ptr<node::ScopeNode> const scope                      = parseScope();
-            std::optional<std::shared_ptr<node::IfPredNode>> const ifPredElif = parseIfPred();
+            const std::shared_ptr<node::ExprNode> expression                  = parseExpression();
+            const std::shared_ptr<node::ScopeNode> scope                      = parseScope();
+            const std::optional<std::shared_ptr<node::IfPredNode>> ifPredElif = parseIfPred();
             ifpred                                                            = std::make_shared<node::IfPredNode>(
                 std::make_shared<node::IfPredElifNode>(expression, scope, ifPredElif));
             break;
@@ -439,7 +439,7 @@ std::optional<std::shared_ptr<node::IfPredNode>> Parser::parseIfPred()
         // Parse format int_lit
         case tokenization::TokenType::TT_ELSE: {
             tryConsume(tokenization::TokenType::TT_ELSE);
-            std::shared_ptr<node::ScopeNode> const scope = parseScope();
+            const std::shared_ptr<node::ScopeNode> scope = parseScope();
             ifpred = std::make_shared<node::IfPredNode>(std::make_shared<node::IfPredElseNode>(scope));
             break;
         }
@@ -478,7 +478,7 @@ std::shared_ptr<node::TermNode> Parser::parseTerm()
         // }
         // Parse format ident = ([Expr]);
         case tokenization::TokenType::TT_LEFT_PAREN: {
-            std::shared_ptr<node::ExprNode> const expression = parseExpression();
+            const std::shared_ptr<node::ExprNode> expression = parseExpression();
             tryConsume(tokenization::TokenType::TT_RIGHT_PAREN);
 
             term = std::make_shared<node::TermNode>(std::make_shared<node::TermExprNode>(expression));
