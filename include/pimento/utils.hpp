@@ -13,7 +13,7 @@ namespace pimento::utils {
 
 /// @brief Gets the global logger.
 /// @return Global logger.
-spdlog::logger& getLogger() noexcept;
+spdlog::logger& getLogger();
 
 /// @brief Configures the logger.
 /// @param level The log level to configure the logger with.
@@ -22,7 +22,7 @@ void configureLogger(spdlog::level::level_enum level) noexcept;
 /// @brief Expands `~` and environment variables in input path.
 /// @param inputPath The file path in which to expand the variables.
 /// @return The file path with variables expanded.
-std::filesystem::path expandVars(const std::string& inputPath) noexcept;
+std::filesystem::path expandVars(const std::string& inputPath);
 
 /// @brief Sanitize the input path.
 /// @details Sanitize the input path by expanding `~` and environment variables and producing the canonical path.

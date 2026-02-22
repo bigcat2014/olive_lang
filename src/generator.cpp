@@ -159,7 +159,7 @@ void Generator::genIfpred(const std::shared_ptr<ast::node::IfPredNode>& node, co
         Visitor(Visitor&& other)      = delete;
 
         Generator& gen;
-        const std::string endLabel;
+        const std::string& endLabel;
 
         void operator()(const std::shared_ptr<ast::node::IfPredElifNode>& ifpred) const
         {
@@ -250,9 +250,9 @@ void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) 
             gen.genExpression(binExpr->right);
             gen.genExpression(binExpr->left);
 
-            std::string const loopLabel = pimento::generation::Generator::createLabel();
-            std::string const negLabel  = pimento::generation::Generator::createLabel();
-            std::string const endLabel  = pimento::generation::Generator::createLabel();
+            const std::string loopLabel = pimento::generation::Generator::createLabel();
+            const std::string negLabel  = pimento::generation::Generator::createLabel();
+            const std::string endLabel  = pimento::generation::Generator::createLabel();
 
             gen.pop("rax");
             (*gen.mOutput) << "    mov rbx, rax\n";
@@ -324,8 +324,8 @@ void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) 
             gen.genExpression(binExpr->right);
             gen.genExpression(binExpr->left);
 
-            std::string const label    = pimento::generation::Generator::createLabel();
-            std::string const endLabel = pimento::generation::Generator::createLabel();
+            const std::string label    = pimento::generation::Generator::createLabel();
+            const std::string endLabel = pimento::generation::Generator::createLabel();
 
             gen.pop("rax");
             gen.pop("rbx");
@@ -344,8 +344,8 @@ void Generator::genBinExpr(const std::shared_ptr<ast::node::BinExprNode>& node) 
             gen.genExpression(binExpr->right);
             gen.genExpression(binExpr->left);
 
-            std::string const label    = pimento::generation::Generator::createLabel();
-            std::string const endLabel = pimento::generation::Generator::createLabel();
+            const std::string label    = pimento::generation::Generator::createLabel();
+            const std::string endLabel = pimento::generation::Generator::createLabel();
 
             gen.pop("rax");
             gen.pop("rbx");

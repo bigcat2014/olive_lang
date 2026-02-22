@@ -37,7 +37,7 @@
             "name": "Pimento Trace",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/debug/pimento",
+            "program": "${command:cmake.getLaunchTargetDirectory}/pimento",
             "args": [
                 "--trace",
                 "${workspaceFolder}/test.oil",

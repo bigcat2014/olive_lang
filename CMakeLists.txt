@@ -57,15 +57,25 @@ $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME}_utils PUBLIC spdlog::spdlog_header_only)
 
+# Input Buffer library target
+add_library(${PROJECT_NAME}_input_buffer STATIC
+    src/input_buffer.cpp)
+target_include_directories(${PROJECT_NAME}_input_buffer PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_link_libraries(${PROJECT_NAME}_input_buffer PUBLIC
+    ${PROJECT_NAME}_utils)
+
 # Lexer library target
 add_library(${PROJECT_NAME}_lexer STATIC
-    src/input_buffer.cpp
     src/lexer.cpp)
 target_include_directories(${PROJECT_NAME}_lexer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME}_lexer PUBLIC
-    ${PROJECT_NAME}_utils magic_enum::magic_enum)
+    ${PROJECT_NAME}_utils
+    ${PROJECT_NAME}_input_buffer
+    magic_enum::magic_enum)
 
 # Parser library target
 add_library(${PROJECT_NAME}_parser STATIC
@@ -138,8 +148,19 @@ if (BUILD_TESTING)
         @ONLY)
 
     # GTest
-    # Lexer
     include(GoogleTest)
+
+    # Input Buffer
+    add_executable(input_buffer_test EXCLUDE_FROM_ALL
+        tests/input_buffer_test.cpp)
+    target_include_directories(input_buffer_test PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+    target_link_libraries(input_buffer_test PRIVATE
+        ${PROJECT_NAME}_input_buffer GTest::gtest_main)
+    gtest_discover_tests(input_buffer_test)
+
+    # Lexer
     # add_executable(lexer_test EXCLUDE_FROM_ALL
     #     tests/lexer_test.cpp)
     # target_include_directories(lexer_test PRIVATE
@@ -162,7 +183,7 @@ if (BUILD_TESTING)
     # Linters
     set(${PROJECT_NAME}_LINTER_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/Linters)
 
-    ## CMake Lint
+    # CMake Lint
     find_program(CMAKE_LINT_PATH cmake-lint)
     if(NOT CMAKE_LINT_PATH)
         message(FATAL_ERROR "cmake-lint not found! Aborting...")
@@ -176,9 +197,10 @@ if (BUILD_TESTING)
         -o ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_cmake_linter.txt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-    ## Clang Tidy
+    # Clang Tidy
     include(ProcessorCount)
     ProcessorCount(N_PROC)
+    file(GLOB ${PROJECT_NAME}_SOURCES "src/*.cpp")
     find_program(
         CLANG_TIDY_PATH
         NAMES run-clang-tidy)
@@ -194,9 +216,10 @@ if (BUILD_TESTING)
         -warnings-as-errors=*
         -export-fixes
         ${${PROJECT_NAME}_LINTER_OUTPUT_DIR}/${PROJECT_NAME}_clang_tidy_linter.yaml
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/pimento.cpp
+        ${${PROJECT_NAME}_SOURCES}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+    # Doxygen
     find_package(Doxygen)
     if(Doxygen_FOUND)
         set(DOXYGEN_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs)
@@ -318,28 +341,31 @@ if (BUILD_TESTING)
     #         --stdout --verbose
     #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    # # Gcovr Coverage Report Generation
-    # list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
-    # include(CodeCoverage)
-    # append_coverage_compiler_flags()
-    # set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
-    # # Use llvm-cov gcov for Clang
-    # if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    #     find_program(
-    #         LLVM_COV_PATH
-    #         NAMES llvm-cov)
-    #     if(NOT LLVM_COV_PATH)
-    #         message(FATAL_ERROR "llvm-cov not found! Aborting...")
-    #     endif() # NOT LLVM_COV_PATH
-    #     list(APPEND GCOVR_ADDITIONAL_ARGS
-    #         --gcov-executable "${LLVM_COV_PATH} gcov")
-    # endif()
-    # set(Coverage_DEPENDENCIES run_tests)
-    # setup_target_for_coverage_gcovr_html(NAME coverage)
+    list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
+
+    # Gcovr Coverage Report Generation
+    if("${CMAKE_${LANG}_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_${LANG}_COMPILER_ID}" MATCHES "(LLVM)?[Ff]lang")
+        include(CodeCoverage)
+        append_coverage_compiler_flags()
+        set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
+        # Use llvm-cov gcov for Clang
+        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            find_program(
+                LLVM_COV_PATH
+                NAMES llvm-cov)
+            if(NOT LLVM_COV_PATH)
+                message(FATAL_ERROR "llvm-cov not found! Aborting...")
+            endif() # NOT LLVM_COV_PATH
+            list(APPEND GCOVR_ADDITIONAL_ARGS
+                --gcov-executable "${LLVM_COV_PATH} gcov")
+        endif()
+        set(Coverage_DEPENDENCIES run_tests)
+        setup_target_for_coverage_gcovr_html(NAME coverage)
+    endif()
 
     # Custom Testing Targets
     add_custom_target(build_tests
-        # DEPENDS lexer_test parser_test
+        DEPENDS input_buffer_test
         COMMENT "Build unit tests")
 
     find_program(CTEST_PATH ctest)

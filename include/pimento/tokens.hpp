@@ -165,9 +165,9 @@ public:
         : mNegative(std::signbit(value))
         , mPrecision(Precision::FLOAT64)
     {
-        double const absVal = std::fabs(value);
+        const double absVal = std::fabs(value);
         int exp;
-        double const frac = std::frexp(absVal, &exp);
+        const double frac = std::frexp(absVal, &exp);
         mMantissa         = static_cast<uint64_t>(frac * (1ULL << FLOAT64_MANTISSA_BITS));
         mExponent         = exp - FLOAT64_MANTISSA_BITS;
     }
@@ -178,9 +178,9 @@ public:
         : mNegative(std::signbit(value))
         , mPrecision(Precision::FLOAT32)
     {
-        float const absVal = std::fabs(value);
+        const float absVal = std::fabs(value);
         int exp;
-        float const frac = std::frexp(absVal, &exp);
+        const float frac = std::frexp(absVal, &exp);
         mMantissa        = static_cast<uint64_t>(frac * (1ULL << FLOAT32_MANTISSA_BITS));
         mExponent        = exp - FLOAT32_MANTISSA_BITS;
     }
@@ -674,11 +674,11 @@ struct Token
     /// @param out The output stream to which to write the token.
     /// @param data The token to write to the output stream.
     /// @return The output stream to which the token was written.
-    friend std::ostream& operator<<(std::ostream& out, Token const& data)
+    friend std::ostream& operator<<(std::ostream& out, const Token& data)
     {
         out << "Token:";
         out << "\n\tTokenType: " << magic_enum::enum_name(data.tokenType);
-        out << "\n\tLexme: \"" << data.lexeme << "\"";
+        out << "\n\tLexeme: \"" << data.lexeme << "\"";
         out << "\n\tOffset: " << data.sourceSpan.first;
         out << "\n\tSpan: " << data.sourceSpan.second;
         out << "\n\tLine: " << data.location.first;

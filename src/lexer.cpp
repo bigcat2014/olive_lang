@@ -11,8 +11,8 @@ namespace pimento::tokenization {
 Lexer::Lexer(std::istream* istream)
     : mInputBuffer(istream)
 {
-    mTokens.reserve(InputBuffer::BUFFER_SIZE);
-    // tokenize();
+    mTokens.reserve(BUFFER_SIZE);
+    tokenize();
 }
 
 [[nodiscard]] const std::vector<Token>& Lexer::tokens() const noexcept
@@ -29,8 +29,7 @@ void Lexer::tokenize()
     size_t column = 0;
 
     while (!mInputBuffer.done()) {
-        // Cache current offset, line number, and column number at start of parsing
-        // current token
+        // Cache current offset, line number, and column number at start of parsing current token
         if (mTokenBuffer.str().empty()) {
             offset = mInputBuffer.getOffset();
             line   = mInputBuffer.getCurrentLine();
@@ -43,74 +42,71 @@ void Lexer::tokenize()
                                     std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
         }
 
-        char currentChar;
-        if (auto current = mInputBuffer.consume()) {
-            currentChar = current.value();
-        }
-        else {
+        char currentChar = mInputBuffer.consume();
+        if (currentChar == std::char_traits<char>::eof()) {
             break;
         }
         mTokenBuffer << currentChar;
 
         switch (mTokenBuffer.str()[0]) {
-            case '_':
-                // TODO(lthomas): I don't like this... Lots of reused code, not very
-                // clean.
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '_':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
+            case std::char_traits<char>::eof():
+                break;
+            case '_': {
+                // TODO(lthomas): I don't like this... Lots of reused code, not very clean.
+                char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        if (mTokenBuffer.str().back() == '_') {
+                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                                    mInputBuffer.getCurrentLine() + 1,
+                                                    mInputBuffer.getCurrentColumn(),
+                                                    "Expected character after '_'"});
+                        }
+                        break;
+                    case '_':
+                        mTokenBuffer << mInputBuffer.consume();
+                        next = mInputBuffer.peek();
+                        switch (next) {
+                            case std::char_traits<char>::eof():
                                 break;
-                            }
-                            if (auto next = mInputBuffer.peek()) {
-                                switch (next.value()) {
-                                    case '_':
-                                        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                                mInputBuffer.getCurrentLine() + 1,
-                                                                mInputBuffer.getCurrentColumn(),
-                                                                "Too many '_' at start of identifier. Max is 2."});
-                                        break;
-                                    default:
-                                        if (std::islower(next.value()) == 0) {
-                                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                                    mInputBuffer.getCurrentLine() + 1,
-                                                                    mInputBuffer.getCurrentColumn(),
-                                                                    "Expected character matching [a-z_]."});
-                                        }
-                                        parseIdent(offset, line, column);
-                                }
-                            }
-                            break;
-                        default:
-                            if (std::islower(next.value()) == 0) {
+                            case '_':
                                 pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
                                                         mInputBuffer.getCurrentLine() + 1,
                                                         mInputBuffer.getCurrentColumn(),
-                                                        "Expected character matching [a-z_]."});
-                            }
-                            parseIdent(offset, line, column);
-                            break;
-                    }
-                }
-                else if (mTokenBuffer.str().back() == '_') {
-                    pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                            mInputBuffer.getCurrentLine() + 1,
-                                            mInputBuffer.getCurrentColumn(),
-                                            "Expected character after '_'"});
+                                                        "Too many '_' at start of identifier. Max is 2."});
+                                break;
+                            default:
+                                if (std::islower(next) == 0) {
+                                    pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                                            mInputBuffer.getCurrentLine() + 1,
+                                                            mInputBuffer.getCurrentColumn(),
+                                                            "Expected character matching [a-z_]."});
+                                }
+                                parseIdent(offset, line, column);
+                        }
+                        break;
+                    default:
+                        if (std::islower(next) == 0) {
+                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                                    mInputBuffer.getCurrentLine() + 1,
+                                                    mInputBuffer.getCurrentColumn(),
+                                                    "Expected character matching [a-z_]."});
+                        }
+                        parseIdent(offset, line, column);
+                        break;
                 }
                 break;
+            }
                 // clang-format off
             case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
             case 'g': case 'h': case 'i': case 'j': case 'k':
             case 'l': case 'm': case 'n': case 'o': case 'p':
             case 'q': case 'r': case 's': case 't': case 'u':
-            case 'v': case 'w': case 'x': case 'y': case 'z':
+            case 'v': case 'w': case 'x': case 'y': case 'z': {
                 // clang-format on
                 parseIdent(offset, line, column);
                 break;
+            }
                 // clang-format off
             case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
             case 'G': case 'H': case 'I': case 'J': case 'K':
@@ -132,357 +128,295 @@ void Lexer::tokenize()
                 // clang-format off
             case '\n': case '\t': case '\v': case '\f': case ' ': {
                 // clang-format on
-                // mFileBuffer.advance();
                 mTokenBuffer.str("");
                 mTokenBuffer.clear();
                 break;
             }
-            case ':':
+            case ':': {
                 createToken(TokenType::TT_COLON, offset, line, column);
                 break;
-            case ',':
+            }
+            case ',': {
                 createToken(TokenType::TT_COMMA, offset, line, column);
                 break;
-            case '{':
+            }
+            case '{': {
                 createToken(TokenType::TT_LEFT_CURLY, offset, line, column);
                 break;
-            case '(':
+            }
+            case '(': {
                 createToken(TokenType::TT_LEFT_PAREN, offset, line, column);
                 break;
-            case '[':
+            }
+            case '[': {
                 createToken(TokenType::TT_LEFT_SQUARE, offset, line, column);
                 break;
-            case '}':
+            }
+            case '}': {
                 createToken(TokenType::TT_RIGHT_CURLY, offset, line, column);
                 break;
-            case ')':
+            }
+            case ')': {
                 createToken(TokenType::TT_RIGHT_PAREN, offset, line, column);
                 break;
-            case ']':
+            }
+            case ']': {
                 createToken(TokenType::TT_RIGHT_SQUARE, offset, line, column);
                 break;
-            case ';':
+            }
+            case ';': {
                 createToken(TokenType::TT_SEMI, offset, line, column);
                 break;
+            }
             // &, &=
-            case '&':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_AMP_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_AMP, offset, line, column);
-                    }
+            case '&': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_AMP_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_AMP, offset, line, column);
                 }
                 break;
+            }
             // ^, ^=, ^^, ^^=
-            case '^':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '^':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
+            case '^': {
+                char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '^':
+                        mTokenBuffer << mInputBuffer.consume();
+                        next = mInputBuffer.peek();
+                        switch (next) {
+                            case std::char_traits<char>::eof():
                                 break;
-                            }
-                            if (auto next = mInputBuffer.peek()) {
-                                switch (next.value()) {
-                                    case '=':
-                                        if (auto current = mInputBuffer.consume()) {
-                                            mTokenBuffer << current.value();
-                                        }
-                                        else {
-                                            break;
-                                        }
-                                        createToken(TokenType::TT_CARET_CARET_EQUAL, offset, line, column);
-                                        break;
-                                    default:
-                                        createToken(TokenType::TT_CARET_CARET, offset, line, column);
-                                }
-                            }
-                            break;
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
+                            case '=':
+                                mTokenBuffer << mInputBuffer.consume();
+                                createToken(TokenType::TT_CARET_CARET_EQUAL, offset, line, column);
                                 break;
-                            }
-                            createToken(TokenType::TT_CARET_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_CARET, offset, line, column);
-                    }
+                            default:
+                                createToken(TokenType::TT_CARET_CARET, offset, line, column);
+                        }
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_CARET_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_CARET, offset, line, column);
                 }
                 break;
+            }
             // .
-            case '.':
+            case '.': {
                 createToken(TokenType::TT_DOT, offset, line, column);
                 break;
+            }
             // =, ==
-            case '=':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_EQUAL_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_EQUAL, offset, line, column);
-                    }
+            case '=': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_EQUAL_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_EQUAL, offset, line, column);
                 }
                 break;
+            }
             // !
-            // case '!':
-            //   // TODO(lthomas): Not sure if this symbol is necessary
-            //   if (auto current = mFileBuffer.consume()) {
-            //     mTokenBuffer << current.value();
-            //   } else {
+            // case '!': {
+            //     // TODO(lthomas): Not sure if this symbol is necessary
+            //     if (auto current = mFileBuffer.consume()) {
+            //         mTokenBuffer << current.value();
+            //     }
+            //     else {
+            //         break;
+            //     }
             //     break;
-            //   }
-            //   break;
+            // }
             // /, //, /=, //=
-            case '/':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '/':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
+            case '/': {
+                char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '/':
+                        mTokenBuffer << mInputBuffer.consume();
+                        next = mInputBuffer.peek();
+                        switch (next) {
+                            case std::char_traits<char>::eof():
                                 break;
-                            }
-                            if (auto next = mInputBuffer.peek()) {
-                                switch (next.value()) {
-                                    case '=':
-                                        if (auto current = mInputBuffer.consume()) {
-                                            mTokenBuffer << current.value();
-                                        }
-                                        else {
-                                            break;
-                                        }
-                                        createToken(TokenType::TT_FSLASH_FSLASH_EQUAL, offset, line, column);
-                                        break;
-                                    default:
-                                        createToken(TokenType::TT_FSLASH_FSLASH, offset, line, column);
-                                }
-                            }
-                            break;
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
+                            case '=':
+                                mTokenBuffer << mInputBuffer.consume();
+                                createToken(TokenType::TT_FSLASH_FSLASH_EQUAL, offset, line, column);
                                 break;
-                            }
-                            createToken(TokenType::TT_FSLASH_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_FSLASH, offset, line, column);
-                    }
+                            default:
+                                createToken(TokenType::TT_FSLASH_FSLASH, offset, line, column);
+                        }
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_FSLASH_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_FSLASH, offset, line, column);
                 }
                 break;
+            }
             // <, <=, <<
-            case '<':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '<':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_LANGLE_LANGLE, offset, line, column);
-                            break;
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_LANGLE_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_LANGLE, offset, line, column);
-                    }
+            case '<': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '<':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_LANGLE_LANGLE, offset, line, column);
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_LANGLE_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_LANGLE, offset, line, column);
                 }
                 break;
+            }
             // -, --, -=
-            case '-':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '-':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_MINUS_MINUS, offset, line, column);
-                            break;
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_MINUS_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_MINUS, offset, line, column);
-                    }
+            case '-': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '-':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_MINUS_MINUS, offset, line, column);
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_MINUS_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_MINUS, offset, line, column);
                 }
                 break;
+            }
             // %, %=
-            case '%':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_PERCENT_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_PERCENT, offset, line, column);
-                    }
+            case '%': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_PERCENT_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_PERCENT, offset, line, column);
                 }
                 break;
+            }
             // |, |=
-            case '|':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_PIPE_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_PIPE, offset, line, column);
-                    }
+            case '|': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_PIPE_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_PIPE, offset, line, column);
                 }
                 break;
+            }
             // +, ++, +=
-            case '+':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '+':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_PLUS_PLUS, offset, line, column);
-                            break;
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_PLUS_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_PLUS, offset, line, column);
-                    }
+            case '+': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '+':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_PLUS_PLUS, offset, line, column);
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_PLUS_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_PLUS, offset, line, column);
                 }
                 break;
+            }
             // ?
-            case '?':
+            case '?': {
                 createToken(TokenType::TT_QUESTION, offset, line, column);
                 break;
+            }
             // >, >=, >>
-            case '>':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '>':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_RANGLE_RANGLE, offset, line, column);
-                            break;
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_RANGLE_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_RANGLE, offset, line, column);
-                    }
+            case '>': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '>':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_RANGLE_RANGLE, offset, line, column);
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_RANGLE_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_RANGLE, offset, line, column);
                 }
                 break;
+            }
             // *, *=
-            case '*':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_STAR_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_STAR, offset, line, column);
-                    }
+            case '*': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_STAR_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_STAR, offset, line, column);
                 }
                 break;
+            }
             // ~, ~=
-            case '~':
-                if (auto next = mInputBuffer.peek()) {
-                    switch (next.value()) {
-                        case '=':
-                            if (auto current = mInputBuffer.consume()) {
-                                mTokenBuffer << current.value();
-                            }
-                            else {
-                                break;
-                            }
-                            createToken(TokenType::TT_TILDE_EQUAL, offset, line, column);
-                            break;
-                        default:
-                            createToken(TokenType::TT_TILDE, offset, line, column);
-                    }
+            case '~': {
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                    case '=':
+                        mTokenBuffer << mInputBuffer.consume();
+                        createToken(TokenType::TT_TILDE_EQUAL, offset, line, column);
+                        break;
+                    default:
+                        createToken(TokenType::TT_TILDE, offset, line, column);
                 }
                 break;
+            }
             // Comments
             case '#': {
-                std::optional<char> next = mInputBuffer.consume();
-                while (next.has_value() && next.value() != '\n') {
+                char next = mInputBuffer.consume();
+                while (next != '\n' && next != std::char_traits<char>::eof()) {
                     next = mInputBuffer.consume();
                 }
 
@@ -491,11 +425,12 @@ void Lexer::tokenize()
                 break;
             }
             // Unknown symbol
-            default:
+            default: {
                 pimento::errors::raise({pimento::errors::ErrorType::SYMBOL_ERROR,
                                         mInputBuffer.getCurrentLine() + 1,
                                         mInputBuffer.getCurrentColumn(),
                                         std::format("Unknown symbol '{}'.", currentChar)});
+            }
         }
     }
 
@@ -520,98 +455,100 @@ void Lexer::tokenize()
 
 void Lexer::createToken(TokenType type, size_t offset, size_t line, size_t column) noexcept
 {
-    std::string const lexme{mTokenBuffer.str()};
-    mTokens.emplace_back(type, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+    const std::string lexeme{mTokenBuffer.str()};
+    mTokens.emplace_back(type, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
 void Lexer::createIdentToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
 {
-    std::string const lexme{mTokenBuffer.str()};
+    const std::string lexeme{mTokenBuffer.str()};
     // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
     mTokens.emplace_back(
-        TokenType::TT_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+        TokenType::TT_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
 void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
 {
-    std::string const lexme{mTokenBuffer.str()};
+    const std::string lexeme{mTokenBuffer.str()};
     // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
     mTokens.emplace_back(
-        TokenType::TT_TYPE_IDENT, lexme, std::make_pair(offset, lexme.length()), std::make_pair(line, column));
+        TokenType::TT_TYPE_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
 void Lexer::parseIdent(size_t offset, size_t line, size_t column)
 {
-    if (auto next = mInputBuffer.peek()) {
-        while (next.has_value() && isIdentChar(next.value())) {
-            auto consumed = mInputBuffer.consume();
-            if (!consumed.has_value()) {
-                auto& logger = utils::getLogger();
-                logger.error("Unexpected EOF in \"{}\"", __FUNCTION__);
-                exit(EXIT_FAILURE);
-            }
-            mTokenBuffer << consumed.value();
-            if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
-                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                        line + 1,
-                                        column,
-                                        std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
-            }
-            next = mInputBuffer.peek();
-        }
+    char next = mInputBuffer.peek();
 
-        next = mInputBuffer.peek();
-        if (next.has_value()) {
-            if (std::isspace(next.value()) == 0) {
-                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                        mInputBuffer.getCurrentLine() + 1,
-                                        mInputBuffer.getCurrentColumn(),
-                                        std::format("Unexpected character: '{}'.", next.value())});
-            }
-        }
-
-        createIdentToken(mTokenBuffer.str(), offset, line, column);
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return;
     }
+
+    while (isIdentChar(next)) {
+        mTokenBuffer << mInputBuffer.consume();
+        if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
+            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                    line + 1,
+                                    column,
+                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
+        }
+        next = mInputBuffer.peek();
+    }
+
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return;
+    }
+
+    if (std::isspace(next) == 0) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                mInputBuffer.getCurrentLine() + 1,
+                                mInputBuffer.getCurrentColumn(),
+                                std::format("Unexpected character: '{}'.", next)});
+    }
+
+    createIdentToken(mTokenBuffer.str(), offset, line, column);
 }
 
 void Lexer::parseType(size_t offset, size_t line, size_t column)
 {
-    if (auto next = mInputBuffer.peek()) {
-        while (next.has_value() && isTypeChar(next.value())) {
-            auto consumed = mInputBuffer.consume();
-            if (!consumed.has_value()) {
-                auto& logger = utils::getLogger();
-                logger.error("Unexpected EOF in \"{}\"", __FUNCTION__);
-                exit(EXIT_FAILURE);
-            }
-            mTokenBuffer << consumed.value();
-            if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
-                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                        line + 1,
-                                        column,
-                                        std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
-            }
-            next = mInputBuffer.peek();
-        }
+    char next = mInputBuffer.peek();
 
-        next = mInputBuffer.peek();
-        if (next.has_value()) {
-            if (std::isspace(next.value()) == 0) {
-                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                        mInputBuffer.getCurrentLine() + 1,
-                                        mInputBuffer.getCurrentColumn(),
-                                        std::format("Unexpected character: '{}'.", next.value())});
-            }
-        }
-
-        createTypeToken(mTokenBuffer.str(), offset, line, column);
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return;
     }
+
+    while (isTypeChar(next)) {
+        mTokenBuffer << mInputBuffer.consume();
+        if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
+            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                    line + 1,
+                                    column,
+                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
+        }
+        next = mInputBuffer.peek();
+    }
+
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return;
+    }
+
+    if (std::isspace(next) == 0) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                mInputBuffer.getCurrentLine() + 1,
+                                mInputBuffer.getCurrentColumn(),
+                                std::format("Unexpected character: '{}'.", next)});
+    }
+
+    createTypeToken(mTokenBuffer.str(), offset, line, column);
 }
 
 void Lexer::parseNumericConst(size_t /*offset*/, size_t /*line*/, size_t /*column*/)
@@ -640,7 +577,7 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     exponent = std::stoi(exponentStr);
 
     // 3. Normalize mantissa (remove decimal point)
-    size_t const dotPos  = mantissaStr.find('.');
+    const size_t dotPos  = mantissaStr.find('.');
     int32_t decimalShift = 0;
     if (dotPos != std::string::npos) {
         decimalShift = static_cast<int32_t>(mantissaStr.size()) - static_cast<int32_t>(dotPos) - 1;
@@ -649,7 +586,7 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
 
     // Convert mantissa digits to integer
     uint64_t decimalMantissa = 0;
-    for (char const character : mantissaStr) {
+    for (const char character : mantissaStr) {
         if (character < '0' || character > '9') {
             throw std::invalid_argument("Invalid digit in float");
         }
@@ -657,14 +594,14 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     }
 
     // Effective base-10 exponent
-    int const effectiveExp10 = exponent - decimalShift;
+    const int effectiveExp10 = exponent - decimalShift;
 
     // 4. Convert decimal mantissa and exponent to binary
-    long double const value = static_cast<long double>(decimalMantissa) * std::pow(10.0L, effectiveExp10);
+    const long double value = static_cast<long double>(decimalMantissa) * std::pow(10.0L, effectiveExp10);
 
     // Decompose into mantissa + binary exponent
     int binExp;
-    long double const frac = std::frexp(value, &binExp);                  // frac in [0.5, 1)
+    const long double frac = std::frexp(value, &binExp);                  // frac in [0.5, 1)
     mantissa               = static_cast<uint64_t>(frac * (1ULL << 53));  // 53-bit mantissa for double
     exponent               = binExp - 53;
 

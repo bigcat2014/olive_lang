@@ -32,7 +32,6 @@ Checks: >
     misc-include-cleaner,
     misc-misleading-identifier,
     misc-misplaced-const,
-    misc-non-private-member-variables-in-classes,
     misc-redundant-expression,
     misc-static-assert,
     misc-throw-by-value-catch-by-reference,
@@ -118,7 +117,8 @@ CheckOptions:
     - { key: readability-uppercase-literal-suffix.NewSuffixes, value: "L;LL;UL;ULL;U" }
 
     - { key: cppcoreguidelines-pro-type-const-cast.StrictMode, value: true }
-    - { key: modernize-deprecated-headers.CheckHeaderFile, value: true }
-    - { key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: true }
     - { key: misc-include-cleaner.MissingIncludes, value: false }
+    - { key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic, value: true }
+    - { key: misc-unused-parameters.StrictMode, value: true }
+    - { key: modernize-deprecated-headers.CheckHeaderFile, value: true }
 

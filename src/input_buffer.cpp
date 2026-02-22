@@ -9,45 +9,22 @@ InputBuffer::InputBuffer(std::istream* istream)
     readChunk();
 }
 
-[[nodiscard]] std::optional<char> InputBuffer::peek() noexcept
+[[nodiscard]] char InputBuffer::peek() const noexcept
 {
-    if (mIndex >= mNumChars) {
-        // TODO(lthomas): I don't love that this technically advances the lexer, but
-        // it fixes the issues with tokens that bridge between chunks...
-        readChunk();
-        if (mDone) {
-            return {};
-        }
-    }
-
     return mBuffer[mIndex];
 }
 
-[[nodiscard]] std::optional<char> InputBuffer::consume()
+[[nodiscard]] char InputBuffer::consume()
 {
     if (mIndex >= mNumChars) {
         readChunk();
         if (mDone) {
-            return {};
+            return std::char_traits<char>::eof();
         }
     }
 
     const char curr = mBuffer[mIndex];
-    advance();
-
-    return curr;
-}
-
-void InputBuffer::advance()
-{
-    // End of chunk or EoF
-    if (mIndex >= mNumChars) {
-        readChunk();
-        return;
-    }
-
-    char const current = mBuffer[mIndex++];
-    if (current == '\n') {
+    if (curr == '\n') {
         auto& logger = utils::getLogger();
         logger.trace("Finished line: {} with {} columns", mLine, mColumn);
         ++mLine;
@@ -57,32 +34,60 @@ void InputBuffer::advance()
         ++mColumn;
     }
 
+    ++mIndex;
     ++mOffset;
+
+    if (curr == std::char_traits<char>::eof()) {
+        mDone = true;
+    }
+    return curr;
 }
 
 [[nodiscard]] std::string InputBuffer::get(size_t offset, size_t span)
 {
     std::string out;
+
+    // Check if the requested offset and span is within the current buffer before reading from the stream
+    const size_t chunkStart = (mTotalChunks - 1) * BUFFER_SIZE;
+    const size_t chunkEnd   = chunkStart + mNumChars;
+
+    // The entire span is within the current buffer, no I/O needed
+    if (offset >= chunkStart && (offset + span) <= chunkEnd) {
+        const size_t localOffset = offset - chunkStart;
+        out.assign(mBuffer.data() + localOffset, span);
+        return out;
+    }
+
+    // Requested offset and span is not within our current buffer, we need to read from the stream
+    // Save state
     mStream->clear();
+    const std::streampos currentPos = mStream->tellg();
 
     mStream->seekg(static_cast<std::streamsize>(offset), std::ios::beg);
     out.resize(span);
     mStream->read(out.data(), static_cast<std::streamsize>(span));
+
+    // Reset state
+    mStream->clear();
+    mStream->seekg(currentPos);
 
     return out;
 }
 
 void InputBuffer::readChunk()
 {
-    mStream->read(mBuffer.data(), static_cast<std::streamsize>(mBuffer.size()));
-    mNumChars = static_cast<size_t>(mStream->gcount());
+    mStream->read(mBuffer.data(), static_cast<std::streamsize>(BUFFER_SIZE));
+    auto charsRead = static_cast<size_t>(mStream->gcount());
 
-    if (mNumChars == 0) {
+    if (charsRead == 0) {
         mDone = true;
         return;
     }
 
+    mNumChars = charsRead;
     mTotalBytes += mNumChars;
+    auto& logger = utils::getLogger();
+    logger.trace("Read {} bytes from chunk {}", mNumChars, mTotalChunks);
     ++mTotalChunks;
     mIndex = 0;
 }

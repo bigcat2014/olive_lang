@@ -5,7 +5,7 @@
 
 namespace pimento::utils {
 
-spdlog::logger& getLogger() noexcept
+spdlog::logger& getLogger()
 {
     static const auto SLogger = spdlog::stderr_color_mt("pimento");
     return *SLogger;
@@ -16,7 +16,7 @@ void configureLogger(spdlog::level::level_enum level) noexcept
     getLogger().set_level(level);
 }
 
-std::filesystem::path expandVars(const std::string& inputPath) noexcept
+std::filesystem::path expandVars(const std::string& inputPath)
 {
     auto& logger = getLogger();
 
@@ -44,7 +44,7 @@ std::filesystem::path expandVars(const std::string& inputPath) noexcept
     }
 
     // Expand environment variables
-    std::regex const envPattern(R"(\$([A-Za-z_][A-Za-z0-9_]*)|\$\{([^}]+)\})");
+    const std::regex envPattern(R"(\$([A-Za-z_][A-Za-z0-9_]*)|\$\{([^}]+)\})");
     std::smatch match;
     std::string result;
     std::string::const_iterator searchStart(path.cbegin());
@@ -52,7 +52,7 @@ std::filesystem::path expandVars(const std::string& inputPath) noexcept
     while (std::regex_search(searchStart, path.cend(), match, envPattern)) {
         result.append(searchStart, match[0].first);
 
-        std::string const varName = match[1].matched ? match[1].str() : match[2].str();
+        const std::string varName = match[1].matched ? match[1].str() : match[2].str();
         const char* value         = std::getenv(varName.c_str());
 
         if (value == nullptr) {
