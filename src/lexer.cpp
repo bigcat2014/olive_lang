@@ -23,17 +23,15 @@ Lexer::Lexer(std::istream* istream)
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void Lexer::tokenize()
 {
-    auto& logger  = utils::getLogger();
-    size_t offset = 0;
-    size_t line   = 0;
-    size_t column = 0;
+    auto& logger = utils::getLogger();
 
     while (!mInputBuffer.done()) {
         // Cache current offset, line number, and column number at start of parsing current token
+        Token token;
         if (mTokenBuffer.str().empty()) {
-            offset = mInputBuffer.getOffset();
-            line   = mInputBuffer.getCurrentLine();
-            column = mInputBuffer.getCurrentColumn();
+            token.offset = mInputBuffer.getOffset();
+            token.line   = mInputBuffer.getCurrentLine();
+            token.column = mInputBuffer.getCurrentColumn();
         }
         else if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
@@ -82,7 +80,7 @@ void Lexer::tokenize()
                                                             mInputBuffer.getCurrentColumn(),
                                                             "Expected character matching [a-z_]."});
                                 }
-                                parseIdent(offset, line, column);
+                                parseIdent(token);
                         }
                         break;
                     default:
@@ -92,7 +90,7 @@ void Lexer::tokenize()
                                                     mInputBuffer.getCurrentColumn(),
                                                     "Expected character matching [a-z_]."});
                         }
-                        parseIdent(offset, line, column);
+                        parseIdent(token);
                         break;
                 }
                 break;
@@ -104,7 +102,7 @@ void Lexer::tokenize()
             case 'q': case 'r': case 's': case 't': case 'u':
             case 'v': case 'w': case 'x': case 'y': case 'z': {
                 // clang-format on
-                parseIdent(offset, line, column);
+                parseIdent(token);
                 break;
             }
                 // clang-format off
@@ -115,14 +113,14 @@ void Lexer::tokenize()
             case 'V': case 'W': case 'X': case 'Y': case 'Z': {
                 // clang-format on
                 // TODO(lthomas): parseIdent or keyword
-                parseType(offset, line, column);
+                parseType(token);
                 break;
             }
                 // clang-format off
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9': {
                 // clang-format on
-                parseNumericConst(offset, line, column);
+                parseNumericConst(token);
                 break;
             }
                 // clang-format off
@@ -133,39 +131,39 @@ void Lexer::tokenize()
                 break;
             }
             case ':': {
-                createToken(TokenType::TT_COLON, offset, line, column);
+                createToken(token, TokenType::TT_COLON);
                 break;
             }
             case ',': {
-                createToken(TokenType::TT_COMMA, offset, line, column);
+                createToken(token, TokenType::TT_COMMA);
                 break;
             }
             case '{': {
-                createToken(TokenType::TT_LEFT_CURLY, offset, line, column);
+                createToken(token, TokenType::TT_LEFT_CURLY);
                 break;
             }
             case '(': {
-                createToken(TokenType::TT_LEFT_PAREN, offset, line, column);
+                createToken(token, TokenType::TT_LEFT_PAREN);
                 break;
             }
             case '[': {
-                createToken(TokenType::TT_LEFT_SQUARE, offset, line, column);
+                createToken(token, TokenType::TT_LEFT_SQUARE);
                 break;
             }
             case '}': {
-                createToken(TokenType::TT_RIGHT_CURLY, offset, line, column);
+                createToken(token, TokenType::TT_RIGHT_CURLY);
                 break;
             }
             case ')': {
-                createToken(TokenType::TT_RIGHT_PAREN, offset, line, column);
+                createToken(token, TokenType::TT_RIGHT_PAREN);
                 break;
             }
             case ']': {
-                createToken(TokenType::TT_RIGHT_SQUARE, offset, line, column);
+                createToken(token, TokenType::TT_RIGHT_SQUARE);
                 break;
             }
             case ';': {
-                createToken(TokenType::TT_SEMI, offset, line, column);
+                createToken(token, TokenType::TT_SEMI);
                 break;
             }
             // &, &=
@@ -176,10 +174,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_AMP_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_AMP_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_AMP, offset, line, column);
+                        createToken(token, TokenType::TT_AMP);
                 }
                 break;
             }
@@ -197,24 +195,24 @@ void Lexer::tokenize()
                                 break;
                             case '=':
                                 mTokenBuffer << mInputBuffer.consume();
-                                createToken(TokenType::TT_CARET_CARET_EQUAL, offset, line, column);
+                                createToken(token, TokenType::TT_CARET_CARET_EQUAL);
                                 break;
                             default:
-                                createToken(TokenType::TT_CARET_CARET, offset, line, column);
+                                createToken(token, TokenType::TT_CARET_CARET);
                         }
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_CARET_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_CARET_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_CARET, offset, line, column);
+                        createToken(token, TokenType::TT_CARET);
                 }
                 break;
             }
             // .
             case '.': {
-                createToken(TokenType::TT_DOT, offset, line, column);
+                createToken(token, TokenType::TT_DOT);
                 break;
             }
             // =, ==
@@ -225,10 +223,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_EQUAL_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_EQUAL_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_EQUAL);
                 }
                 break;
             }
@@ -257,18 +255,18 @@ void Lexer::tokenize()
                                 break;
                             case '=':
                                 mTokenBuffer << mInputBuffer.consume();
-                                createToken(TokenType::TT_FSLASH_FSLASH_EQUAL, offset, line, column);
+                                createToken(token, TokenType::TT_FSLASH_FSLASH_EQUAL);
                                 break;
                             default:
-                                createToken(TokenType::TT_FSLASH_FSLASH, offset, line, column);
+                                createToken(token, TokenType::TT_FSLASH_FSLASH);
                         }
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_FSLASH_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_FSLASH_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_FSLASH, offset, line, column);
+                        createToken(token, TokenType::TT_FSLASH);
                 }
                 break;
             }
@@ -280,14 +278,14 @@ void Lexer::tokenize()
                         break;
                     case '<':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_LANGLE_LANGLE, offset, line, column);
+                        createToken(token, TokenType::TT_LANGLE_LANGLE);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_LANGLE_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_LANGLE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_LANGLE, offset, line, column);
+                        createToken(token, TokenType::TT_LANGLE);
                 }
                 break;
             }
@@ -299,14 +297,14 @@ void Lexer::tokenize()
                         break;
                     case '-':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_MINUS_MINUS, offset, line, column);
+                        createToken(token, TokenType::TT_MINUS_MINUS);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_MINUS_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_MINUS_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_MINUS, offset, line, column);
+                        createToken(token, TokenType::TT_MINUS);
                 }
                 break;
             }
@@ -318,10 +316,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PERCENT_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_PERCENT_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_PERCENT, offset, line, column);
+                        createToken(token, TokenType::TT_PERCENT);
                 }
                 break;
             }
@@ -333,10 +331,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PIPE_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_PIPE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_PIPE, offset, line, column);
+                        createToken(token, TokenType::TT_PIPE);
                 }
                 break;
             }
@@ -348,20 +346,20 @@ void Lexer::tokenize()
                         break;
                     case '+':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PLUS_PLUS, offset, line, column);
+                        createToken(token, TokenType::TT_PLUS_PLUS);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PLUS_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_PLUS_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_PLUS, offset, line, column);
+                        createToken(token, TokenType::TT_PLUS);
                 }
                 break;
             }
             // ?
             case '?': {
-                createToken(TokenType::TT_QUESTION, offset, line, column);
+                createToken(token, TokenType::TT_QUESTION);
                 break;
             }
             // >, >=, >>
@@ -372,14 +370,14 @@ void Lexer::tokenize()
                         break;
                     case '>':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_RANGLE_RANGLE, offset, line, column);
+                        createToken(token, TokenType::TT_RANGLE_RANGLE);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_RANGLE_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_RANGLE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_RANGLE, offset, line, column);
+                        createToken(token, TokenType::TT_RANGLE);
                 }
                 break;
             }
@@ -391,10 +389,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_STAR_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_STAR_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_STAR, offset, line, column);
+                        createToken(token, TokenType::TT_STAR);
                 }
                 break;
             }
@@ -406,10 +404,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_TILDE_EQUAL, offset, line, column);
+                        createToken(token, TokenType::TT_TILDE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_TILDE, offset, line, column);
+                        createToken(token, TokenType::TT_TILDE);
                 }
                 break;
             }
@@ -448,40 +446,46 @@ void Lexer::tokenize()
         // Testing using offset and span for pulling from input stream
         std::cout << "Tokens from file" << '\n';
         for (const auto& token : mTokens) {
-            std::cout << mInputBuffer.get(token.sourceSpan.first, token.sourceSpan.second) << '\n';
+            std::cout << mInputBuffer.get(token.offset, token.span) << '\n';
         }
     }
 }
 
-void Lexer::createToken(TokenType type, size_t offset, size_t line, size_t column) noexcept
+void Lexer::addToken(const Token& token)
 {
-    const std::string lexeme{mTokenBuffer.str()};
-    mTokens.emplace_back(type, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
+    mTokens.emplace_back(token);
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
-void Lexer::createIdentToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
+void Lexer::createToken(Token& token, TokenType type) noexcept
 {
     const std::string lexeme{mTokenBuffer.str()};
-    // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
-    mTokens.emplace_back(
-        TokenType::TT_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
-    mTokenBuffer.str("");
-    mTokenBuffer.clear();
+    token.tokenType = type;
+    token.lexeme    = lexeme;
+    token.span      = lexeme.length();
+    addToken(token);
 }
 
-void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
+void Lexer::createIdentToken(Token& token, const std::string& /*value*/) noexcept
 {
     const std::string lexeme{mTokenBuffer.str()};
-    // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
-    mTokens.emplace_back(
-        TokenType::TT_TYPE_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
-    mTokenBuffer.str("");
-    mTokenBuffer.clear();
+    token.tokenType = TokenType::TT_IDENT;
+    token.lexeme    = lexeme;
+    token.span      = lexeme.length();
+    addToken(token);
 }
 
-void Lexer::parseIdent(size_t offset, size_t line, size_t column)
+void Lexer::createTypeToken(Token& token, const std::string& /*value*/) noexcept
+{
+    const std::string lexeme{mTokenBuffer.str()};
+    token.tokenType = TokenType::TT_TYPE_IDENT;
+    token.lexeme    = lexeme;
+    token.span      = lexeme.length();
+    addToken(token);
+}
+
+void Lexer::parseIdent(Token& token) noexcept
 {
     char next = mInputBuffer.peek();
 
@@ -494,8 +498,8 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
         mTokenBuffer << mInputBuffer.consume();
         if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    line + 1,
-                                    column,
+                                    token.line + 1,
+                                    token.column,
                                     std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
         }
         next = mInputBuffer.peek();
@@ -513,10 +517,10 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
                                 std::format("Unexpected character: '{}'.", next)});
     }
 
-    createIdentToken(mTokenBuffer.str(), offset, line, column);
+    createIdentToken(token, mTokenBuffer.str());
 }
 
-void Lexer::parseType(size_t offset, size_t line, size_t column)
+void Lexer::parseType(Token& token) noexcept
 {
     char next = mInputBuffer.peek();
 
@@ -529,8 +533,8 @@ void Lexer::parseType(size_t offset, size_t line, size_t column)
         mTokenBuffer << mInputBuffer.consume();
         if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    line + 1,
-                                    column,
+                                    token.line + 1,
+                                    token.column,
                                     std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
         }
         next = mInputBuffer.peek();
@@ -548,10 +552,10 @@ void Lexer::parseType(size_t offset, size_t line, size_t column)
                                 std::format("Unexpected character: '{}'.", next)});
     }
 
-    createTypeToken(mTokenBuffer.str(), offset, line, column);
+    createTypeToken(token, mTokenBuffer.str());
 }
 
-void Lexer::parseNumericConst(size_t /*offset*/, size_t /*line*/, size_t /*column*/)
+void Lexer::parseNumericConst(Token& /*token*/) noexcept
 {
     mTokenBuffer.str("");
     mTokenBuffer.clear();

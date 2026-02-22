@@ -33,45 +33,36 @@ public:
     void tokenize();
 
 private:
+    /// @brief Add a token to the completed list of tokens.
+    /// @param token The token to add.
+    void addToken(const Token& token);
+
     /// @brief Create a token of the specified type.
-    /// @param type The TokenType to create.
-    /// @param offset The offset of the token in the input.
-    /// @param line The line number of the start of the token.
-    /// @param column The column number of the start of the token.
-    void createToken(TokenType type, size_t offset, size_t line, size_t column) noexcept;
+    /// @param token The token to build.
+    /// @param type The type of the token.
+    void createToken(Token& token, TokenType type) noexcept;
 
     /// @brief Create an Identifier token.
-    /// @param offset The offset of the token in the input.
-    /// @param line The line number of the start of the token.
-    /// @param column The column number of the start of the token.
-    void createIdentToken(const std::string& value, size_t offset, size_t line, size_t column) noexcept;
+    /// @param token The token to build.
+    /// @param value The identifier string.
+    void createIdentToken(Token& token, const std::string& value) noexcept;
 
     /// @brief Create a Type Identifier token.
-    /// @param offset The offset of the token in the input.
-    /// @param line The line number of the start of the token.
-    /// @param column The column number of the start of the token.
-    void createTypeToken(const std::string& value, size_t offset, size_t line, size_t column) noexcept;
+    /// @param token The token to build.
+    /// @param value The type string.
+    void createTypeToken(Token& token, const std::string& value) noexcept;
 
     /// @brief Parse an identifier token from the input buffer.
-    /// @param offset The offset of the start of the token for token creation.
-    /// @param line The line number of the start of the token for token creation.
-    /// @param column The column number of the start of the token for token
-    /// creation.
-    void parseIdent(size_t offset, size_t line, size_t column);
+    /// @param token The token to build.
+    void parseIdent(Token& token) noexcept;
 
     /// @brief Parse a type identifier token from the input buffer.
-    /// @param offset The offset of the start of the token for token creation.
-    /// @param line The line number of the start of the token for token creation.
-    /// @param column The column number of the start of the token for token
-    /// creation.
-    void parseType(size_t offset, size_t line, size_t column);
+    /// @param token The token to build.
+    void parseType(Token& token) noexcept;
 
     /// @brief Parse a numeric constant token from the input buffer.
-    /// @param offset The offset of the start of the token for token creation.
-    /// @param line The line number of the start of the token for token creation.
-    /// @param column The column number of the start of the token for token
-    /// creation.
-    void parseNumericConst(size_t offset, size_t line, size_t column);
+    /// @param token The token to build.
+    void parseNumericConst(Token& token) noexcept;
 
     /// @brief Check if the specified character is valid for an identifier.
     /// @param value The character to check.

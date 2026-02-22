@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include <magic_enum/magic_enum.hpp>
@@ -147,6 +148,22 @@ public:
         FLOAT64
     };
 
+    /// @brief Default constructor.
+    /// @details Default constructs a FloatConst as NaN. NaN is defined by IEEE-754 as the following:
+    /// Exponent bits are all 1's.
+    /// Mantissa bits must have at least one non-zero value.
+    /// Sign bit is ignored, can be 0 or 1.
+    ///
+    /// This default implementation would generally behave as a signaling NaN (sNaN) where the most significant bit of
+    /// the mantissa is 0, as opposed to a quiet NaN (qNaN) which is typically indicated by the most significant bit of
+    /// the mantissa being set.
+    FloatConst()
+        : mMantissa(1)
+        , mExponent(std::numeric_limits<int>::max())
+        , mNegative(false)
+        , mPrecision(Precision::FLOAT64)
+    {}
+
     /// @brief Constructor for value represented in scientific notation.
     /// @param mantissa The mantissa of the value.
     /// @param exponent The exponent of the value.
@@ -259,6 +276,12 @@ struct [[gnu::packed]] PackedView
 class RawBits
 {
 public:
+    /// @brief Default constructor.
+    /// @details Default constructs RawBits as all 0's.
+    RawBits()
+        : uint64(0)
+    {}
+
     /// @brief Constructor.
     /// @tparam T Integral type.
     /// @param value The value to use as the raw bits.
@@ -343,6 +366,12 @@ private:
 class IntConst
 {
 public:
+    /// @brief Default constructor.
+    /// @details Default constructs an IntConst as 0.
+    IntConst()
+        : uint64(0)
+    {}
+
     /// @brief Constructor.
     /// @tparam T Integral type.
     /// @param value The value of the integer.
@@ -410,6 +439,12 @@ class NumericConst
 public:
     /// @brief Alias for the variant of the numeric constant value.
     using Value = std::variant<IntConst, FloatConst, RawBits>;
+
+    /// @brief Default constructor.
+    /// @details Default constructs a NumericConst with a default constructed RawBits variant.
+    NumericConst()
+        : mValue(RawBits())
+    {}
 
     /// @brief Constructor for integer value.
     /// @tparam T Integral type.
@@ -661,14 +696,88 @@ private:
 /// @brief Parsed token.
 struct Token
 {
+    /// @brief Default constructor.
+    Token() = default;
+
+    // TODO(lthomas): Finish this.
+    /// @brief Partial token constructor.
+    /// @details Construct a partial token for building up as lexing progresses.
+    /// @param offset The offset in the input in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    Token(size_t offset, size_t line, size_t column)
+        : offset(offset)
+        , line(line)
+        , column(column)
+    {}
+
+    /// @brief Generic constructor for standard token types.
+    /// @param tokenType The type of the token.
+    /// @param lexeme The literal string parsed representing the token.
+    /// @param offset The offset in the input in bytes.
+    /// @param span The span of the token in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    Token(TokenType tokenType, std::string lexeme, size_t offset, size_t span, size_t line, size_t column)
+        : tokenType(tokenType)
+        , lexeme(std::move(lexeme))
+        , offset(offset)
+        , span(span)
+        , line(line)
+        , column(column)
+    {}
+
+    /// @brief Constructor for NumericConst token types.
+    /// @param lexeme The literal string parsed representing the token.
+    /// @param offset The offset in the input in bytes.
+    /// @param span The span of the token in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    /// @param value The NumericConst value stored in the token.
+    Token(std::string lexeme, size_t offset, size_t span, size_t line, size_t column, const NumericConst& value)
+        : tokenType(TokenType::TT_NUMERIC_CONST)
+        , lexeme(std::move(lexeme))
+        , offset(offset)
+        , span(span)
+        , line(line)
+        , column(column)
+        , value(value)
+    {}
+
+    /// TODO(lthomas): What is the difference between lexeme and str?
+    /// @brief Constructor for string literal token types.
+    /// @param lexeme The literal string parsed representing the token.
+    /// @param offset The offset in the input in bytes.
+    /// @param span The span of the token in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    /// @param str The string literal of the token.
+    Token(std::string lexeme, size_t offset, size_t span, size_t line, size_t column, std::string str)
+        : tokenType(TokenType::TT_STRING_LITERAL)
+        , lexeme(std::move(lexeme))
+        , offset(offset)
+        , span(span)
+        , line(line)
+        , column(column)
+        , str(std::move(str))
+    {}
+
     /// @brief The type of this token.
     TokenType tokenType;
     /// @brief The literal string parsed to get the token.
     std::string lexeme;
-    /// @brief The offset and span of the token.
-    std::pair<uint64_t, uint64_t> sourceSpan;
-    /// @brief The line and column number of the token.
-    std::pair<uint64_t, uint64_t> location;
+    /// @brief The offset of the token in bytes.
+    size_t offset{0};
+    /// @brief The span of the token.
+    size_t span{0};
+    /// @brief The line number the token is on.
+    size_t line{0};
+    /// @brief The column number the token starts at.
+    size_t column{0};
+    /// @brief Numeric constant value for when the token is a NumericConst type
+    NumericConst value;
+    /// @brief String value for when the token is a string literal type
+    std::string str;
 
     /// @brief Output stream operator for Token.
     /// @param out The output stream to which to write the token.
@@ -679,27 +788,12 @@ struct Token
         out << "Token:";
         out << "\n\tTokenType: " << magic_enum::enum_name(data.tokenType);
         out << "\n\tLexeme: \"" << data.lexeme << "\"";
-        out << "\n\tOffset: " << data.sourceSpan.first;
-        out << "\n\tSpan: " << data.sourceSpan.second;
-        out << "\n\tLine: " << data.location.first;
-        out << "\n\tColumn: " << data.location.second;
+        out << "\n\tOffset: " << data.offset;
+        out << "\n\tSpan: " << data.span;
+        out << "\n\tLine: " << data.line;
+        out << "\n\tColumn: " << data.column;
         return out;
     }
-};
-
-/// @brief Token for representing numeric constants.
-struct NumConstToken : public Token
-{
-    /// @brief The value of the floating point number.
-    NumericConst value;
-};
-
-/// @brief Token for representing string values.
-/// @details This could be string literals, identifiers, or type identifiers.
-struct StringToken : public Token
-{
-    /// @brief The string value stored, either string literal or identifier.
-    std::string value;
 };
 
 }  // namespace pimento::tokenization
