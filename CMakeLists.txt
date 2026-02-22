@@ -341,24 +341,27 @@ if (BUILD_TESTING)
     #         --stdout --verbose
     #     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
-    # Gcovr Coverage Report Generation
     list(APPEND CMAKE_MODULE_PATH ${${PROJECT_NAME}_CMAKE_DIR}/modules)
-    include(CodeCoverage)
-    append_coverage_compiler_flags()
-    set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
-    # Use llvm-cov gcov for Clang
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        find_program(
-            LLVM_COV_PATH
-            NAMES llvm-cov)
-        if(NOT LLVM_COV_PATH)
-            message(FATAL_ERROR "llvm-cov not found! Aborting...")
-        endif() # NOT LLVM_COV_PATH
-        list(APPEND GCOVR_ADDITIONAL_ARGS
-            --gcov-executable "${LLVM_COV_PATH} gcov")
+
+    # Gcovr Coverage Report Generation
+    if("${CMAKE_${LANG}_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_${LANG}_COMPILER_ID}" MATCHES "(LLVM)?[Ff]lang")
+        include(CodeCoverage)
+        append_coverage_compiler_flags()
+        set(COVERAGE_GCOVR_EXCLUDES ${FETCHCONTENT_BASE_DIR})
+        # Use llvm-cov gcov for Clang
+        if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            find_program(
+                LLVM_COV_PATH
+                NAMES llvm-cov)
+            if(NOT LLVM_COV_PATH)
+                message(FATAL_ERROR "llvm-cov not found! Aborting...")
+            endif() # NOT LLVM_COV_PATH
+            list(APPEND GCOVR_ADDITIONAL_ARGS
+                --gcov-executable "${LLVM_COV_PATH} gcov")
+        endif()
+        set(Coverage_DEPENDENCIES run_tests)
+        setup_target_for_coverage_gcovr_html(NAME coverage)
     endif()
-    set(Coverage_DEPENDENCIES run_tests)
-    setup_target_for_coverage_gcovr_html(NAME coverage)
 
     # Custom Testing Targets
     add_custom_target(build_tests
