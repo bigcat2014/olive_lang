@@ -28,19 +28,19 @@ RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
     && add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main" \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-    clang-19 clang++-19 clang-tidy-19 clang-format-19 llvm-19 \
+    clang-19 clang++-19 clang-tidy-19 clang-format-19 llvm-19 libclang-19-dev\
     && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-20 main" \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-    clang-20 clang++-20 clang-tidy-20 clang-format-20 llvm-20 \
+    clang-20 clang++-20 clang-tidy-20 clang-format-20 llvm-20 libclang-20-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN add-apt-repository "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-21 main" \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        clang-21 clang++-21 clang-tidy-21 clang-format-21 llvm-21 \
+        clang-21 clang++-21 clang-tidy-21 clang-format-21 llvm-21 libclang-21-dev\
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
