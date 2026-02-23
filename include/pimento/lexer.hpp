@@ -33,24 +33,21 @@ public:
     void tokenize();
 
 private:
-    /// @brief Add a token to the completed list of tokens.
-    /// @param token The token to add.
-    void addToken(const Token& token);
-
-    /// @brief Create a token of the specified type.
-    /// @param token The token to build.
+    /// @brief Finalize a token and add it to the completed list of tokens.
+    /// @details Finalize a token by setting the token type, lexeme, and span.
+    /// @param token The token to finalize.
     /// @param type The type of the token.
-    void createToken(Token& token, TokenType type) noexcept;
+    void addToken(Token& token, TokenType type) noexcept;
 
-    /// @brief Create an Identifier token.
+    /// @brief Updatee token as an Identifier token.
     /// @param token The token to build.
     /// @param value The identifier string.
-    void createIdentToken(Token& token, const std::string& value) noexcept;
+    void updateIdentToken(Token& token, const std::string& value) noexcept;
 
-    /// @brief Create a Type Identifier token.
+    /// @brief Update token as a Type Identifier token.
     /// @param token The token to build.
     /// @param value The type string.
-    void createTypeToken(Token& token, const std::string& value) noexcept;
+    void updateTypeToken(Token& token, const std::string& value) noexcept;
 
     /// @brief Parse an identifier token from the input buffer.
     /// @param token The token to build.
@@ -64,12 +61,26 @@ private:
     /// @param token The token to build.
     void parseNumericConst(Token& token) noexcept;
 
+    /// @brief Parse a hexidecimal constant from the input buffer.
+    /// @param token The token to build.
+    void parseHex(Token& token) noexcept;
+
+    /// @brief Parse an octal constant from the input buffer.
+    /// @param token The token to build.
+    void parseOctal(Token& token) noexcept;
+
+    /// @brief Parse a binary constant from the input buffer.
+    /// @param token The token to build.
+    void parseBinary(Token& token) noexcept;
+
     /// @brief Check if the specified character is valid for an identifier.
     /// @param value The character to check.
     /// @return True if the character is valid for an identifier, false otherwise.
     [[nodiscard]] static bool isIdentChar(char value) noexcept
     {
-        return (std::islower(value) != 0) || (std::isupper(value) != 0) || (std::isdigit(value) != 0) || value == '_';
+        return (std::islower(static_cast<unsigned char>(value)) != 0)
+               || (std::isupper(static_cast<unsigned char>(value)) != 0)
+               || (std::isdigit(static_cast<unsigned char>(value)) != 0) || value == '_';
     }
 
     /// @brief Check if the specified character is valid for a type identifier.
@@ -78,7 +89,9 @@ private:
     /// otherwise.
     [[nodiscard]] static bool isTypeChar(char value) noexcept
     {
-        return (std::islower(value) != 0) || (std::isupper(value) != 0) || (std::isdigit(value) != 0);
+        return (std::islower(static_cast<unsigned char>(value)) != 0)
+               || (std::isupper(static_cast<unsigned char>(value)) != 0)
+               || (std::isdigit(static_cast<unsigned char>(value)) != 0);
     }
 
     /// @brief Check if the specified character is the hex specifier.
@@ -101,20 +114,15 @@ private:
     /// @return True if the character is a valid octal digit, false otherwise.
     [[nodiscard]] static bool isOctalDigit(char value) noexcept
     {
-        static const std::unordered_set<char> Chars{'0', '1', '2', '3', '4', '5', '6', '7'};
+        static const std::unordered_set<char> ValidChars{'0', '1', '2', '3', '4', '5', '6', '7'};
 
-        return Chars.contains(value);
+        return ValidChars.contains(value);
     }
 
     /// @brief Check if the specified character is a valid binary digit.
     /// @param value The character to check.
     /// @return True if the character is a valid binary digit, false otherwise.
-    [[nodiscard]] static bool isBinaryDigit(char value) noexcept
-    {
-        static const std::unordered_set<char> Chars{'0', '1'};
-
-        return Chars.contains(value);
-    }
+    [[nodiscard]] static bool isBinaryDigit(char value) noexcept { return value == '0' || value == '1'; }
 
     /// @brief Convert Scientific Notation to double precision float constant.
     /// @param mantissa_str The mantissa of the scientific number.
@@ -123,6 +131,21 @@ private:
     [[nodiscard]] static FloatConst doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr);
 
 private:
+    /// @brief The base of hexidecimal numbers.
+    static constexpr int HEX_BASE = 16;
+    /// @brief Maximum number of hexidecimal digits that can appear in a single hex literal.
+    static constexpr size_t MAX_HEX_DIGITS = 16;  // 64-bit numbers
+
+    /// @brief The base of octal numbers.
+    static constexpr int OCTAL_BASE = 8;
+    /// @brief Maximum number of octal digits that can appear in a single octal literal.
+    static constexpr size_t MAX_OCTAL_DIGITS = 22;  // 64-bit numbers
+
+    /// @brief The base of binary numbers.
+    static constexpr int BINARY_BASE = 2;
+    /// @brief Maximum number of binary digits that can appear in a single binary literal.
+    static constexpr size_t MAX_BINARY_DIGITS = 64;  // 64-bit numbers
+
     /// @brief The size in bytes of the maximum token length.
     static constexpr size_t MAX_TOKEN_LEN = 64;
 
