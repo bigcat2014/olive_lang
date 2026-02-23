@@ -237,6 +237,17 @@ public:
         return result;
     }
 
+    /// @brief Output stream operator for FloatConst.
+    /// @details Outputs the FloatConst as 64-bit floating point number.
+    /// @param out The output stream to which to write the FloatConst.
+    /// @param data The FloatConst to write to the output stream.
+    /// @return The output stream to which the FloatConst was written.
+    friend std::ostream& operator<<(std::ostream& out, const FloatConst& data)
+    {
+        out << data.asFloat64();
+        return out;
+    }
+
 private:
     /// @brief The mantissa of the floating point number.
     uint64_t mMantissa;
@@ -330,6 +341,18 @@ public:
     /// @return The raw bits as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const noexcept { return int8View.value; }
 
+    /// @brief Output stream operator for RawBits.
+    /// @details Outputs the RawBits as uint64_t.
+    /// @param out The output stream to which to write the RawBits.
+    /// @param data The RawBits to write to the output stream.
+    /// @return The output stream to which the RawBits was written.
+    friend std::ostream& operator<<(std::ostream& out, const RawBits& data)
+    {
+        out << data.asUint64();
+        return out;
+    }
+
+
 private:
     /// @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
     /// used for type punning.
@@ -419,6 +442,17 @@ public:
     /// @brief Get the value as signed 8-bit integer.
     /// @return The value as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const noexcept { return static_cast<int8_t>(int64); }
+
+    /// @brief Output stream operator for IntConst.
+    /// @details Outputs the IntConst as uint64_t.
+    /// @param out The output stream to which to write the IntConst.
+    /// @param data The IntConst to write to the output stream.
+    /// @return The output stream to which the IntConst was written.
+    friend std::ostream& operator<<(std::ostream& out, const IntConst& data)
+    {
+        out << data.asUint64();
+        return out;
+    }
 
 private:
     /// @brief Union of signed and signed and unsigned 64-bit values to be used
@@ -688,6 +722,12 @@ public:
             mValue);
     }
 
+    friend std::ostream& operator<<(std::ostream& out, const NumericConst& data)
+    {
+        std::visit([&out](auto&& element) -> void { out << element; }, data.mValue);
+        return out;
+    }
+
 private:
     /// @brief The numeric constant value.
     Value mValue;
@@ -792,6 +832,8 @@ struct Token
         out << "\n\tSpan: " << data.span;
         out << "\n\tLine: " << data.line;
         out << "\n\tColumn: " << data.column;
+        out << "\n\tNumeric Const value: " << data.value;
+        out << "\n\tString literal value: " << data.str;
         return out;
     }
 };
