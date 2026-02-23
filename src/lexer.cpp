@@ -124,7 +124,7 @@ void Lexer::tokenize()
                 break;
             }
             case '0': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 if (next == std::char_traits<char>::eof()) {
                     break;
                 }
@@ -609,7 +609,7 @@ void Lexer::parseHex(Token& token) noexcept
     }
 
     size_t numConverted;
-    uint64_t value = std::stoull(mTokenBuffer.str(), &numConverted, HEX_BASE);
+    const uint64_t value = std::stoull(mTokenBuffer.str(), &numConverted, HEX_BASE);
 
     // Check that all digits were converted properly
     // Number of actual digits parsed after the hex identifier: MAX_HEX_DIGITS - count
@@ -675,7 +675,7 @@ void Lexer::parseOctal(Token& token) noexcept
     const std::string toConvert{mTokenBuffer.str().substr(2)};
 
     size_t numConverted;
-    uint64_t value = std::stoull(toConvert, &numConverted, OCTAL_BASE);
+    const uint64_t value = std::stoull(toConvert, &numConverted, OCTAL_BASE);
 
     // Check that all digits were converted properly
     // Number of actual digits parsed after the octal identifier: MAX_OCTAL_DIGITS - count
@@ -725,7 +725,7 @@ void Lexer::parseBinary(Token& token) noexcept
     }
 
     size_t numConverted;
-    uint64_t value = std::stoull(mTokenBuffer.str(), &numConverted, BINARY_BASE);
+    const uint64_t value = std::stoull(mTokenBuffer.str(), &numConverted, BINARY_BASE);
 
     // Check that all digits were converted properly
     // Number of actual digits parsed after the binary identifier: MAX_BINARY_DIGITS - count

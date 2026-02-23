@@ -722,6 +722,11 @@ public:
             mValue);
     }
 
+    /// @brief Output stream operator for NumericConst.
+    /// @details Outputs the NumericConst as the default value for each of the variant types.
+    /// @param out The output stream to which to write the NumericConst.
+    /// @param data The NumericConst to write to the output stream.
+    /// @return The output stream to which the NumericConst was written.
     friend std::ostream& operator<<(std::ostream& out, const NumericConst& data)
     {
         std::visit([&out](auto&& element) -> void { out << element; }, data.mValue);
