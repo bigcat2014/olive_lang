@@ -124,6 +124,11 @@ private:
     /// @return True if the character is a valid binary digit, false otherwise.
     [[nodiscard]] static bool isBinaryDigit(char value) noexcept { return value == '0' || value == '1'; }
 
+    /// @brief Check if the specified character is the scientific number delimiter.
+    /// @param value The character to check.
+    /// @return True if the character is the scientific number delimiter, false otherwise.
+    [[nodiscard]] static bool isScientificDelimiter(char value) noexcept { return value == 'e' || value == 'E'; }
+
     /// @brief Convert Scientific Notation to double precision float literal.
     /// @param mantissa_str The mantissa of the scientific number.
     /// @param exponent_str The exponent of the scientific number.

@@ -244,7 +244,8 @@ public:
     /// @return The output stream to which the FloatLiteral was written.
     friend std::ostream& operator<<(std::ostream& out, const FloatLiteral& data)
     {
-        out << data.asFloat64();
+        out << "float64: " << data.asFloat64();
+        out << ", float32: " << data.asFloat32();
         return out;
     }
 
@@ -450,7 +451,8 @@ public:
     /// @return The output stream to which the IntLiteral was written.
     friend std::ostream& operator<<(std::ostream& out, const IntLiteral& data)
     {
-        out << data.asUint64();
+        out << "uint64: " << data.asUint64();
+        out << ", int64: " << data.asInt64();
         return out;
     }
 
