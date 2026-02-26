@@ -57,19 +57,19 @@ private:
     /// @param token The token to build.
     void parseType(Token& token) noexcept;
 
-    /// @brief Parse a numeric constant token from the input buffer.
+    /// @brief Parse a numeric literal token from the input buffer.
     /// @param token The token to build.
-    void parseNumericConst(Token& token) noexcept;
+    void parseNumericLiteral(Token& token) noexcept;
 
-    /// @brief Parse a hexidecimal constant from the input buffer.
+    /// @brief Parse a hexidecimal literal from the input buffer.
     /// @param token The token to build.
     void parseHex(Token& token) noexcept;
 
-    /// @brief Parse an octal constant from the input buffer.
+    /// @brief Parse an octal literal from the input buffer.
     /// @param token The token to build.
     void parseOctal(Token& token) noexcept;
 
-    /// @brief Parse a binary constant from the input buffer.
+    /// @brief Parse a binary literal from the input buffer.
     /// @param token The token to build.
     void parseBinary(Token& token) noexcept;
 
@@ -124,11 +124,11 @@ private:
     /// @return True if the character is a valid binary digit, false otherwise.
     [[nodiscard]] static bool isBinaryDigit(char value) noexcept { return value == '0' || value == '1'; }
 
-    /// @brief Convert Scientific Notation to double precision float constant.
+    /// @brief Convert Scientific Notation to double precision float literal.
     /// @param mantissa_str The mantissa of the scientific number.
     /// @param exponent_str The exponent of the scientific number.
     /// @return The double precision floating point number represented by the scientific notation.
-    [[nodiscard]] static FloatConst doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr);
+    [[nodiscard]] static FloatLiteral doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr);
 
 private:
     /// @brief The base of hexidecimal numbers.

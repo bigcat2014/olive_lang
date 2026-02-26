@@ -142,7 +142,7 @@ void Lexer::tokenize()
                     parseBinary(token);
                 }
                 else {
-                    parseNumericConst(token);
+                    parseNumericLiteral(token);
                 }
                 break;
             }
@@ -150,7 +150,7 @@ void Lexer::tokenize()
             case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9': {
                 // clang-format on
-                parseNumericConst(token);
+                parseNumericLiteral(token);
                 break;
             }
             case ':': {
@@ -568,7 +568,7 @@ void Lexer::parseType(Token& token) noexcept
     updateTypeToken(token, mTokenBuffer.str());
 }
 
-void Lexer::parseNumericConst(Token& /*token*/) noexcept
+void Lexer::parseNumericLiteral(Token& /*token*/) noexcept
 {
     mTokenBuffer.str("");
     mTokenBuffer.clear();
@@ -621,8 +621,8 @@ void Lexer::parseHex(Token& token) noexcept
                                 std::format("Could not convert literal to hexidecimal: \"{}\"", mTokenBuffer.str())});
     }
 
-    token.value = NumericConst(RawBits(value));
-    addToken(token, TokenType::TT_NUMERIC_CONST);
+    token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
 }
 
 void Lexer::parseOctal(Token& token) noexcept
@@ -686,8 +686,8 @@ void Lexer::parseOctal(Token& token) noexcept
                                 std::format("Could not convert literal to octal: \"{}\"", mTokenBuffer.str())});
     }
 
-    token.value = NumericConst(RawBits(value));
-    addToken(token, TokenType::TT_NUMERIC_CONST);
+    token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
 }
 
 void Lexer::parseBinary(Token& token) noexcept
@@ -737,12 +737,12 @@ void Lexer::parseBinary(Token& token) noexcept
                                 std::format("Could not convert literal to binary: \"{}\"", mTokenBuffer.str())});
     }
 
-    token.value = NumericConst(RawBits(value));
-    addToken(token, TokenType::TT_NUMERIC_CONST);
+    token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.
-FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr)
+FloatLiteral Lexer::doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr)
 {
     uint64_t mantissa;
     int32_t exponent;
@@ -789,7 +789,7 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     mantissa               = static_cast<uint64_t>(frac * (1ULL << 53));  // 53-bit mantissa for double
     exponent               = binExp - 53;
 
-    return {mantissa, exponent, negative, FloatConst::Precision::FLOAT64};
+    return {mantissa, exponent, negative, FloatLiteral::Precision::FLOAT64};
 }
 
 }  // namespace pimento::tokenization
