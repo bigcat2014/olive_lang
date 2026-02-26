@@ -209,12 +209,13 @@ public:
     {
         double result;
         switch (mPrecision) {
-            case Precision::FLOAT64:
-                result = std::ldexp(static_cast<double>(mMantissa), mExponent);
-                result = mNegative ? -result : result;
-                break;
             case Precision::FLOAT32:
                 result = static_cast<double>(asFloat32());
+                break;
+            case Precision::FLOAT64:
+            default:
+                result = std::ldexp(static_cast<double>(mMantissa), mExponent);
+                result = mNegative ? -result : result;
                 break;
         }
         return result;
@@ -226,12 +227,13 @@ public:
     {
         float result;
         switch (mPrecision) {
-            case Precision::FLOAT64:
-                result = static_cast<float>(asFloat64());
-                break;
             case Precision::FLOAT32:
                 result = static_cast<float>(std::ldexp(static_cast<double>(mMantissa), mExponent));
                 result = mNegative ? -result : result;
+                break;
+            case Precision::FLOAT64:
+            default:
+                result = static_cast<float>(asFloat64());
                 break;
         }
         return result;
