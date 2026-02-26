@@ -33,6 +33,20 @@ public:
     void tokenize();
 
 private:
+    /// @brief Holds the results of parsing the mantissa portion of a numeric literal.
+    /// @details Returned by parseMantissa to describe which components were found during parsing, allowing the caller
+    /// to determine the appropriate token type and validate that at least one digit was present.
+    struct MantissaResult
+    {
+        /// @brief True if one or more digits were found before the decimal point.
+        bool hasLeadingDigits;
+        /// @brief True if a decimal point was found, promoting the literal to float territory.
+        bool hasDot;
+        /// @brief True if one or more digits were found after the decimal point. Only meaningful when hasDot is true.
+        bool hasTrailingDigits;
+    };
+
+private:
     /// @brief Finalize a token and add it to the completed list of tokens.
     /// @details Finalize a token by setting the token type, lexeme, and span.
     /// @param token The token to finalize.
@@ -57,6 +71,21 @@ private:
     /// @param token The token to build.
     void parseType(Token& token) noexcept;
 
+    /// @brief Parses the mantissa portion of a numeric literal from the input buffer.
+    /// @details Consumes leading digits, an optional decimal point, and trailing digits from the input buffer, writing
+    /// each consumed character into mTokenBuffer. The first character is assumed to have already been consumed by the
+    /// caller and written into mTokenBuffer prior to this call.
+    /// @return A MantissaResult containing flags indicating which components were found.
+    MantissaResult parseMantissa() noexcept;
+
+    /// @brief Parses the exponent portion of a numeric literal from the input buffer.
+    /// @details If the next character in the input buffer is 'e' or 'E', consumes the exponent including its optional
+    /// sign and required digit sequence, writing each consumed character into mTokenBuffer. If an exponent marker is
+    /// found but no digits follow, raises a pimento INVALID_TOKEN_ERROR (no throw).
+    /// @param token The token being constructed, used for error reporting.
+    /// @return True if a valid exponent was found and consumed, false if no 'e'/'E' was present.
+    bool parseExponent(const Token& token) noexcept;
+
     /// @brief Parse a numeric literal token from the input buffer.
     /// @param token The token to build.
     void parseNumericLiteral(Token& token) noexcept;
@@ -72,6 +101,13 @@ private:
     /// @brief Parse a binary literal from the input buffer.
     /// @param token The token to build.
     void parseBinary(Token& token) noexcept;
+
+    /// @brief Finalizes a scientific or floating-point numeric literal token.
+    /// @details Converts the contents of mTokenBuffer to a double using std::stod and stores the result in the token.
+    /// If the conversion does not consume the full contents of mTokenBuffer, raises a pimento INVALID_TOKEN_ERROR
+    /// indicating a malformed literal (no throw).
+    /// @param token The token being constructed, used for error reporting and the final value.
+    void finalizeFloat(Token& token) noexcept;
 
     /// @brief Check if the specified character is valid for an identifier.
     /// @param value The character to check.

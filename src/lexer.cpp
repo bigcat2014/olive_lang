@@ -235,7 +235,7 @@ void Lexer::tokenize()
             }
             // .
             case '.': {
-                char next = mInputBuffer.peek();
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
                         break;
@@ -594,6 +594,103 @@ void Lexer::parseType(Token& token) noexcept
     updateTypeToken(token, mTokenBuffer.str());
 }
 
+Lexer::MantissaResult Lexer::parseMantissa() noexcept
+{
+    const char first = mTokenBuffer.str()[0];
+
+    Lexer::MantissaResult result{.hasLeadingDigits  = std::isdigit(static_cast<unsigned char>(first)) != 0,
+                                 .hasDot            = first == '.',
+                                 .hasTrailingDigits = false};
+
+    char next = mInputBuffer.peek();
+
+    // Check for EOF
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return {};
+    }
+
+    if (result.hasDot) {
+        // -------------------------------------------------------------------------
+        // first was '.', so skip straight to consuming trailing digits: [0-9]*
+        // -------------------------------------------------------------------------
+        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+            result.hasTrailingDigits = true;
+            mTokenBuffer << mInputBuffer.consume();
+            next = mInputBuffer.peek();
+        }
+    }
+    else {
+        // -------------------------------------------------------------------------
+        // first was a sign or digit, so continue consuming leading digits: [0-9]*
+        // -------------------------------------------------------------------------
+        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+            result.hasLeadingDigits = true;
+            mTokenBuffer << mInputBuffer.consume();
+            next = mInputBuffer.peek();
+        }
+
+        // -------------------------------------------------------------------------
+        // Optional decimal point, which promotes us from integer to float territory
+        // -------------------------------------------------------------------------
+        if (next == '.') {
+            result.hasDot = true;
+            mTokenBuffer << mInputBuffer.consume();
+            next = mInputBuffer.peek();
+
+            // Digits after the dot: [0-9]*
+            while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+                result.hasTrailingDigits = true;
+                mTokenBuffer << mInputBuffer.consume();
+                next = mInputBuffer.peek();
+            }
+        }
+    }
+
+    return result;
+}
+
+bool Lexer::parseExponent(const Token& token) noexcept
+{
+    char next = mInputBuffer.peek();
+
+    // -------------------------------------------------------------------------
+    // Optional exponent: [eE]([\+-]?[0-9]+)
+    // Presence of an exponent promotes us to scientific number territory.
+    // -------------------------------------------------------------------------
+    if (!isScientificDelimiter(next)) {
+        return false;
+    }
+
+    mTokenBuffer << mInputBuffer.consume();  // consume scientific delimiter
+    next = mInputBuffer.peek();
+
+    // Optional sign inside the exponent
+    if (next == '+' || next == '-') {
+        mTokenBuffer << mInputBuffer.consume();
+        next = mInputBuffer.peek();
+    }
+
+    // Exponent must have at least one digit
+    bool hasExponentDigits = false;
+    while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+        hasExponentDigits = true;
+        mTokenBuffer << mInputBuffer.consume();
+        next = mInputBuffer.peek();
+    }
+
+    if (!hasExponentDigits) {
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             token.line,
+             token.column,
+             std::format("Expected digits after exponent in numeric literal: \"{}\"", mTokenBuffer.str())});
+        return false;
+    }
+
+    return true;
+}
+
 void Lexer::parseNumericLiteral(Token& token) noexcept
 {
     // Attempts to lex one of three forms, using longest match to resolve ambiguity:
@@ -605,11 +702,6 @@ void Lexer::parseNumericLiteral(Token& token) noexcept
     // We commit greedily at each stage and only determine the final token type
     // once we can no longer extend the match.
 
-    const char first       = mTokenBuffer.str()[0];
-    bool hasLeadingDigits  = std::isdigit(static_cast<unsigned char>(first)) != 0;
-    bool hasDot            = first == '.';
-    bool hasTrailingDigits = false;
-
     char next = mInputBuffer.peek();
 
     // Check for EOF
@@ -618,42 +710,7 @@ void Lexer::parseNumericLiteral(Token& token) noexcept
         return;
     }
 
-    if (hasDot) {
-        // -------------------------------------------------------------------------
-        // first was '.', so skip straight to consuming trailing digits: [0-9]*
-        // -------------------------------------------------------------------------
-        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
-            hasTrailingDigits = true;
-            mTokenBuffer << mInputBuffer.consume();
-            next = mInputBuffer.peek();
-        }
-    }
-    else {
-        // -------------------------------------------------------------------------
-        // first was a sign or digit, so continue consuming leading digits: [0-9]*
-        // -------------------------------------------------------------------------
-        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
-            hasLeadingDigits = true;
-            mTokenBuffer << mInputBuffer.consume();
-            next = mInputBuffer.peek();
-        }
-
-        // -------------------------------------------------------------------------
-        // Optional decimal point, which promotes us from integer to float territory
-        // -------------------------------------------------------------------------
-        if (next == '.') {
-            hasDot = true;
-            mTokenBuffer << mInputBuffer.consume();
-            next = mInputBuffer.peek();
-
-            // Digits after the dot: [0-9]*
-            while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
-                hasTrailingDigits = true;
-                mTokenBuffer << mInputBuffer.consume();
-                next = mInputBuffer.peek();
-            }
-        }
-    }
+    const auto [hasLeadingDigits, hasDot, hasTrailingDigits] = parseMantissa();
 
     // At this point we must have seen at least one digit somewhere to form a
     // valid number. A lone '.' (no leading or trailing digits) is invalid, as
@@ -666,76 +723,15 @@ void Lexer::parseNumericLiteral(Token& token) noexcept
         return;
     }
 
-    // -------------------------------------------------------------------------
-    // Optional exponent: [eE]([\+-]?[0-9]+)
-    // Presence of an exponent promotes us to scientific number territory.
-    // -------------------------------------------------------------------------
-    if (isScientificDelimiter(next)) {
-        mTokenBuffer << mInputBuffer.consume();  // consume scientific delimiter
-        next = mInputBuffer.peek();
+    const bool hasExponent = parseExponent(token);
 
-        // Optional sign inside the exponent
-        if (next == '+' || next == '-') {
-            mTokenBuffer << mInputBuffer.consume();
-            next = mInputBuffer.peek();
-        }
-
-        // Exponent must have at least one digit
-        bool hasExponentDigits = false;
-        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
-            hasExponentDigits = true;
-            mTokenBuffer << mInputBuffer.consume();
-            next = mInputBuffer.peek();
-        }
-
-        if (!hasExponentDigits) {
-            pimento::errors::raise(
-                {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                 token.line,
-                 token.column,
-                 std::format("Expected digits after exponent in numeric literal: \"{}\"", mTokenBuffer.str())});
-            return;
-        }
-
-        // *** Finalized as SCIENTIFIC NUMBER ***
-        // Examples: 1e10, -1.5e-3, .5E+2, 1.E4
-        std::string raw = mTokenBuffer.str();
-        size_t numConverted;
-        const double value = std::stod(raw, &numConverted);
-        if (numConverted != raw.size()) {
-            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    token.line,
-                                    token.column,
-                                    std::format("Could not fully convert scientific literal: \"{}\"", raw)});
-            return;
-        }
-        token.value = NumericLiteral(value);
-        addToken(token, TokenType::TT_NUMERIC_LITERAL);
+    if (hasExponent || hasDot) {
+        // Finalized as scientific number or float
+        finalizeFloat(token);
         return;
     }
 
-    if (hasDot) {
-        // *** Finalized as FLOAT ***
-        // A dot was consumed but no exponent followed, so this is a plain float.
-        // Examples: 1.0, 1., .5, -3.14
-        const std::string raw = mTokenBuffer.str();
-        size_t numConverted;
-        const double value = std::stod(raw, &numConverted);
-        if (numConverted != raw.size()) {
-            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    token.line,
-                                    token.column,
-                                    std::format("Could not fully convert float literal: \"{}\"", raw)});
-            return;
-        }
-        token.value = NumericLiteral(value);
-        addToken(token, TokenType::TT_NUMERIC_LITERAL);
-        return;
-    }
-
-    // *** Finalized as INTEGER ***
-    // No dot and no exponent were found; we have a plain integer.
-    // Examples: 42, +7, -100
+    // Finalized as integer
     const std::string raw = mTokenBuffer.str();
     size_t numConverted;
     const int64_t value = std::stoll(raw, &numConverted);
@@ -914,6 +910,22 @@ void Lexer::parseBinary(Token& token) noexcept
     }
 
     token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
+}
+
+void Lexer::finalizeFloat(Token& token) noexcept
+{
+    const std::string raw = mTokenBuffer.str();
+    size_t numConverted;
+    const double value = std::stod(raw, &numConverted);
+    if (numConverted != raw.size()) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Could not fully convert literal: \"{}\"", raw)});
+        return;
+    }
+    token.value = NumericLiteral(value);
     addToken(token, TokenType::TT_NUMERIC_LITERAL);
 }
 
