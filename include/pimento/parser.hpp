@@ -45,7 +45,8 @@ private:
     /// @brief Try to consume the next token if it is the provided TokenType.
     /// @details Try to consume the next token if it is a specific TokenType. If the token type matches, consume it,
     /// otherwise log an error and exit.
-    /// @param token_type The token type we are asserting is next.
+    /// @param tokenType The token type we are asserting is next.
+    /// @return The token that has been consumed.
     inline tokenization::Token tryConsume(tokenization::TokenType tokenType) noexcept;
 
     /// @brief Parse a Statement into the AST.
@@ -53,6 +54,7 @@ private:
     std::shared_ptr<node::StmtNode> parseStatement();
 
     /// @brief Parse an Expression into the AST.
+    /// @param minPrecedence The minimum precedence used for determining operator precedence.
     /// @return The Expression node of the AST.
     std::shared_ptr<node::ExprNode> parseExpression(uint8_t minPrecedence = 0);
 

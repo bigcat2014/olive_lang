@@ -38,6 +38,7 @@ public:
     }
 
 private:
+    /// @brief Type alias for the map between error types and their string representations.
     using ErrorStrMap = std::unordered_map<ErrorType, std::string>;
 
     /// @brief Get the map from error types to human-readable strings.
