@@ -23,19 +23,17 @@ Lexer::Lexer(std::istream* istream)
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void Lexer::tokenize()
 {
-    auto& logger  = utils::getLogger();
-    size_t offset = 0;
-    size_t line   = 0;
-    size_t column = 0;
+    auto& logger = utils::getLogger();
 
     while (!mInputBuffer.done()) {
-        // Cache current offset, line number, and column number at start of parsing current token
+        // Create the token with the current offset, line number, and column number
+        Token token;
         if (mTokenBuffer.str().empty()) {
-            offset = mInputBuffer.getOffset();
-            line   = mInputBuffer.getCurrentLine();
-            column = mInputBuffer.getCurrentColumn();
+            token.offset = mInputBuffer.getOffset();
+            token.line   = mInputBuffer.getCurrentLine();
+            token.column = mInputBuffer.getCurrentColumn();
         }
-        else if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
+        else if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
                                     mInputBuffer.getCurrentLine() + 1,
                                     mInputBuffer.getCurrentColumn(),
@@ -46,126 +44,114 @@ void Lexer::tokenize()
         if (currentChar == std::char_traits<char>::eof()) {
             break;
         }
-        mTokenBuffer << currentChar;
 
-        switch (mTokenBuffer.str()[0]) {
+        // Handle white space
+        if (std::isspace(static_cast<unsigned char>(currentChar)) != 0) {
+            // mTokenBuffer.str("");
+            // mTokenBuffer.clear();
+            continue;
+        }
+
+        mTokenBuffer << currentChar;
+        switch (currentChar) {
             case std::char_traits<char>::eof():
                 break;
-            case '_': {
-                // TODO(lthomas): I don't like this... Lots of reused code, not very clean.
-                char next = mInputBuffer.peek();
+            case '"':
+                parseStringToken(token);
+                break;
+            case 'r': {
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
-                        if (mTokenBuffer.str().back() == '_') {
-                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                    mInputBuffer.getCurrentLine() + 1,
-                                                    mInputBuffer.getCurrentColumn(),
-                                                    "Expected character after '_'"});
-                        }
                         break;
-                    case '_':
-                        mTokenBuffer << mInputBuffer.consume();
-                        next = mInputBuffer.peek();
-                        switch (next) {
-                            case std::char_traits<char>::eof():
-                                break;
-                            case '_':
-                                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                        mInputBuffer.getCurrentLine() + 1,
-                                                        mInputBuffer.getCurrentColumn(),
-                                                        "Too many '_' at start of identifier. Max is 2."});
-                                break;
-                            default:
-                                if (std::islower(next) == 0) {
-                                    pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                            mInputBuffer.getCurrentLine() + 1,
-                                                            mInputBuffer.getCurrentColumn(),
-                                                            "Expected character matching [a-z_]."});
-                                }
-                                parseIdent(offset, line, column);
-                        }
+                    case '"':
+                        parseRawStringToken(token);
                         break;
                     default:
-                        if (std::islower(next) == 0) {
-                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                    mInputBuffer.getCurrentLine() + 1,
-                                                    mInputBuffer.getCurrentColumn(),
-                                                    "Expected character matching [a-z_]."});
-                        }
-                        parseIdent(offset, line, column);
-                        break;
+                        parseAlnumToken(token);
                 }
                 break;
             }
                 // clang-format off
+            case '_':
             case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
             case 'g': case 'h': case 'i': case 'j': case 'k':
             case 'l': case 'm': case 'n': case 'o': case 'p':
-            case 'q': case 'r': case 's': case 't': case 'u':
-            case 'v': case 'w': case 'x': case 'y': case 'z': {
-                // clang-format on
-                parseIdent(offset, line, column);
-                break;
-            }
-                // clang-format off
+            case 'q':           case 's': case 't': case 'u':
+            case 'v': case 'w': case 'x': case 'y': case 'z':
             case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
             case 'G': case 'H': case 'I': case 'J': case 'K':
             case 'L': case 'M': case 'N': case 'O': case 'P':
             case 'Q': case 'R': case 'S': case 'T': case 'U':
             case 'V': case 'W': case 'X': case 'Y': case 'Z': {
                 // clang-format on
-                // TODO(lthomas): parseIdent or keyword
-                parseType(offset, line, column);
+                parseAlnumToken(token);
+                break;
+            }
+            case '0': {
+                const char next = mInputBuffer.peek();
+                if (next == std::char_traits<char>::eof()) {
+                    break;
+                }
+
+                if (isHexSpecifier(next)) {
+                    mTokenBuffer << mInputBuffer.consume();
+                    parseHex(token);
+                }
+                else if (isOctalSpecifier(next)) {
+                    mTokenBuffer << mInputBuffer.consume();
+                    parseOctal(token);
+                }
+                else if (isBinarySpecifier(next)) {
+                    mTokenBuffer << mInputBuffer.consume();
+                    parseBinary(token);
+                }
+                else {
+                    parseNumericLiteral(token);
+                }
                 break;
             }
                 // clang-format off
-            case '0': case '1': case '2': case '3': case '4':
+            case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9': {
                 // clang-format on
-                parseNumericConst(offset, line, column);
-                break;
-            }
-                // clang-format off
-            case '\n': case '\t': case '\v': case '\f': case ' ': {
-                // clang-format on
-                mTokenBuffer.str("");
-                mTokenBuffer.clear();
+                parseNumericLiteral(token);
                 break;
             }
             case ':': {
-                createToken(TokenType::TT_COLON, offset, line, column);
+                addToken(token, TokenType::TT_COLON);
                 break;
             }
             case ',': {
-                createToken(TokenType::TT_COMMA, offset, line, column);
+                addToken(token, TokenType::TT_COMMA);
                 break;
             }
             case '{': {
-                createToken(TokenType::TT_LEFT_CURLY, offset, line, column);
+                addToken(token, TokenType::TT_LEFT_CURLY);
                 break;
             }
             case '(': {
-                createToken(TokenType::TT_LEFT_PAREN, offset, line, column);
+                addToken(token, TokenType::TT_LEFT_PAREN);
                 break;
             }
             case '[': {
-                createToken(TokenType::TT_LEFT_SQUARE, offset, line, column);
+                addToken(token, TokenType::TT_LEFT_SQUARE);
                 break;
             }
             case '}': {
-                createToken(TokenType::TT_RIGHT_CURLY, offset, line, column);
+                addToken(token, TokenType::TT_RIGHT_CURLY);
                 break;
             }
             case ')': {
-                createToken(TokenType::TT_RIGHT_PAREN, offset, line, column);
+                addToken(token, TokenType::TT_RIGHT_PAREN);
                 break;
             }
             case ']': {
-                createToken(TokenType::TT_RIGHT_SQUARE, offset, line, column);
+                addToken(token, TokenType::TT_RIGHT_SQUARE);
                 break;
             }
             case ';': {
-                createToken(TokenType::TT_SEMI, offset, line, column);
+                addToken(token, TokenType::TT_SEMI);
                 break;
             }
             // &, &=
@@ -176,10 +162,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_AMP_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_AMP_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_AMP, offset, line, column);
+                        addToken(token, TokenType::TT_AMP);
                 }
                 break;
             }
@@ -197,24 +183,36 @@ void Lexer::tokenize()
                                 break;
                             case '=':
                                 mTokenBuffer << mInputBuffer.consume();
-                                createToken(TokenType::TT_CARET_CARET_EQUAL, offset, line, column);
+                                addToken(token, TokenType::TT_CARET_CARET_EQUAL);
                                 break;
                             default:
-                                createToken(TokenType::TT_CARET_CARET, offset, line, column);
+                                addToken(token, TokenType::TT_CARET_CARET);
                         }
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_CARET_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_CARET_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_CARET, offset, line, column);
+                        addToken(token, TokenType::TT_CARET);
                 }
                 break;
             }
             // .
             case '.': {
-                createToken(TokenType::TT_DOT, offset, line, column);
+                const char next = mInputBuffer.peek();
+                switch (next) {
+                    case std::char_traits<char>::eof():
+                        break;
+                        // clang-format off
+                    case '0': case '1': case '2': case '3': case '4':
+                    case '5': case '6': case '7': case '8': case '9':
+                        // clang-format on
+                        parseNumericLiteral(token);
+                        break;
+                    default:
+                        addToken(token, TokenType::TT_DOT);
+                }
                 break;
             }
             // =, ==
@@ -225,10 +223,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_EQUAL_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_EQUAL_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_EQUAL);
                 }
                 break;
             }
@@ -257,18 +255,18 @@ void Lexer::tokenize()
                                 break;
                             case '=':
                                 mTokenBuffer << mInputBuffer.consume();
-                                createToken(TokenType::TT_FSLASH_FSLASH_EQUAL, offset, line, column);
+                                addToken(token, TokenType::TT_FSLASH_FSLASH_EQUAL);
                                 break;
                             default:
-                                createToken(TokenType::TT_FSLASH_FSLASH, offset, line, column);
+                                addToken(token, TokenType::TT_FSLASH_FSLASH);
                         }
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_FSLASH_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_FSLASH_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_FSLASH, offset, line, column);
+                        addToken(token, TokenType::TT_FSLASH);
                 }
                 break;
             }
@@ -280,14 +278,14 @@ void Lexer::tokenize()
                         break;
                     case '<':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_LANGLE_LANGLE, offset, line, column);
+                        addToken(token, TokenType::TT_LANGLE_LANGLE);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_LANGLE_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_LANGLE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_LANGLE, offset, line, column);
+                        addToken(token, TokenType::TT_LANGLE);
                 }
                 break;
             }
@@ -299,14 +297,21 @@ void Lexer::tokenize()
                         break;
                     case '-':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_MINUS_MINUS, offset, line, column);
+                        addToken(token, TokenType::TT_MINUS_MINUS);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_MINUS_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_MINUS_EQUAL);
+                        break;
+                        // clang-format off
+                    case '0': case '1': case '2': case '3': case '4':
+                    case '5': case '6': case '7': case '8': case '9':
+                    case '.':
+                        // clang-format on
+                        parseNumericLiteral(token);
                         break;
                     default:
-                        createToken(TokenType::TT_MINUS, offset, line, column);
+                        addToken(token, TokenType::TT_MINUS);
                 }
                 break;
             }
@@ -318,10 +323,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PERCENT_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_PERCENT_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_PERCENT, offset, line, column);
+                        addToken(token, TokenType::TT_PERCENT);
                 }
                 break;
             }
@@ -333,10 +338,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PIPE_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_PIPE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_PIPE, offset, line, column);
+                        addToken(token, TokenType::TT_PIPE);
                 }
                 break;
             }
@@ -348,20 +353,27 @@ void Lexer::tokenize()
                         break;
                     case '+':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PLUS_PLUS, offset, line, column);
+                        addToken(token, TokenType::TT_PLUS_PLUS);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_PLUS_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_PLUS_EQUAL);
+                        break;
+                        // clang-format off
+                    case '0': case '1': case '2': case '3': case '4':
+                    case '5': case '6': case '7': case '8': case '9':
+                    case '.':
+                        // clang-format on
+                        parseNumericLiteral(token);
                         break;
                     default:
-                        createToken(TokenType::TT_PLUS, offset, line, column);
+                        addToken(token, TokenType::TT_PLUS);
                 }
                 break;
             }
             // ?
             case '?': {
-                createToken(TokenType::TT_QUESTION, offset, line, column);
+                addToken(token, TokenType::TT_QUESTION);
                 break;
             }
             // >, >=, >>
@@ -372,14 +384,14 @@ void Lexer::tokenize()
                         break;
                     case '>':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_RANGLE_RANGLE, offset, line, column);
+                        addToken(token, TokenType::TT_RANGLE_RANGLE);
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_RANGLE_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_RANGLE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_RANGLE, offset, line, column);
+                        addToken(token, TokenType::TT_RANGLE);
                 }
                 break;
             }
@@ -391,10 +403,10 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_STAR_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_STAR_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_STAR, offset, line, column);
+                        addToken(token, TokenType::TT_STAR);
                 }
                 break;
             }
@@ -406,16 +418,16 @@ void Lexer::tokenize()
                         break;
                     case '=':
                         mTokenBuffer << mInputBuffer.consume();
-                        createToken(TokenType::TT_TILDE_EQUAL, offset, line, column);
+                        addToken(token, TokenType::TT_TILDE_EQUAL);
                         break;
                     default:
-                        createToken(TokenType::TT_TILDE, offset, line, column);
+                        addToken(token, TokenType::TT_TILDE);
                 }
                 break;
             }
             // Comments
             case '#': {
-                char next = mInputBuffer.consume();
+                char next = mInputBuffer.peek();
                 while (next != '\n' && next != std::char_traits<char>::eof()) {
                     next = mInputBuffer.consume();
                 }
@@ -448,40 +460,24 @@ void Lexer::tokenize()
         // Testing using offset and span for pulling from input stream
         std::cout << "Tokens from file" << '\n';
         for (const auto& token : mTokens) {
-            std::cout << mInputBuffer.get(token.sourceSpan.first, token.sourceSpan.second) << '\n';
+            std::cout << mInputBuffer.get(token.offset, token.span) << '\n';
         }
     }
 }
 
-void Lexer::createToken(TokenType type, size_t offset, size_t line, size_t column) noexcept
+void Lexer::addToken(Token& token, TokenType type) noexcept
 {
     const std::string lexeme{mTokenBuffer.str()};
-    mTokens.emplace_back(type, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
+    token.tokenType = type;
+    token.lexeme    = lexeme;
+    token.span      = lexeme.length();
+
+    mTokens.emplace_back(token);
     mTokenBuffer.str("");
     mTokenBuffer.clear();
 }
 
-void Lexer::createIdentToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
-{
-    const std::string lexeme{mTokenBuffer.str()};
-    // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
-    mTokens.emplace_back(
-        TokenType::TT_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
-    mTokenBuffer.str("");
-    mTokenBuffer.clear();
-}
-
-void Lexer::createTypeToken(const std::string& /*value*/, size_t offset, size_t line, size_t column) noexcept
-{
-    const std::string lexeme{mTokenBuffer.str()};
-    // TODO(lthomas): Fix polymorphism. Vector of token pointers? std::variant?
-    mTokens.emplace_back(
-        TokenType::TT_TYPE_IDENT, lexeme, std::make_pair(offset, lexeme.length()), std::make_pair(line, column));
-    mTokenBuffer.str("");
-    mTokenBuffer.clear();
-}
-
-void Lexer::parseIdent(size_t offset, size_t line, size_t column)
+void Lexer::parseAlnumToken(Token& token) noexcept
 {
     char next = mInputBuffer.peek();
 
@@ -490,33 +486,201 @@ void Lexer::parseIdent(size_t offset, size_t line, size_t column)
         return;
     }
 
-    while (isIdentChar(next)) {
+    while (isTokenChar(next)) {
         mTokenBuffer << mInputBuffer.consume();
-        if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
+        if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    line + 1,
-                                    column,
+                                    token.line + 1,
+                                    token.column,
                                     std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
         }
         next = mInputBuffer.peek();
     }
 
-    if (next == std::char_traits<char>::eof()) {
-        // TODO(lthomas): What to do here...
-        return;
-    }
-
-    if (std::isspace(next) == 0) {
+    if (std::isspace(static_cast<unsigned char>(next)) == 0 && next != std::char_traits<char>::eof()) {
         pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
                                 mInputBuffer.getCurrentLine() + 1,
                                 mInputBuffer.getCurrentColumn(),
                                 std::format("Unexpected character: '{}'.", next)});
     }
 
-    createIdentToken(mTokenBuffer.str(), offset, line, column);
+    // Check if keyword
+    std::string raw = mTokenBuffer.str();
+    const auto iter = KeywordMap.find(raw);
+
+    if (iter != KeywordMap.end()) {
+        addToken(token, iter->second);
+        return;
+    }
+
+    // Not a keyword — enforce the identifier pattern
+    if (isValidIdentifier(raw)) {
+        addToken(token, TokenType::TT_IDENT);
+    }
+    else if (isValidType(raw)) {
+        addToken(token, TokenType::TT_TYPE_IDENT);
+    }
+    else {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line + 1,
+                                token.column,
+                                std::format("'{}' is not a valid identifier or type.", raw)});
+    }
 }
 
-void Lexer::parseType(size_t offset, size_t line, size_t column)
+Lexer::MantissaResult Lexer::parseMantissa() noexcept
+{
+    const char first = mTokenBuffer.str()[0];
+
+    Lexer::MantissaResult result{.hasLeadingDigits  = std::isdigit(static_cast<unsigned char>(first)) != 0,
+                                 .hasDot            = first == '.',
+                                 .hasTrailingDigits = false};
+
+    char next = mInputBuffer.peek();
+
+    // Check for EOF
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return {};
+    }
+
+    if (result.hasDot) {
+        // -------------------------------------------------------------------------
+        // first was '.', so skip straight to consuming trailing digits: [0-9]*
+        // -------------------------------------------------------------------------
+        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+            result.hasTrailingDigits = true;
+            mTokenBuffer << mInputBuffer.consume();
+            next = mInputBuffer.peek();
+        }
+    }
+    else {
+        // -------------------------------------------------------------------------
+        // first was a sign or digit, so continue consuming leading digits: [0-9]*
+        // -------------------------------------------------------------------------
+        while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+            result.hasLeadingDigits = true;
+            mTokenBuffer << mInputBuffer.consume();
+            next = mInputBuffer.peek();
+        }
+
+        // -------------------------------------------------------------------------
+        // Optional decimal point, which promotes us from integer to float territory
+        // -------------------------------------------------------------------------
+        if (next == '.') {
+            result.hasDot = true;
+            mTokenBuffer << mInputBuffer.consume();
+            next = mInputBuffer.peek();
+
+            // Digits after the dot: [0-9]*
+            while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+                result.hasTrailingDigits = true;
+                mTokenBuffer << mInputBuffer.consume();
+                next = mInputBuffer.peek();
+            }
+        }
+    }
+
+    return result;
+}
+
+bool Lexer::parseExponent(const Token& token) noexcept
+{
+    char next = mInputBuffer.peek();
+
+    // -------------------------------------------------------------------------
+    // Optional exponent: [eE]([\+-]?[0-9]+)
+    // Presence of an exponent promotes us to scientific number territory.
+    // -------------------------------------------------------------------------
+    if (!isScientificDelimiter(next)) {
+        return false;
+    }
+
+    mTokenBuffer << mInputBuffer.consume();  // consume scientific delimiter
+    next = mInputBuffer.peek();
+
+    // Optional sign inside the exponent
+    if (next == '+' || next == '-') {
+        mTokenBuffer << mInputBuffer.consume();
+        next = mInputBuffer.peek();
+    }
+
+    // Exponent must have at least one digit
+    bool hasExponentDigits = false;
+    while (std::isdigit(static_cast<unsigned char>(next)) != 0) {
+        hasExponentDigits = true;
+        mTokenBuffer << mInputBuffer.consume();
+        next = mInputBuffer.peek();
+    }
+
+    if (!hasExponentDigits) {
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             token.line,
+             token.column,
+             std::format("Expected digits after exponent in numeric literal: \"{}\"", mTokenBuffer.str())});
+        return false;
+    }
+
+    return true;
+}
+
+void Lexer::parseNumericLiteral(Token& token) noexcept
+{
+    // Attempts to lex one of three forms, using longest match to resolve ambiguity:
+    //   Integer:    [\+-]?[0-9]+
+    //   Float:      [\+-]?([0-9]+\.[0-9]*|\.[0-9]+)
+    //   Scientific: [\+-]?([0-9]+(\.[0-9]*)?|\.[0-9]+)[eE]([\+-]?[0-9]+)
+    //
+    // Longest match priority: Scientific > Float > Integer
+    // We commit greedily at each stage and only determine the final token type
+    // once we can no longer extend the match.
+
+    char next = mInputBuffer.peek();
+
+    // Check for EOF
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return;
+    }
+
+    const auto [hasLeadingDigits, hasDot, hasTrailingDigits] = parseMantissa();
+
+    // At this point we must have seen at least one digit somewhere to form a
+    // valid number. A lone '.' (no leading or trailing digits) is invalid, as
+    // is a bare sign character.
+    if (!hasLeadingDigits && !hasTrailingDigits) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Expected numeric digit in literal, got: '{}'", next)});
+        return;
+    }
+
+    const bool hasExponent = parseExponent(token);
+
+    if (hasExponent || hasDot) {
+        // Finalized as scientific number or float
+        finalizeFloat(token);
+        return;
+    }
+
+    // Finalized as integer
+    const std::string raw = mTokenBuffer.str();
+    size_t numConverted;
+    const int64_t value = std::stoll(raw, &numConverted);
+    if (numConverted != raw.size()) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Could not fully convert integer literal: \"{}\"", raw)});
+        return;
+    }
+    token.value = NumericLiteral(value);
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
+}
+
+void Lexer::parseHex(Token& token) noexcept
 {
     char next = mInputBuffer.peek();
 
@@ -525,40 +689,329 @@ void Lexer::parseType(size_t offset, size_t line, size_t column)
         return;
     }
 
-    while (isTypeChar(next)) {
-        mTokenBuffer << mInputBuffer.consume();
-        if (mTokenBuffer.str().length() + 1 > MAX_TOKEN_LEN) {
-            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    line + 1,
-                                    column,
-                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
-        }
-        next = mInputBuffer.peek();
+    bool isValidDigit = std::isxdigit(static_cast<unsigned char>(next)) != 0;
+    if (!isValidDigit) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Unexpected symbol: '{}'. Expected hexidecimal character.", next)});
     }
+
+    size_t count = MAX_HEX_DIGITS;
+    while (isValidDigit && count > 0) {
+        mTokenBuffer << mInputBuffer.consume();
+        next         = mInputBuffer.peek();
+        isValidDigit = std::isxdigit(static_cast<unsigned char>(next)) != 0;
+        count--;
+    }
+
+    // Received more than MAX_HEX_DIGITS digits
+    if (isValidDigit && count == 0) {
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             token.line,
+             token.column,
+             std::format("Too many digits in hexidecimal number, expected <= {} digits.", MAX_HEX_DIGITS)});
+    }
+
+    size_t numConverted;
+    const uint64_t value = std::stoull(mTokenBuffer.str(), &numConverted, HEX_BASE);
+
+    // Check that all digits were converted properly
+    // Number of actual digits parsed after the hex identifier: MAX_HEX_DIGITS - count
+    // Number of digits in the hex identifier (0x or 0X): 2
+    if (numConverted != MAX_HEX_DIGITS - count + 2) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Could not convert literal to hexidecimal: \"{}\"", mTokenBuffer.str())});
+    }
+
+    token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
+}
+
+void Lexer::parseOctal(Token& token) noexcept
+{
+    char next = mInputBuffer.peek();
 
     if (next == std::char_traits<char>::eof()) {
         // TODO(lthomas): What to do here...
         return;
     }
 
-    if (std::isspace(next) == 0) {
+    bool isValidDigit = isOctalDigit(next);
+    if (!isValidDigit) {
         pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                mInputBuffer.getCurrentLine() + 1,
-                                mInputBuffer.getCurrentColumn(),
-                                std::format("Unexpected character: '{}'.", next)});
+                                token.line,
+                                token.column,
+                                std::format("Unexpected symbol: '{}'. Expected octal character.", next)});
     }
 
-    createTypeToken(mTokenBuffer.str(), offset, line, column);
+    // If first digit is "1" then MAX_OCTAL_DIGITS is valid. If not, then we must have fewer digits.
+    // Octal overflows 64 bits when there are MAX_OCTAL_DIGITS and the first digit is greater than 1
+    size_t count;
+    if (next == '0' || next == '1') {
+        count = MAX_OCTAL_DIGITS;
+    }
+    else {
+        count = MAX_OCTAL_DIGITS - 1;
+    }
+    // Set max digits for verification later
+    const size_t MAX_DIGITS{count};
+
+    while (isValidDigit && count > 0) {
+        mTokenBuffer << mInputBuffer.consume();
+        next         = mInputBuffer.peek();
+        isValidDigit = isOctalDigit(next);
+        count--;
+    }
+
+    // Received more than MAX_OCTAL_DIGITS digits
+    if (isValidDigit && count == 0) {
+        // TODO(lthomas): Fix printing to handle differences between starting with 1 and not
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             token.line,
+             token.column,
+             std::format("Too many digits in octal number, expected <= {} digits.", MAX_OCTAL_DIGITS)});
+    }
+
+    // Strip "0o" / "0O" prefix
+    const std::string toConvert{mTokenBuffer.str().substr(2)};
+
+    size_t numConverted;
+    const uint64_t value = std::stoull(toConvert, &numConverted, OCTAL_BASE);
+
+    // Check that all digits were converted properly
+    // Number of actual digits parsed after the octal identifier: MAX_OCTAL_DIGITS - count
+    if (numConverted != MAX_DIGITS - count) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Could not convert literal to octal: \"{}\"", mTokenBuffer.str())});
+    }
+
+    token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
 }
 
-void Lexer::parseNumericConst(size_t /*offset*/, size_t /*line*/, size_t /*column*/)
+void Lexer::parseBinary(Token& token) noexcept
 {
-    mTokenBuffer.str("");
-    mTokenBuffer.clear();
+    char next = mInputBuffer.peek();
+
+    if (next == std::char_traits<char>::eof()) {
+        // TODO(lthomas): What to do here...
+        return;
+    }
+
+    bool isValidDigit = isBinaryDigit(next);
+    if (!isValidDigit) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Unexpected symbol: '{}'. Expected hexidecimal character.", next)});
+    }
+
+    size_t count = MAX_BINARY_DIGITS;
+    while (isValidDigit && count > 0) {
+        mTokenBuffer << mInputBuffer.consume();
+        next         = mInputBuffer.peek();
+        isValidDigit = isBinaryDigit(next);
+        count--;
+    }
+
+    // Received more than MAX_BINARY_DIGITS digits
+    if (isValidDigit && count == 0) {
+        pimento::errors::raise(
+            {pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+             token.line,
+             token.column,
+             std::format("Too many digits in binary number, expected <= {} digits.", MAX_BINARY_DIGITS)});
+    }
+
+    size_t numConverted;
+    const uint64_t value = std::stoull(mTokenBuffer.str(), &numConverted, BINARY_BASE);
+
+    // Check that all digits were converted properly
+    // Number of actual digits parsed after the binary identifier: MAX_BINARY_DIGITS - count
+    // Number of digits in the binary identifier (0b or 0B): 2
+    if (numConverted != MAX_BINARY_DIGITS - count + 2) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Could not convert literal to binary: \"{}\"", mTokenBuffer.str())});
+    }
+
+    token.value = NumericLiteral(RawBits(value));
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
+}
+
+void Lexer::finalizeFloat(Token& token) noexcept
+{
+    const std::string raw = mTokenBuffer.str();
+    size_t numConverted;
+    const double value = std::stod(raw, &numConverted);
+    if (numConverted != raw.size()) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line,
+                                token.column,
+                                std::format("Could not fully convert literal: \"{}\"", raw)});
+        return;
+    }
+    token.value = NumericLiteral(value);
+    addToken(token, TokenType::TT_NUMERIC_LITERAL);
+}
+
+void Lexer::parseStringToken(Token& token) noexcept
+{
+    char next   = mInputBuffer.peek();
+    bool closed = false;
+
+    while (next != std::char_traits<char>::eof()) {
+        if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
+            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                    token.line + 1,
+                                    token.column,
+                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
+            return;
+        }
+
+        if (next == '"') {
+            mTokenBuffer << mInputBuffer.consume();
+            closed = true;
+            break;
+        }
+
+        if (next == '\\') {
+            mTokenBuffer << mInputBuffer.consume();
+            char escaped = mInputBuffer.peek();
+
+            if (escaped == std::char_traits<char>::eof()) {
+                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
+                                        "Unterminated escape sequence in string literal."});
+                return;
+            }
+
+            static constexpr std::string_view ValidEscapes = R"(nrt\\"0)";
+            if (ValidEscapes.find(escaped) == std::string_view::npos) {
+                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
+                                        std::format("Invalid escape sequence: '\\{}'.", escaped)});
+                return;
+            }
+
+            mTokenBuffer << mInputBuffer.consume();
+        }
+        else {
+            mTokenBuffer << mInputBuffer.consume();
+        }
+
+        next = mInputBuffer.peek();
+    }
+
+    if (!closed) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line + 1,
+                                token.column,
+                                "Unterminated string literal."});
+        return;
+    }
+
+    addToken(token, TokenType::TT_STRING);
+}
+
+void Lexer::parseRawStringToken(Token& token) noexcept
+{
+    mTokenBuffer << mInputBuffer.consume();
+
+    char next   = mInputBuffer.peek();
+    bool closed = false;
+
+    while (next != std::char_traits<char>::eof()) {
+        if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
+            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                    token.line + 1,
+                                    token.column,
+                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
+            return;
+        }
+
+        if (next == '"') {
+            mTokenBuffer << mInputBuffer.consume();
+            closed = true;
+            break;
+        }
+
+        mTokenBuffer << mInputBuffer.consume();
+        next = mInputBuffer.peek();
+    }
+
+    if (!closed) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line + 1,
+                                token.column,
+                                "Unterminated raw string literal."});
+        return;
+    }
+
+    addToken(token, TokenType::TT_RAW_STRING);
+}
+
+bool Lexer::isValidIdentifier(const std::string& lexeme) noexcept
+{
+    size_t pos       = 0;
+    const size_t len = lexeme.size();
+
+    // Consume 0-2 leading underscores
+    while (pos < len && lexeme[pos] == '_' && pos < 2) {
+        ++pos;
+    }
+
+    // Must be followed by a lowercase letter
+    if (pos >= len || (std::islower(static_cast<unsigned char>(lexeme[pos])) == 0)) {
+        return false;
+    }
+    ++pos;
+
+    // Remaining chars: letters, digits, underscores
+    while (pos < len) {
+        if (!isTokenChar(lexeme[pos])) {
+            return false;
+        }
+        ++pos;
+    }
+
+    return true;
+}
+
+bool Lexer::isValidType(const std::string& lexeme) noexcept
+{
+    size_t pos       = 0;
+    const size_t len = lexeme.size();
+
+    // Must start with an uppercase letter
+    if (pos >= len || (std::isupper(static_cast<unsigned char>(lexeme[pos])) == 0)) {
+        return false;
+    }
+    ++pos;
+
+    // Remaining chars: letters, digits
+    while (pos < len) {
+        if (!isTypeChar(lexeme[pos])) {
+            return false;
+        }
+        ++pos;
+    }
+
+    return true;
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.
-FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr)
+FloatLiteral Lexer::doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr)
 {
     uint64_t mantissa;
     int32_t exponent;
@@ -605,7 +1058,7 @@ FloatConst Lexer::doubleFromScientific(std::string& mantissaStr, const std::stri
     mantissa               = static_cast<uint64_t>(frac * (1ULL << 53));  // 53-bit mantissa for double
     exponent               = binExp - 53;
 
-    return {mantissa, exponent, negative, FloatConst::Precision::FLOAT64};
+    return {mantissa, exponent, negative, FloatLiteral::Precision::FLOAT64};
 }
 
 }  // namespace pimento::tokenization

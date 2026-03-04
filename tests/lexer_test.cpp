@@ -65,7 +65,7 @@ TEST_F(LexerFixture, FloatPass)
     initializeFromFile(FLOAT_PASS_PATH);
 
     for (const auto& token : mTokens) {
-        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
+        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_LITERAL);
         // TODO(lthomas): Placeholder code. Will need updating for token type
         EXPECT_EQ(token.value, std::stof(token));
     }
@@ -76,7 +76,7 @@ TEST(Lexer, IntegerPass)
     initializeFromFile(INTEGER_PASS_PATH);
 
     for (const auto& token : mTokens) {
-        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
+        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_LITERAL);
         // TODO(lthomas): Placeholder code. Will need updating for token type
         EXPECT_EQ(token.value, std::stoll(token));
     }
@@ -87,7 +87,7 @@ TEST(Lexer, ScientificPass)
     initializeFromFile(SCIENTIFIC_PASS_PATH);
 
     for (const auto& token : mTokens) {
-        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_CONST);
+        ASSERT_EQ(token.tokenType, TokenType::TT_NUMERIC_LITERAL);
         // TODO(lthomas): Placeholder code. Will need updating for token type
         EXPECT_EQ(token.value, std::stoll(parsed[1]));
         EXPECT_EQ(token.value, std::stoll(parsed[2]));
@@ -103,7 +103,7 @@ TEST(Lexer, FloatFail)
         Lexer lexer{testStream};
 
         for (const auto& token : lexer.tokens()) {
-            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_CONST);
+            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_LITERAL);
         }
     }
 }
@@ -118,7 +118,7 @@ TEST(Lexer, IntegerFail)
 
         for (const auto& token : lexer.tokens()) {
             // TODO(lthomas): Will need updating for token type
-            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_CONST);
+            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_LITERAL);
         }
     }
 }
@@ -133,7 +133,7 @@ TEST(Lexer, ScientificFail)
 
         for (const auto& token : lexer.tokens()) {
             // TODO(lthomas): Will need updating for token type
-            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_CONST);
+            EXPECT_NE(token.tokenType, TokenType::TT_NUMERIC_LITERAL);
         }
     }
 }

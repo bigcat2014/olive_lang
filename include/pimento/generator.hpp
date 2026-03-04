@@ -41,6 +41,7 @@ private:
 
     /// @brief Generate assembly for an If Predicate.
     /// @param node Input if predicate node for which to generate assembly.
+    /// @param endLabel The name of the label to jump to in order to skip the ifpred body when the condition is false.
     void genIfpred(const std::shared_ptr<ast::node::IfPredNode>& node, const std::string& endLabel) noexcept;
 
     /// @brief Generate assembly for a Term.
@@ -80,7 +81,7 @@ private:
 
         /// @brief Constructor for the Var.
         /// @param name Identifier of the variable.
-        /// @param stack_loc Stack location of the variable.
+        /// @param stackLoc Stack location of the variable.
         Var(std::string name, size_t stackLoc);
     };
 

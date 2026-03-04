@@ -47,16 +47,40 @@
 
 \subsection{Identifiers, Literals, and Comments}
 \begin{align}
-    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                &&\to &&\text{IDENT}                                   \\
-    &U(?:L|U|D)*                                                                             &&\to &&\text{TYPE\_IDENT}                             \\
-    &[\backslash+-]?D+                                                                       &&\to &&\text{INTEGER\_CONST}                          \\
-    &\text{0}[\text{xX}](H\{1,16\})                                                          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Hex}        \\
-    &\text{0}[\text{oO}](1O\{21\}|O\{1,21\})                                                 &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Octal}      \\
-    &\text{0}[\text{bB}](B\{1,64\})                                                          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Binary}     \\
-    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to &&\text{FLOAT\_CONST}      &&&&\text{Float}      \\
-    &([\backslash+-]?(?:D+(?:\backslash.D*)?|\backslash.D+))[eE]([\backslash+-]?D+)          &&\to &&\text{NUMERIC\_CONST}    &&&&\text{Scientific} \\
-    &(\text{r}?)"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to &&\text{STRING\_LITERAL}                         \\
-    &\#.*\$                                                                                  &&\to &&\text{COMMENT}
+    &\_\{0, 2\}L(?:L|U|D|\_)*                                                                &&\to \quad\text{IDENT}                 \\
+    &U(?:L|U|D)*                                                                             &&\to \quad\text{TYPE\_IDENT}           \\
+    &[\backslash+-]?D+                                                                       &&\to \begin{aligned}[t]
+                                                                                                   \quad\text{NUMERIC\_LITERAL}      \\
+                                                                                                   \text{(INT\_LITERAL)}             \\
+                                                                                                   \text{Integer}
+                                                                                                   \end{aligned}                     \\
+    &\text{0}[\text{xX}](H\{1,16\})                                                          &&\to \begin{aligned}[t]
+                                                                                                   \quad\text{NUMERIC\_LITERAL}      \\
+                                                                                                   \text{(RAW\_BITS)}                \\
+                                                                                                   \text{Hex}
+                                                                                                   \end{aligned}                     \\
+    &\text{0}[\text{oO}](1O\{21\}|O\{1,21\})                                                 &&\to \begin{aligned}[t]
+                                                                                                   \quad\text{NUMERIC\_LITERAL}      \\
+                                                                                                   \text{(RAW\_BITS)}                \\
+                                                                                                   \text{Octal}
+                                                                                                   \end{aligned}                     \\
+    &\text{0}[\text{bB}](B\{1,64\})                                                          &&\to \begin{aligned}[t]
+                                                                                                   \quad\text{NUMERIC\_LITERAL}      \\
+                                                                                                   \text{(RAW\_BITS)}                \\
+                                                                                                   \text{Binary}
+                                                                                                   \end{aligned}                     \\
+    &[\backslash+-]?(?:D+\backslash.D*|\backslash.D+)                                        &&\to \begin{aligned}[t]
+                                                                                                   \quad\text{NUMERIC\_LITERAL}      \\
+                                                                                                   \text{(FLOAT\_LITERAL)}           \\
+                                                                                                   \text{Float}
+                                                                                                   \end{aligned}                     \\
+    &([\backslash+-]?(?:D+(?:\backslash.D*)?|\backslash.D+))[eE]([\backslash+-]?D+)          &&\to \begin{aligned}[t]
+                                                                                                   \quad\text{NUMERIC\_LITERAL}      \\
+                                                                                                   \text{(FLOAT\_LITERAL)}           \\
+                                                                                                   \text{Scientific}
+                                                                                                   \end{aligned}                     \\
+    &(\text{r}?)"((?:[\enspace\hat{}\enspace"\backslash\backslash]|\backslash\backslash")*)" &&\to \quad\text{STRING\_LITERAL}       \\
+    &\#.*\$                                                                                  &&\to \quad\text{COMMENT}
 \end{align}
 
 \subsection{Symbols}

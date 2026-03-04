@@ -11,6 +11,9 @@ InputBuffer::InputBuffer(std::istream* istream)
 
 [[nodiscard]] char InputBuffer::peek() const noexcept
 {
+    if (mIndex >= mNumChars) {
+        return std::char_traits<char>::eof();
+    }
     return mBuffer[mIndex];
 }
 

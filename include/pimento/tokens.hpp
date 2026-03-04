@@ -14,6 +14,8 @@
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <variant>
 
 #include <magic_enum/magic_enum.hpp>
@@ -46,14 +48,13 @@ enum class TokenType : uint8_t
     TT_EXCLAIM_EQUAL,
     TT_EXIT,
     TT_FALSE,
-    TT_FLOAT_CONST,
     TT_FLOAT_NAN,
-    TT_FLOAT32_T_MAX,
-    TT_FLOAT32_T_MIN,
-    TT_FLOAT32_T,
-    TT_FLOAT64_T_MAX,
-    TT_FLOAT64_T_MIN,
-    TT_FLOAT64_T,
+    TT_FLOAT32_MAX,
+    TT_FLOAT32_MIN,
+    TT_FLOAT32,
+    TT_FLOAT64_MAX,
+    TT_FLOAT64_MIN,
+    TT_FLOAT64,
     TT_FOR,
     TT_FSLASH_EQUAL,
     TT_FSLASH_FSLASH_EQUAL,
@@ -63,19 +64,18 @@ enum class TokenType : uint8_t
     TT_IDENT,
     TT_IF,
     TT_IN,
-    TT_INT16_T_MAX,
-    TT_INT16_T_MIN,
-    TT_INT16_T,
-    TT_INT32_T_MAX,
-    TT_INT32_T_MIN,
-    TT_INT32_T,
-    TT_INT64_T_MAX,
-    TT_INT64_T_MIN,
-    TT_INT64_T,
-    TT_INT8_T_MAX,
-    TT_INT8_T_MIN,
-    TT_INT8_T,
-    TT_INTEGER_CONST,
+    TT_INT16_MAX,
+    TT_INT16_MIN,
+    TT_INT16,
+    TT_INT32_MAX,
+    TT_INT32_MIN,
+    TT_INT32,
+    TT_INT64_MAX,
+    TT_INT64_MIN,
+    TT_INT64,
+    TT_INT8_MAX,
+    TT_INT8_MIN,
+    TT_INT8,
     TT_INTERFACE,
     TT_LANGLE_EQUAL,
     TT_LANGLE_LANGLE,
@@ -89,7 +89,7 @@ enum class TokenType : uint8_t
     TT_MUTABLE,
     TT_NEG_INF,
     TT_NOT,
-    TT_NUMERIC_CONST,
+    TT_NUMERIC_LITERAL,
     TT_OR,
     TT_PERCENT_EQUAL,
     TT_PERCENT,
@@ -105,6 +105,7 @@ enum class TokenType : uint8_t
     TT_RANGLE_EQUAL,
     TT_RANGLE_RANGLE,
     TT_RANGLE,
+    TT_RAW_STRING,
     TT_RETURN,
     TT_RIGHT_CURLY,
     TT_RIGHT_PAREN,
@@ -118,26 +119,26 @@ enum class TokenType : uint8_t
     TT_TILDE,
     TT_TRUE,
     TT_TYPE_IDENT,
-    TT_UINT16_T_MAX,
-    TT_UINT16_T_MIN,
-    TT_UINT16_T,
-    TT_UINT32_T_MAX,
-    TT_UINT32_T_MIN,
-    TT_UINT32_T,
-    TT_UINT64_T_MAX,
-    TT_UINT64_T_MIN,
-    TT_UINT64_T,
-    TT_UINT8_T_MAX,
-    TT_UINT8_T_MIN,
-    TT_UINT8_T,
+    TT_UINT16_MAX,
+    TT_UINT16_MIN,
+    TT_UINT16,
+    TT_UINT32_MAX,
+    TT_UINT32_MIN,
+    TT_UINT32,
+    TT_UINT64_MAX,
+    TT_UINT64_MIN,
+    TT_UINT64,
+    TT_UINT8_MAX,
+    TT_UINT8_MIN,
+    TT_UINT8,
     TT_WHILE,
     NUM_TOKENS
 };
 
 // TODO(lthomas): Not yet IEEE-754 compliant.
-/// @brief Float Constant Value.
+/// @brief Float Literal Value.
 /// @details Can be a double, float, or scientific notation.
-class FloatConst
+class FloatLiteral
 {
 public:
     /// @brief Enum representing the precision of the floating point value.
@@ -147,12 +148,28 @@ public:
         FLOAT64
     };
 
+    /// @brief Default constructor.
+    /// @details Default constructs a FloatLiteral as NaN. NaN is defined by IEEE-754 as the following:
+    /// Exponent bits are all 1's.
+    /// Mantissa bits must have at least one non-zero value.
+    /// Sign bit is ignored, can be 0 or 1.
+    ///
+    /// This default implementation would generally behave as a signaling NaN (sNaN) where the most significant bit of
+    /// the mantissa is 0, as opposed to a quiet NaN (qNaN) which is typically indicated by the most significant bit of
+    /// the mantissa being set.
+    FloatLiteral()
+        : mMantissa(1)
+        , mExponent(std::numeric_limits<int>::max())
+        , mNegative(false)
+        , mPrecision(Precision::FLOAT64)
+    {}
+
     /// @brief Constructor for value represented in scientific notation.
     /// @param mantissa The mantissa of the value.
     /// @param exponent The exponent of the value.
     /// @param negative Whether or not the value is negative.
     /// @param precision The precision of the floating point value.
-    FloatConst(uint64_t mantissa, int32_t exponent, bool negative, Precision precision)
+    FloatLiteral(uint64_t mantissa, int32_t exponent, bool negative, Precision precision)
         : mMantissa(mantissa)
         , mExponent(exponent)
         , mNegative(negative)
@@ -161,7 +178,7 @@ public:
 
     /// @brief Constructor for double-precision floating point values.
     /// @param value The value of the floating point number.
-    explicit FloatConst(double value)
+    explicit FloatLiteral(double value)
         : mNegative(std::signbit(value))
         , mPrecision(Precision::FLOAT64)
     {
@@ -174,7 +191,7 @@ public:
 
     /// @brief Constructor for single-precision floating point values.
     /// @param value The value of the floating point number.
-    explicit FloatConst(float value)
+    explicit FloatLiteral(float value)
         : mNegative(std::signbit(value))
         , mPrecision(Precision::FLOAT32)
     {
@@ -192,12 +209,13 @@ public:
     {
         double result;
         switch (mPrecision) {
-            case Precision::FLOAT64:
-                result = std::ldexp(static_cast<double>(mMantissa), mExponent);
-                result = mNegative ? -result : result;
-                break;
             case Precision::FLOAT32:
                 result = static_cast<double>(asFloat32());
+                break;
+            case Precision::FLOAT64:
+            default:
+                result = std::ldexp(static_cast<double>(mMantissa), mExponent);
+                result = mNegative ? -result : result;
                 break;
         }
         return result;
@@ -209,15 +227,28 @@ public:
     {
         float result;
         switch (mPrecision) {
-            case Precision::FLOAT64:
-                result = static_cast<float>(asFloat64());
-                break;
             case Precision::FLOAT32:
                 result = static_cast<float>(std::ldexp(static_cast<double>(mMantissa), mExponent));
                 result = mNegative ? -result : result;
                 break;
+            case Precision::FLOAT64:
+            default:
+                result = static_cast<float>(asFloat64());
+                break;
         }
         return result;
+    }
+
+    /// @brief Output stream operator for FloatLiteral.
+    /// @details Outputs the FloatLiteral as 64-bit floating point number.
+    /// @param out The output stream to which to write the FloatLiteral.
+    /// @param data The FloatLiteral to write to the output stream.
+    /// @return The output stream to which the FloatLiteral was written.
+    friend std::ostream& operator<<(std::ostream& out, const FloatLiteral& data)
+    {
+        out << "float64: " << data.asFloat64();
+        out << ", float32: " << data.asFloat32();
+        return out;
     }
 
 private:
@@ -254,11 +285,17 @@ struct [[gnu::packed]] PackedView
 };
 #endif
 
-/// @brief Constant value as raw bits.
+/// @brief Literal value as raw bits.
 /// @details Generally to be used with values specified in hex, octal, or binary.
 class RawBits
 {
 public:
+    /// @brief Default constructor.
+    /// @details Default constructs RawBits as all 0's.
+    RawBits()
+        : uint64(0)
+    {}
+
     /// @brief Constructor.
     /// @tparam T Integral type.
     /// @param value The value to use as the raw bits.
@@ -307,6 +344,18 @@ public:
     /// @return The raw bits as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const noexcept { return int8View.value; }
 
+    /// @brief Output stream operator for RawBits.
+    /// @details Outputs the RawBits as uint64_t.
+    /// @param out The output stream to which to write the RawBits.
+    /// @param data The RawBits to write to the output stream.
+    /// @return The output stream to which the RawBits was written.
+    friend std::ostream& operator<<(std::ostream& out, const RawBits& data)
+    {
+        out << data.asUint64();
+        return out;
+    }
+
+
 private:
     /// @brief Union of signed and unsigned 64, 32, 16, and 8 bit values to be
     /// used for type punning.
@@ -338,17 +387,23 @@ private:
     };
 };
 
-/// @brief Integer Constant value.
+/// @brief Integer Literal value.
 /// @details Can be signed or unsigned.
-class IntConst
+class IntLiteral
 {
 public:
+    /// @brief Default constructor.
+    /// @details Default constructs an IntLiteral as 0.
+    IntLiteral()
+        : uint64(0)
+    {}
+
     /// @brief Constructor.
     /// @tparam T Integral type.
     /// @param value The value of the integer.
     template <typename T>
         requires std::is_integral_v<T>
-    explicit IntConst(T value)
+    explicit IntLiteral(T value)
     {
         if constexpr (std::is_signed_v<T>) {
             int64 = static_cast<int64_t>(value);
@@ -391,6 +446,18 @@ public:
     /// @return The value as signed 8-bit integer.
     [[nodiscard]] int8_t asInt8() const noexcept { return static_cast<int8_t>(int64); }
 
+    /// @brief Output stream operator for IntLiteral.
+    /// @details Outputs the IntLiteral as uint64_t.
+    /// @param out The output stream to which to write the IntLiteral.
+    /// @param data The IntLiteral to write to the output stream.
+    /// @return The output stream to which the IntLiteral was written.
+    friend std::ostream& operator<<(std::ostream& out, const IntLiteral& data)
+    {
+        out << "uint64: " << data.asUint64();
+        out << ", int64: " << data.asInt64();
+        return out;
+    }
+
 private:
     /// @brief Union of signed and signed and unsigned 64-bit values to be used
     /// for type punning.
@@ -403,21 +470,27 @@ private:
     };
 };
 
-/// @brief Numeric Constant value.
+/// @brief Numeric Literal value.
 /// @details Can be floating point number, integer, or raw bits.
-class NumericConst
+class NumericLiteral
 {
 public:
-    /// @brief Alias for the variant of the numeric constant value.
-    using Value = std::variant<IntConst, FloatConst, RawBits>;
+    /// @brief Alias for the variant of the numeric literal value.
+    using Value = std::variant<IntLiteral, FloatLiteral, RawBits>;
+
+    /// @brief Default constructor.
+    /// @details Default constructs a NumericLiteral with a default constructed RawBits variant.
+    NumericLiteral()
+        : mValue(RawBits())
+    {}
 
     /// @brief Constructor for integer value.
     /// @tparam T Integral type.
     /// @param value The value of the integer.
     template <typename T>
         requires std::is_integral_v<T>
-    explicit NumericConst(T value)
-        : mValue(IntConst(value))
+    explicit NumericLiteral(T value)
+        : mValue(IntLiteral(value))
     {}
 
     // TODO(lthomas): Not sure if I should always be creating these as double-precision float, I think this has the
@@ -426,32 +499,32 @@ public:
     /// @param mantissa The mantissa of the floating point value.
     /// @param exponent The exponent of the floating point value.
     /// @param negative Whether or not the value is negative.
-    NumericConst(uint64_t mantissa, int exponent, bool negative = false)
-        : mValue(FloatConst{mantissa, exponent, negative, FloatConst::Precision::FLOAT64})
+    NumericLiteral(uint64_t mantissa, int exponent, bool negative = false)
+        : mValue(FloatLiteral{mantissa, exponent, negative, FloatLiteral::Precision::FLOAT64})
     {}
 
     /// @brief Constructor for value specified in raw bits.
     /// @param raw The raw bits from which to construct the value.
-    explicit NumericConst(const RawBits& raw)
+    explicit NumericLiteral(const RawBits& raw)
         : mValue(raw)
     {}
 
-    /// @brief Constructor for value specified as FloatConst.
-    /// @param floatConst The floating point constant from which to construct the value.
-    explicit NumericConst(const FloatConst& floatConst)
+    /// @brief Constructor for value specified as FloatLiteral.
+    /// @param floatConst The floating point literal from which to construct the value.
+    explicit NumericLiteral(const FloatLiteral& floatConst)
         : mValue(floatConst)
     {}
 
     /// @brief Constructor for double-precision floating point values.
     /// @param value The value of the floating point number.
-    explicit NumericConst(double value)
-        : mValue(FloatConst(value))
+    explicit NumericLiteral(double value)
+        : mValue(FloatLiteral(value))
     {}
 
     /// @brief Constructor for single-precision floating point values.
     /// @param value The value of the floating point number.
-    explicit NumericConst(float value)
-        : mValue(FloatConst(value))
+    explicit NumericLiteral(float value)
+        : mValue(FloatLiteral(value))
     {}
 
 public:
@@ -466,12 +539,12 @@ public:
                     // std::cout << "RawBits" << std::endl;
                     return std::bit_cast<double>(element.asUint64());
                 }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                else if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return element.asFloat64();
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return static_cast<double>(element.asInt64());
                 }
             },
@@ -489,12 +562,12 @@ public:
                     // std::cout << "RawBits" << std::endl;
                     return std::bit_cast<float>(element.asUint32());
                 }
-                else if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                else if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return element.asFloat32();
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return static_cast<float>(element.asInt64());
                 }
             },
@@ -508,12 +581,12 @@ public:
         return std::visit(
             [](auto&& element) -> uint64_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<uint64_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asUint64();
                 }
             },
@@ -527,12 +600,12 @@ public:
         return std::visit(
             [](auto&& element) -> int64_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<int64_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asInt64();
                 }
             },
@@ -546,12 +619,12 @@ public:
         return std::visit(
             [](auto&& element) -> uint32_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<uint32_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asUint32();
                 }
             },
@@ -565,12 +638,12 @@ public:
         return std::visit(
             [](auto&& element) -> int32_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<int32_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asInt32();
                 }
             },
@@ -584,12 +657,12 @@ public:
         return std::visit(
             [](auto&& element) -> uint16_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<uint16_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asUint16();
                 }
             },
@@ -603,12 +676,12 @@ public:
         return std::visit(
             [](auto&& element) -> int16_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<int16_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asInt16();
                 }
             },
@@ -622,12 +695,12 @@ public:
         return std::visit(
             [](auto&& element) -> uint8_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<uint8_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asUint8();
                 }
             },
@@ -641,34 +714,119 @@ public:
         return std::visit(
             [](auto&& element) -> int8_t {
                 using T = std::decay_t<decltype(element)>;
-                if constexpr (std::is_same_v<T, FloatConst>) {
-                    // std::cout << "FloatConst" << std::endl;
+                if constexpr (std::is_same_v<T, FloatLiteral>) {
+                    // std::cout << "FloatLiteral" << std::endl;
                     return static_cast<int8_t>(element.asFloat64());
                 }
                 else {
-                    // std::cout << "IntConst" << std::endl;
+                    // std::cout << "IntLiteral" << std::endl;
                     return element.asInt8();
                 }
             },
             mValue);
     }
 
+    /// @brief Output stream operator for NumericLiteral.
+    /// @details Outputs the NumericLiteral as the default value for each of the variant types.
+    /// @param out The output stream to which to write the NumericLiteral.
+    /// @param data The NumericLiteral to write to the output stream.
+    /// @return The output stream to which the NumericLiteral was written.
+    friend std::ostream& operator<<(std::ostream& out, const NumericLiteral& data)
+    {
+        std::visit([&out](auto&& element) -> void { out << element; }, data.mValue);
+        return out;
+    }
+
 private:
-    /// @brief The numeric constant value.
+    /// @brief The numeric literal value.
     Value mValue;
 };
 
 /// @brief Parsed token.
 struct Token
 {
+    /// @brief Default constructor.
+    Token() = default;
+
+    // TODO(lthomas): Finish this.
+    /// @brief Partial token constructor.
+    /// @details Construct a partial token for building up as lexing progresses.
+    /// @param offset The offset in the input in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    Token(size_t offset, size_t line, size_t column)
+        : offset(offset)
+        , line(line)
+        , column(column)
+    {}
+
+    /// @brief Generic constructor for standard token types.
+    /// @param tokenType The type of the token.
+    /// @param lexeme The literal string parsed representing the token.
+    /// @param offset The offset in the input in bytes.
+    /// @param span The span of the token in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    Token(TokenType tokenType, std::string lexeme, size_t offset, size_t span, size_t line, size_t column)
+        : tokenType(tokenType)
+        , lexeme(std::move(lexeme))
+        , offset(offset)
+        , span(span)
+        , line(line)
+        , column(column)
+    {}
+
+    /// @brief Constructor for NumericLiteral token types.
+    /// @param lexeme The literal string parsed representing the token.
+    /// @param offset The offset in the input in bytes.
+    /// @param span The span of the token in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    /// @param value The NumericLiteral value stored in the token.
+    Token(std::string lexeme, size_t offset, size_t span, size_t line, size_t column, const NumericLiteral& value)
+        : tokenType(TokenType::TT_NUMERIC_LITERAL)
+        , lexeme(std::move(lexeme))
+        , offset(offset)
+        , span(span)
+        , line(line)
+        , column(column)
+        , value(value)
+    {}
+
+    /// TODO(lthomas): What is the difference between lexeme and str?
+    /// @brief Constructor for string literal token types.
+    /// @param lexeme The literal string parsed representing the token.
+    /// @param offset The offset in the input in bytes.
+    /// @param span The span of the token in bytes.
+    /// @param line The current line number of the token.
+    /// @param column The current column number of the token.
+    /// @param str The string literal of the token.
+    Token(std::string lexeme, size_t offset, size_t span, size_t line, size_t column, std::string str)
+        : tokenType(TokenType::TT_STRING_LITERAL)
+        , lexeme(std::move(lexeme))
+        , offset(offset)
+        , span(span)
+        , line(line)
+        , column(column)
+        , str(std::move(str))
+    {}
+
     /// @brief The type of this token.
     TokenType tokenType;
     /// @brief The literal string parsed to get the token.
     std::string lexeme;
-    /// @brief The offset and span of the token.
-    std::pair<uint64_t, uint64_t> sourceSpan;
-    /// @brief The line and column number of the token.
-    std::pair<uint64_t, uint64_t> location;
+    /// @brief The offset of the token in bytes.
+    size_t offset{0};
+    /// @brief The span of the token.
+    size_t span{0};
+    /// @brief The line number the token is on.
+    size_t line{0};
+    /// @brief The column number the token starts at.
+    size_t column{0};
+    /// @brief Numeric literal value for when the token is a NumericLiteral type
+    NumericLiteral value;
+    /// @brief String value for when the token is a string literal type
+    std::string str;
 
     /// @brief Output stream operator for Token.
     /// @param out The output stream to which to write the token.
@@ -679,28 +837,73 @@ struct Token
         out << "Token:";
         out << "\n\tTokenType: " << magic_enum::enum_name(data.tokenType);
         out << "\n\tLexeme: \"" << data.lexeme << "\"";
-        out << "\n\tOffset: " << data.sourceSpan.first;
-        out << "\n\tSpan: " << data.sourceSpan.second;
-        out << "\n\tLine: " << data.location.first;
-        out << "\n\tColumn: " << data.location.second;
+        out << "\n\tOffset: " << data.offset;
+        out << "\n\tSpan: " << data.span;
+        out << "\n\tLine: " << data.line;
+        out << "\n\tColumn: " << data.column;
+        out << "\n\tNumeric Const value: " << data.value;
+        out << "\n\tString literal value: " << data.str;
         return out;
     }
 };
 
-/// @brief Token for representing numeric constants.
-struct NumConstToken : public Token
-{
-    /// @brief The value of the floating point number.
-    NumericConst value;
-};
-
-/// @brief Token for representing string values.
-/// @details This could be string literals, identifiers, or type identifiers.
-struct StringToken : public Token
-{
-    /// @brief The string value stored, either string literal or identifier.
-    std::string value;
-};
+/// @brief Look up table to match keywords to their respective token types.
+static const std::unordered_map<std::string, TokenType> KeywordMap{{"and", TokenType::TT_AND},
+                                                                   {"bool", TokenType::TT_BOOL},
+                                                                   {"break", TokenType::TT_BREAK},
+                                                                   {"class", TokenType::TT_CLASS},
+                                                                   {"elif", TokenType::TT_ELIF},
+                                                                   {"else", TokenType::TT_ELSE},
+                                                                   {"enum", TokenType::TT_ENUM},
+                                                                   {"exit", TokenType::TT_EXIT},
+                                                                   {"false", TokenType::TT_FALSE},
+                                                                   {"NAN", TokenType::TT_FLOAT_NAN},
+                                                                   {"FLOAT32_MAX", TokenType::TT_FLOAT32_MAX},
+                                                                   {"FLOAT32_MIN", TokenType::TT_FLOAT32_MIN},
+                                                                   {"float32", TokenType::TT_FLOAT32},
+                                                                   {"FLOAT64_MAX", TokenType::TT_FLOAT64_MAX},
+                                                                   {"FLOAT64_MIN", TokenType::TT_FLOAT64_MIN},
+                                                                   {"float64", TokenType::TT_FLOAT64},
+                                                                   {"for", TokenType::TT_FOR},
+                                                                   {"func", TokenType::TT_FUNCTION},
+                                                                   {"if", TokenType::TT_IF},
+                                                                   {"in", TokenType::TT_IN},
+                                                                   {"INT16_MAX", TokenType::TT_INT16_MAX},
+                                                                   {"INT16_MIN", TokenType::TT_INT16_MIN},
+                                                                   {"int16", TokenType::TT_INT16},
+                                                                   {"INT32_MAX", TokenType::TT_INT32_MAX},
+                                                                   {"INT32_MIN", TokenType::TT_INT32_MIN},
+                                                                   {"int32", TokenType::TT_INT32},
+                                                                   {"INT64_MAX", TokenType::TT_INT64_MAX},
+                                                                   {"INT64_MIN", TokenType::TT_INT64_MIN},
+                                                                   {"int64", TokenType::TT_INT64},
+                                                                   {"INT8_MAX", TokenType::TT_INT8_MAX},
+                                                                   {"INT8_MIN", TokenType::TT_INT8_MIN},
+                                                                   {"int8", TokenType::TT_INT8},
+                                                                   {"iface", TokenType::TT_INTERFACE},
+                                                                   {"mut", TokenType::TT_MUTABLE},
+                                                                   {"NINF", TokenType::TT_NEG_INF},
+                                                                   {"not", TokenType::TT_NOT},
+                                                                   {"or", TokenType::TT_OR},
+                                                                   {"INF", TokenType::TT_POS_INF},
+                                                                   {"private", TokenType::TT_PRIVATE},
+                                                                   {"public", TokenType::TT_PUBLIC},
+                                                                   {"return", TokenType::TT_RETURN},
+                                                                   {"string", TokenType::TT_STRING},
+                                                                   {"true", TokenType::TT_TRUE},
+                                                                   {"UINT16_MAX", TokenType::TT_UINT16_MAX},
+                                                                   {"UINT16_MIN", TokenType::TT_UINT16_MIN},
+                                                                   {"uint16", TokenType::TT_UINT16},
+                                                                   {"UINT32_MAX", TokenType::TT_UINT32_MAX},
+                                                                   {"UINT32_MIN", TokenType::TT_UINT32_MIN},
+                                                                   {"uint32", TokenType::TT_UINT32},
+                                                                   {"UIN64_MAX", TokenType::TT_UINT64_MAX},
+                                                                   {"UIN64_MIN", TokenType::TT_UINT64_MIN},
+                                                                   {"uint64", TokenType::TT_UINT64},
+                                                                   {"UINT8_MAX", TokenType::TT_UINT8_MAX},
+                                                                   {"UINT8_MIN", TokenType::TT_UINT8_MIN},
+                                                                   {"uint8", TokenType::TT_UINT8},
+                                                                   {"while", TokenType::TT_WHILE}};
 
 }  // namespace pimento::tokenization
 

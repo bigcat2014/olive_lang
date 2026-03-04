@@ -1,13 +1,18 @@
+# I'm a comment
+# Identifier tests
 identifier
 iDentifier
 iDentifier23
-# iDentifier23iDentifier23iDentifier23iDentifier23iDentifier23iDentifier23
+iDentifier23iDentifier23iDentifier23iDentifier23iDentifier23iDen  # Max token length
+#iDentifier23iDentifier23iDentifier23iDentifier23iDentifier23iDent # Max token length exceeded
 _identifier
 _iDentifier
 _iDentifier23
 __identifier
 __iDenti_fier
 __iDenti_fier23
+
+# Type Identifier tests
 Identifier
 IDentifier
 IDentifier23
@@ -17,6 +22,8 @@ IDentifier23
 # __Identifier - Invalid identifier and type
 # __IDenti_fier - Invalid identifier and type
 # __IDenti_fier23 - Invalid identifier and type
+
+# Character tests
 :
 ,
 {
@@ -60,4 +67,145 @@ IDentifier23
 *
 ~=
 ~
-# I'm a comment
+
+# Hexidecimal tests
+0xFF
+0XAA
+0xA5A5
+0X5A5A
+0x96969696
+0X69696969
+0x1234567890ABCDEF
+0Xfedcba0987654321
+# 0xFFFFFFFFFFFFFFFFF # Invalid
+
+# Octal tests
+0o377
+0O252
+0o122645
+0O55132
+0o22645513226
+0O15132264551
+0o110642547422052746757
+0O1773345640460731241441
+0o177777777777777777777
+# 0o17777777777777777777771 # Invalid
+# 0o2777777777777777777777 # Invalid
+
+# Binary tests
+0b11111111
+0B10101010
+0b1010010110100101
+0B0101101001011010
+0b10010110100101101001011010010110
+0B01101001011010010110100101101001
+0b0001001000110100010101100111100010010000101010111100110111101111
+0B1111111011011100101110100000100110000111011001010100001100100001
+#0b11111110110111001011101000001001100001110110010101000011001000011 # Invalid
+
+# Integer tests
+123
++123
+-123
+000000123
++000000123
+-000000123
+
+# Float tests
+123.
+123.4
+123.123
+.123
+1.234
++123.
++123.4
++123.123
++.123
++1.234
+-123.
+-123.4
+-123.123
+-.123
+-1.234
+
+# Scientific notation tests
+1.234e123
+.123e-123
+123E4
++123E4
+-123.4E+5
+.123E-4
++123.4E123
++123.123E+123
+-123.123E-123
+
+# Keywords
+and
+bool
+break
+class
+elif
+else
+enum
+exit
+false
+NAN
+FLOAT32_MAX
+FLOAT32_MIN
+float32
+FLOAT64_MAX
+FLOAT64_MIN
+float64
+for
+func
+if
+in
+INT16_MAX
+INT16_MIN
+int16
+INT32_MAX
+INT32_MIN
+int32
+INT64_MAX
+INT64_MIN
+int64
+INT8_MAX
+INT8_MIN
+int8
+iface
+mut
+NINF
+not
+or
+INF
+private
+public
+return
+string
+true
+UINT16_MAX
+UINT16_MIN
+uint16
+UINT32_MAX
+UINT32_MIN
+uint32
+UIN64_MAX
+UIN64_MIN
+uint64
+UINT8_MAX
+UINT8_MIN
+uint8
+while
+
+# String literals
+"Hello, world!"
+"Hello, \"world\"!"
+"Hello,\nworld!"
+"Hello,\r\nworld!"
+"Hello,\tworld!"
+"Hello, \\world!"
+r"Hello, world!"
+r"Hello,\nworld!"
+r"Hello,\r\nworld!"
+r"Hello,\tworld!"
+r"Hello, \\world!"
