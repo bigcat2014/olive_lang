@@ -53,23 +53,10 @@ private:
     /// @param type The type of the token.
     void addToken(Token& token, TokenType type) noexcept;
 
-    /// @brief Updatee token as an Identifier token.
+    /// @brief Parse an alphanumeric token from the input buffer.
+    /// @details This token could be a keyword, an identifier, or a type identifier.
     /// @param token The token to build.
-    /// @param value The identifier string.
-    void updateIdentToken(Token& token, const std::string& value) noexcept;
-
-    /// @brief Update token as a Type Identifier token.
-    /// @param token The token to build.
-    /// @param value The type string.
-    void updateTypeToken(Token& token, const std::string& value) noexcept;
-
-    /// @brief Parse an identifier token from the input buffer.
-    /// @param token The token to build.
-    void parseIdent(Token& token) noexcept;
-
-    /// @brief Parse a type identifier token from the input buffer.
-    /// @param token The token to build.
-    void parseType(Token& token) noexcept;
+    void parseAlnumToken(Token& token) noexcept;
 
     /// @brief Parses the mantissa portion of a numeric literal from the input buffer.
     /// @details Consumes leading digits, an optional decimal point, and trailing digits from the input buffer, writing
@@ -109,14 +96,20 @@ private:
     /// @param token The token being constructed, used for error reporting and the final value.
     void finalizeFloat(Token& token) noexcept;
 
+    /// @brief Parses a string token handling escape sequences.
+    /// @param token The token being constructed, used for error reporting and the final value.
+    void parseStringToken(Token& token) noexcept;
+
+    /// @brief Parses a raw string token, ignoring escape sequences and parsing until the next '"'.
+    /// @param token The token being constructed, used for error reporting and the final value.
+    void parseRawStringToken(Token& token) noexcept;
+
     /// @brief Check if the specified character is valid for an identifier.
     /// @param value The character to check.
     /// @return True if the character is valid for an identifier, false otherwise.
-    [[nodiscard]] static bool isIdentChar(char value) noexcept
+    [[nodiscard]] static bool isTokenChar(char value) noexcept
     {
-        return (std::islower(static_cast<unsigned char>(value)) != 0)
-               || (std::isupper(static_cast<unsigned char>(value)) != 0)
-               || (std::isdigit(static_cast<unsigned char>(value)) != 0) || value == '_';
+        return std::isalnum(static_cast<unsigned char>(value)) != 0 || value == '_';
     }
 
     /// @brief Check if the specified character is valid for a type identifier.
@@ -125,9 +118,7 @@ private:
     /// otherwise.
     [[nodiscard]] static bool isTypeChar(char value) noexcept
     {
-        return (std::islower(static_cast<unsigned char>(value)) != 0)
-               || (std::isupper(static_cast<unsigned char>(value)) != 0)
-               || (std::isdigit(static_cast<unsigned char>(value)) != 0);
+        return std::isalnum(static_cast<unsigned char>(value)) != 0;
     }
 
     /// @brief Check if the specified character is the hex specifier.
@@ -165,9 +156,21 @@ private:
     /// @return True if the character is the scientific number delimiter, false otherwise.
     [[nodiscard]] static bool isScientificDelimiter(char value) noexcept { return value == 'e' || value == 'E'; }
 
+    /// @brief Checks whether or not a string is a valid identifier.
+    /// @details A valid identifier matches the regex _{0,2}[a-z][a-zA-Z0-9_]*
+    /// @param lexeme The string to check.
+    /// @return True if it is a valid identifier, false otherwise.
+    [[nodiscard]] static bool isValidIdentifier(const std::string& lexeme) noexcept;
+
+    /// @brief Checks whether or not a string is a valid type identifier.
+    /// @details A valid type identifier matches the regex [A-Z][a-zA-Z0-9]*
+    /// @param lexeme The string to check.
+    /// @return True if it is a valid type identifier, false otherwise.
+    [[nodiscard]] static bool isValidType(const std::string& lexeme) noexcept;
+
     /// @brief Convert Scientific Notation to double precision float literal.
-    /// @param mantissa_str The mantissa of the scientific number.
-    /// @param exponent_str The exponent of the scientific number.
+    /// @param mantissaStr The mantissa of the scientific number.
+    /// @param exponentStr The exponent of the scientific number.
     /// @return The double precision floating point number represented by the scientific notation.
     [[nodiscard]] static FloatLiteral doubleFromScientific(std::string& mantissaStr, const std::string& exponentStr);
 

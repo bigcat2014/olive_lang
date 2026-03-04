@@ -44,83 +44,48 @@ void Lexer::tokenize()
         if (currentChar == std::char_traits<char>::eof()) {
             break;
         }
-        mTokenBuffer << currentChar;
 
         // Handle white space
-        if (std::isspace(static_cast<unsigned char>(mTokenBuffer.str()[0])) != 0) {
-            mTokenBuffer.str("");
-            mTokenBuffer.clear();
+        if (std::isspace(static_cast<unsigned char>(currentChar)) != 0) {
+            // mTokenBuffer.str("");
+            // mTokenBuffer.clear();
             continue;
         }
 
-        switch (mTokenBuffer.str()[0]) {
+        mTokenBuffer << currentChar;
+        switch (currentChar) {
             case std::char_traits<char>::eof():
                 break;
-            case '_': {
-                // TODO(lthomas): I don't like this... Lots of reused code, not very clean.
-                char next = mInputBuffer.peek();
+            case '"':
+                parseStringToken(token);
+                break;
+            case 'r': {
+                const char next = mInputBuffer.peek();
                 switch (next) {
                     case std::char_traits<char>::eof():
-                        if (mTokenBuffer.str().back() == '_') {
-                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                    mInputBuffer.getCurrentLine() + 1,
-                                                    mInputBuffer.getCurrentColumn(),
-                                                    "Expected character after '_'"});
-                        }
                         break;
-                    case '_':
-                        mTokenBuffer << mInputBuffer.consume();
-                        next = mInputBuffer.peek();
-                        switch (next) {
-                            case std::char_traits<char>::eof():
-                                break;
-                            case '_':
-                                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                        mInputBuffer.getCurrentLine() + 1,
-                                                        mInputBuffer.getCurrentColumn(),
-                                                        "Too many '_' at start of identifier. Max is 2."});
-                                break;
-                            default:
-                                if (std::islower(next) == 0) {
-                                    pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                            mInputBuffer.getCurrentLine() + 1,
-                                                            mInputBuffer.getCurrentColumn(),
-                                                            "Expected character matching [a-z_]."});
-                                }
-                                parseIdent(token);
-                        }
+                    case '"':
+                        parseRawStringToken(token);
                         break;
                     default:
-                        if (std::islower(next) == 0) {
-                            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                                    mInputBuffer.getCurrentLine() + 1,
-                                                    mInputBuffer.getCurrentColumn(),
-                                                    "Expected character matching [a-z_]."});
-                        }
-                        parseIdent(token);
-                        break;
+                        parseAlnumToken(token);
                 }
                 break;
             }
                 // clang-format off
+            case '_':
             case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
             case 'g': case 'h': case 'i': case 'j': case 'k':
             case 'l': case 'm': case 'n': case 'o': case 'p':
-            case 'q': case 'r': case 's': case 't': case 'u':
-            case 'v': case 'w': case 'x': case 'y': case 'z': {
-                // clang-format on
-                parseIdent(token);
-                break;
-            }
-                // clang-format off
+            case 'q':           case 's': case 't': case 'u':
+            case 'v': case 'w': case 'x': case 'y': case 'z':
             case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
             case 'G': case 'H': case 'I': case 'J': case 'K':
             case 'L': case 'M': case 'N': case 'O': case 'P':
             case 'Q': case 'R': case 'S': case 'T': case 'U':
             case 'V': case 'W': case 'X': case 'Y': case 'Z': {
                 // clang-format on
-                // TODO(lthomas): parseIdent or keyword
-                parseType(token);
+                parseAlnumToken(token);
                 break;
             }
             case '0': {
@@ -462,7 +427,7 @@ void Lexer::tokenize()
             }
             // Comments
             case '#': {
-                char next = mInputBuffer.consume();
+                char next = mInputBuffer.peek();
                 while (next != '\n' && next != std::char_traits<char>::eof()) {
                     next = mInputBuffer.consume();
                 }
@@ -512,19 +477,7 @@ void Lexer::addToken(Token& token, TokenType type) noexcept
     mTokenBuffer.clear();
 }
 
-void Lexer::updateIdentToken(Token& token, const std::string& /*value*/) noexcept
-{
-    // TODO(lthomas): Do something with the value
-    addToken(token, TokenType::TT_IDENT);
-}
-
-void Lexer::updateTypeToken(Token& token, const std::string& /*value*/) noexcept
-{
-    // TODO(lthomas): Do something with the value
-    addToken(token, TokenType::TT_TYPE_IDENT);
-}
-
-void Lexer::parseIdent(Token& token) noexcept
+void Lexer::parseAlnumToken(Token& token) noexcept
 {
     char next = mInputBuffer.peek();
 
@@ -533,7 +486,7 @@ void Lexer::parseIdent(Token& token) noexcept
         return;
     }
 
-    while (isIdentChar(next)) {
+    while (isTokenChar(next)) {
         mTokenBuffer << mInputBuffer.consume();
         if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
             pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
@@ -544,54 +497,35 @@ void Lexer::parseIdent(Token& token) noexcept
         next = mInputBuffer.peek();
     }
 
-    if (next == std::char_traits<char>::eof()) {
-        // TODO(lthomas): What to do here...
-        return;
-    }
-
-    if (std::isspace(static_cast<unsigned char>(next)) == 0) {
+    if (std::isspace(static_cast<unsigned char>(next)) == 0 && next != std::char_traits<char>::eof()) {
         pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
                                 mInputBuffer.getCurrentLine() + 1,
                                 mInputBuffer.getCurrentColumn(),
                                 std::format("Unexpected character: '{}'.", next)});
     }
 
-    updateIdentToken(token, mTokenBuffer.str());
-}
+    // Check if keyword
+    std::string raw = mTokenBuffer.str();
+    const auto iter = KeywordMap.find(raw);
 
-void Lexer::parseType(Token& token) noexcept
-{
-    char next = mInputBuffer.peek();
-
-    if (next == std::char_traits<char>::eof()) {
-        // TODO(lthomas): What to do here...
+    if (iter != KeywordMap.end()) {
+        addToken(token, iter->second);
         return;
     }
 
-    while (isTypeChar(next)) {
-        mTokenBuffer << mInputBuffer.consume();
-        if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
-            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                    token.line + 1,
-                                    token.column,
-                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
-        }
-        next = mInputBuffer.peek();
+    // Not a keyword — enforce the identifier pattern
+    if (isValidIdentifier(raw)) {
+        addToken(token, TokenType::TT_IDENT);
     }
-
-    if (next == std::char_traits<char>::eof()) {
-        // TODO(lthomas): What to do here...
-        return;
+    else if (isValidType(raw)) {
+        addToken(token, TokenType::TT_TYPE_IDENT);
     }
-
-    if (std::isspace(static_cast<unsigned char>(next)) == 0) {
+    else {
         pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
-                                mInputBuffer.getCurrentLine() + 1,
-                                mInputBuffer.getCurrentColumn(),
-                                std::format("Unexpected character: '{}'.", next)});
+                                token.line + 1,
+                                token.column,
+                                std::format("'{}' is not a valid identifier or type.", raw)});
     }
-
-    updateTypeToken(token, mTokenBuffer.str());
 }
 
 Lexer::MantissaResult Lexer::parseMantissa() noexcept
@@ -927,6 +861,154 @@ void Lexer::finalizeFloat(Token& token) noexcept
     }
     token.value = NumericLiteral(value);
     addToken(token, TokenType::TT_NUMERIC_LITERAL);
+}
+
+void Lexer::parseStringToken(Token& token) noexcept
+{
+    char next   = mInputBuffer.peek();
+    bool closed = false;
+
+    while (next != std::char_traits<char>::eof()) {
+        if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
+            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                    token.line + 1,
+                                    token.column,
+                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
+            return;
+        }
+
+        if (next == '"') {
+            mTokenBuffer << mInputBuffer.consume();
+            closed = true;
+            break;
+        }
+
+        if (next == '\\') {
+            mTokenBuffer << mInputBuffer.consume();  // consume '\'
+            char escaped = mInputBuffer.peek();
+
+            if (escaped == std::char_traits<char>::eof()) {
+                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
+                                        "Unterminated escape sequence in string literal."});
+                return;
+            }
+
+            static constexpr std::string_view ValidEscapes = R"(nrt\\"0)";
+            if (ValidEscapes.find(escaped) == std::string_view::npos) {
+                pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                        mInputBuffer.getCurrentLine() + 1,
+                                        mInputBuffer.getCurrentColumn(),
+                                        std::format("Invalid escape sequence: '\\{}'.", escaped)});
+                return;
+            }
+
+            mTokenBuffer << mInputBuffer.consume();
+        }
+        else {
+            mTokenBuffer << mInputBuffer.consume();
+        }
+
+        next = mInputBuffer.peek();
+    }
+
+    if (!closed) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line + 1,
+                                token.column,
+                                "Unterminated string literal."});
+        return;
+    }
+
+    addToken(token, TokenType::TT_STRING);
+}
+
+void Lexer::parseRawStringToken(Token& token) noexcept
+{
+    mTokenBuffer << mInputBuffer.consume();
+
+    char next   = mInputBuffer.peek();
+    bool closed = false;
+
+    while (next != std::char_traits<char>::eof()) {
+        if (mTokenBuffer.str().length() > MAX_TOKEN_LEN) {
+            pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                    token.line + 1,
+                                    token.column,
+                                    std::format("Max token length of {} characters exceeded.", MAX_TOKEN_LEN)});
+            return;
+        }
+
+        if (next == '"') {
+            mTokenBuffer << mInputBuffer.consume();
+            closed = true;
+            break;
+        }
+
+        // Backslashes are just regular characters in raw strings — no escape processing
+        mTokenBuffer << mInputBuffer.consume();
+        next = mInputBuffer.peek();
+    }
+
+    if (!closed) {
+        pimento::errors::raise({pimento::errors::ErrorType::INVALID_TOKEN_ERROR,
+                                token.line + 1,
+                                token.column,
+                                "Unterminated raw string literal."});
+        return;
+    }
+
+    addToken(token, TokenType::TT_RAW_STRING);
+}
+
+bool Lexer::isValidIdentifier(const std::string& lexeme) noexcept
+{
+    size_t pos       = 0;
+    const size_t len = lexeme.size();
+
+    // Consume 0-2 leading underscores
+    while (pos < len && lexeme[pos] == '_' && pos < 2) {
+        ++pos;
+    }
+
+    // Must be followed by a lowercase letter
+    if (pos >= len || (std::islower(static_cast<unsigned char>(lexeme[pos])) == 0)) {
+        return false;
+    }
+    ++pos;
+
+    // Remaining chars: letters, digits, underscores
+    while (pos < len) {
+        if (!isTokenChar(lexeme[pos])) {
+            return false;
+        }
+        ++pos;
+    }
+
+    return true;
+}
+
+bool Lexer::isValidType(const std::string& lexeme) noexcept
+{
+    size_t pos       = 0;
+    const size_t len = lexeme.size();
+
+    // Must start with an uppercase letter
+    if (pos >= len || (std::isupper(static_cast<unsigned char>(lexeme[pos])) == 0)) {
+        return false;
+    }
+    ++pos;
+
+    // Remaining chars: letters, digits
+    while (pos < len) {
+        if (!isTypeChar(lexeme[pos])) {
+            return false;
+        }
+        ++pos;
+    }
+
+    return true;
 }
 
 // TODO(lthomas): Not IEEE-754 compliant yet.

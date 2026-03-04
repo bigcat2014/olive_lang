@@ -1,3 +1,4 @@
+# I'm a comment
 # Identifier tests
 identifier
 iDentifier
@@ -138,4 +139,73 @@ IDentifier23
 +123.123E+123
 -123.123E-123
 
-# I'm a comment
+# Keywords
+and
+bool
+break
+class
+elif
+else
+enum
+exit
+false
+NAN
+FLOAT32_MAX
+FLOAT32_MIN
+float32
+FLOAT64_MAX
+FLOAT64_MIN
+float64
+for
+func
+if
+in
+INT16_MAX
+INT16_MIN
+int16
+INT32_MAX
+INT32_MIN
+int32
+INT64_MAX
+INT64_MIN
+int64
+INT8_MAX
+INT8_MIN
+int8
+iface
+mut
+NINF
+not
+or
+INF
+private
+public
+return
+string
+true
+UINT16_MAX
+UINT16_MIN
+uint16
+UINT32_MAX
+UINT32_MIN
+uint32
+UIN64_MAX
+UIN64_MIN
+uint64
+UINT8_MAX
+UINT8_MIN
+uint8
+while
+
+# String literals
+"Hello, world!"
+"Hello, \"world\"!"
+"Hello,\nworld!"
+"Hello,\r\nworld!"
+"Hello,\tworld!"
+"Hello, \\world!"
+r"Hello, world!"
+r"Hello,\nworld!"
+r"Hello,\r\nworld!"
+r"Hello,\tworld!"
+r"Hello, \\world!"
