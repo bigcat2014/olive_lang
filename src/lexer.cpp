@@ -884,7 +884,7 @@ void Lexer::parseStringToken(Token& token) noexcept
         }
 
         if (next == '\\') {
-            mTokenBuffer << mInputBuffer.consume();  // consume '\'
+            mTokenBuffer << mInputBuffer.consume();
             char escaped = mInputBuffer.peek();
 
             if (escaped == std::char_traits<char>::eof()) {
@@ -946,7 +946,6 @@ void Lexer::parseRawStringToken(Token& token) noexcept
             break;
         }
 
-        // Backslashes are just regular characters in raw strings — no escape processing
         mTokenBuffer << mInputBuffer.consume();
         next = mInputBuffer.peek();
     }
